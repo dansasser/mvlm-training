@@ -1,0 +1,14 @@
+{
+  "title": "Washington Irving Tales",
+  "author": "Washington Irving",
+  "source": "Project Gutenberg",
+  "category": "biblical_classical",
+  "subcategory": "virtue_character",
+  "quality_score": 9.5,
+  "biblical_alignment": 7.5,
+  "word_count": 15122,
+  "url": "https://www.gutenberg.org/files/41/41-0.txt",
+  "hash": "865f2790161890fffad8c10116b3c3b6",
+  "priority": "medium",
+  "filepath": "mvlm_comprehensive_dataset/biblical_classical/virtue_character/Washington-Irving-Tales_865f2790.txt"
+}

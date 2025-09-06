@@ -1,0 +1,14 @@
+{
+  "title": "The Enchiridion",
+  "author": "Epictetus",
+  "source": "Project Gutenberg",
+  "category": "educational",
+  "subcategory": "philosophy_ethics",
+  "quality_score": 8.5,
+  "biblical_alignment": 7.5,
+  "word_count": 11064,
+  "url": "https://www.gutenberg.org/files/45109/45109-0.txt",
+  "hash": "93142c616d425285a74142dc31c53c20",
+  "priority": "high",
+  "filepath": "mvlm_comprehensive_dataset/educational/philosophy_ethics/The-Enchiridion_93142c61.txt"
+}

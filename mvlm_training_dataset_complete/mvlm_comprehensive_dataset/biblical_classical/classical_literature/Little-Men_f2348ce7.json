@@ -1,0 +1,14 @@
+{
+  "title": "Little Men",
+  "author": "Louisa May Alcott",
+  "source": "Project Gutenberg",
+  "category": "biblical_classical",
+  "subcategory": "classical_literature",
+  "quality_score": 10.0,
+  "biblical_alignment": 7.0,
+  "word_count": 104972,
+  "url": "https://www.gutenberg.org/files/2788/2788-0.txt",
+  "hash": "f2348ce7e5f07add210cfd1d8281e8a0",
+  "priority": "medium",
+  "filepath": "mvlm_comprehensive_dataset/biblical_classical/classical_literature/Little-Men_f2348ce7.txt"
+}

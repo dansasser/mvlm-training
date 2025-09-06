@@ -1,0 +1,14 @@
+{
+  "title": "Little Dorrit",
+  "author": "Charles Dickens",
+  "source": "Project Gutenberg",
+  "category": "biblical_classical",
+  "subcategory": "classical_literature",
+  "quality_score": 10.0,
+  "biblical_alignment": 7.0,
+  "word_count": 337372,
+  "url": "https://www.gutenberg.org/files/963/963-0.txt",
+  "hash": "c912276bc90e2199af39cf39374002d8",
+  "priority": "medium",
+  "filepath": "mvlm_comprehensive_dataset/biblical_classical/classical_literature/Little-Dorrit_c912276b.txt"
+}

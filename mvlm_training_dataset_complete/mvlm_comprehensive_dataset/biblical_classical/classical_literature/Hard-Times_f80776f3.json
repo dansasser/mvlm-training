@@ -1,0 +1,14 @@
+{
+  "title": "Hard Times",
+  "author": "Charles Dickens",
+  "source": "Project Gutenberg",
+  "category": "biblical_classical",
+  "subcategory": "classical_literature",
+  "quality_score": 10.0,
+  "biblical_alignment": 7.0,
+  "word_count": 103253,
+  "url": "https://www.gutenberg.org/files/786/786-0.txt",
+  "hash": "f80776f3065f5aa90f298bc7daaa52c6",
+  "priority": "medium",
+  "filepath": "mvlm_comprehensive_dataset/biblical_classical/classical_literature/Hard-Times_f80776f3.txt"
+}

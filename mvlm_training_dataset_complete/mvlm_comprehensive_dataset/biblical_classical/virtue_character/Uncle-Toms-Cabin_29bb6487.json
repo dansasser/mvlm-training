@@ -1,0 +1,14 @@
+{
+  "title": "Uncle Toms Cabin",
+  "author": "Harriet Beecher Stowe",
+  "source": "Project Gutenberg",
+  "category": "biblical_classical",
+  "subcategory": "virtue_character",
+  "quality_score": 10.0,
+  "biblical_alignment": 7.0,
+  "word_count": 180924,
+  "url": "https://www.gutenberg.org/files/203/203-0.txt",
+  "hash": "29bb64878395640f166207b5a9edc34e",
+  "priority": "high",
+  "filepath": "mvlm_comprehensive_dataset/biblical_classical/virtue_character/Uncle-Toms-Cabin_29bb6487.txt"
+}

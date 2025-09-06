@@ -1,0 +1,14 @@
+{
+  "title": "The Apology",
+  "author": "Plato",
+  "source": "Project Gutenberg",
+  "category": "philosophical",
+  "subcategory": "classical_philosophy",
+  "quality_score": 10.0,
+  "biblical_alignment": 9.0,
+  "word_count": 19073,
+  "url": "https://www.gutenberg.org/files/1656/1656-0.txt",
+  "hash": "d9f9438cd952d6a2106acf20f72dedad",
+  "priority": "high",
+  "filepath": "mvlm_comprehensive_dataset/philosophical/classical_philosophy/The-Apology_d9f9438c.txt"
+}

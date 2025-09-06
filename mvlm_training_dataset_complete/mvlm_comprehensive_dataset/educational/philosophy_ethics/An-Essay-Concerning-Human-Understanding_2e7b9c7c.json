@@ -1,0 +1,14 @@
+{
+  "title": "An Essay Concerning Human Understanding",
+  "author": "John Locke",
+  "source": "Project Gutenberg",
+  "category": "educational",
+  "subcategory": "philosophy_ethics",
+  "quality_score": 9.5,
+  "biblical_alignment": 6.5,
+  "word_count": 149761,
+  "url": "https://www.gutenberg.org/files/10615/10615-0.txt",
+  "hash": "2e7b9c7c9bb5d39cdab3e441b53bc28c",
+  "priority": "medium",
+  "filepath": "mvlm_comprehensive_dataset/educational/philosophy_ethics/An-Essay-Concerning-Human-Understanding_2e7b9c7c.txt"
+}

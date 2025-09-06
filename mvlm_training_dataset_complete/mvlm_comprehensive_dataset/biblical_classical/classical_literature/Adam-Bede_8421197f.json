@@ -1,0 +1,14 @@
+{
+  "title": "Adam Bede",
+  "author": "George Eliot",
+  "source": "Project Gutenberg",
+  "category": "biblical_classical",
+  "subcategory": "classical_literature",
+  "quality_score": 10.0,
+  "biblical_alignment": 7.0,
+  "word_count": 216983,
+  "url": "https://www.gutenberg.org/files/507/507-0.txt",
+  "hash": "8421197ff1b0207def137da9b327c215",
+  "priority": "medium",
+  "filepath": "mvlm_comprehensive_dataset/biblical_classical/classical_literature/Adam-Bede_8421197f.txt"
+}

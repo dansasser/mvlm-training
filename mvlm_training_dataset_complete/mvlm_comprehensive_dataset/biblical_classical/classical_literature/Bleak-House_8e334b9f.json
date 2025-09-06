@@ -1,0 +1,14 @@
+{
+  "title": "Bleak House",
+  "author": "Charles Dickens",
+  "source": "Project Gutenberg",
+  "category": "biblical_classical",
+  "subcategory": "classical_literature",
+  "quality_score": 10.0,
+  "biblical_alignment": 7.0,
+  "word_count": 353463,
+  "url": "https://www.gutenberg.org/files/1023/1023-0.txt",
+  "hash": "8e334b9fd47dc90d8699eb7a60944057",
+  "priority": "medium",
+  "filepath": "mvlm_comprehensive_dataset/biblical_classical/classical_literature/Bleak-House_8e334b9f.txt"
+}

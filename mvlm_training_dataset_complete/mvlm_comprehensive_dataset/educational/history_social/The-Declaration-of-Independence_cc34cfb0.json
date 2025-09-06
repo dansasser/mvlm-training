@@ -1,0 +1,14 @@
+{
+  "title": "The Declaration of Independence",
+  "author": "Thomas Jefferson",
+  "source": "Project Gutenberg",
+  "category": "educational",
+  "subcategory": "history_social",
+  "quality_score": 8.5,
+  "biblical_alignment": 8.0,
+  "word_count": 19900,
+  "url": "https://www.gutenberg.org/files/1/1-0.txt",
+  "hash": "cc34cfb0ff4ed8e26b8ac31868f5ad04",
+  "priority": "high",
+  "filepath": "mvlm_comprehensive_dataset/educational/history_social/The-Declaration-of-Independence_cc34cfb0.txt"
+}

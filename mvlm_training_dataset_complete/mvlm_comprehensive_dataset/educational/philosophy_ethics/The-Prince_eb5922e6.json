@@ -1,0 +1,14 @@
+{
+  "title": "The Prince",
+  "author": "Niccol\u00f2 Machiavelli",
+  "source": "Project Gutenberg",
+  "category": "educational",
+  "subcategory": "philosophy_ethics",
+  "quality_score": 10.0,
+  "biblical_alignment": 6.5,
+  "word_count": 49943,
+  "url": "https://www.gutenberg.org/files/1232/1232-0.txt",
+  "hash": "eb5922e686e43b8d6174c8862fa32dfe",
+  "priority": "medium",
+  "filepath": "mvlm_comprehensive_dataset/educational/philosophy_ethics/The-Prince_eb5922e6.txt"
+}

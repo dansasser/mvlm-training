@@ -1,0 +1,14 @@
+{
+  "title": "A Midsummer Nights Dream",
+  "author": "William Shakespeare",
+  "source": "Project Gutenberg",
+  "category": "biblical_classical",
+  "subcategory": "classical_literature",
+  "quality_score": 10.0,
+  "biblical_alignment": 7.5,
+  "word_count": 20192,
+  "url": "https://www.gutenberg.org/files/1514/1514-0.txt",
+  "hash": "afe59bdcc0fd7d814f37f57341890252",
+  "priority": "medium",
+  "filepath": "mvlm_comprehensive_dataset/biblical_classical/classical_literature/A-Midsummer-Nights-Dream_afe59bdc.txt"
+}

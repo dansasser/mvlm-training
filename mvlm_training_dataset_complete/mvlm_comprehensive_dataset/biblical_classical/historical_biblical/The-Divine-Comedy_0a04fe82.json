@@ -1,0 +1,14 @@
+{
+  "title": "The Divine Comedy",
+  "author": "Dante Alighieri",
+  "source": "Project Gutenberg",
+  "category": "biblical_classical",
+  "subcategory": "historical_biblical",
+  "quality_score": 10.0,
+  "biblical_alignment": 7.0,
+  "word_count": 38044,
+  "url": "https://www.gutenberg.org/files/1001/1001-0.txt",
+  "hash": "0a04fe82f31dfde2a4dd6800ae77b799",
+  "priority": "high",
+  "filepath": "mvlm_comprehensive_dataset/biblical_classical/historical_biblical/The-Divine-Comedy_0a04fe82.txt"
+}

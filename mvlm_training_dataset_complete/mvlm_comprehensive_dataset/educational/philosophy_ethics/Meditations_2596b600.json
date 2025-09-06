@@ -1,0 +1,14 @@
+{
+  "title": "Meditations",
+  "author": "Marcus Aurelius",
+  "source": "Project Gutenberg",
+  "category": "educational",
+  "subcategory": "philosophy_ethics",
+  "quality_score": 10.0,
+  "biblical_alignment": 6.5,
+  "word_count": 74884,
+  "url": "https://www.gutenberg.org/files/2680/2680-0.txt",
+  "hash": "2596b6008e8df3c6844c6c61cdefa81c",
+  "priority": "high",
+  "filepath": "mvlm_comprehensive_dataset/educational/philosophy_ethics/Meditations_2596b600.txt"
+}

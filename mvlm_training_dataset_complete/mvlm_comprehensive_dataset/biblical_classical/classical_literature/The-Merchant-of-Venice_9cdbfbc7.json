@@ -1,0 +1,14 @@
+{
+  "title": "The Merchant of Venice",
+  "author": "William Shakespeare",
+  "source": "Project Gutenberg",
+  "category": "biblical_classical",
+  "subcategory": "classical_literature",
+  "quality_score": 10.0,
+  "biblical_alignment": 7.5,
+  "word_count": 25308,
+  "url": "https://www.gutenberg.org/files/1515/1515-0.txt",
+  "hash": "9cdbfbc7af2c3d13a8ce2e0cb1e9611c",
+  "priority": "medium",
+  "filepath": "mvlm_comprehensive_dataset/biblical_classical/classical_literature/The-Merchant-of-Venice_9cdbfbc7.txt"
+}

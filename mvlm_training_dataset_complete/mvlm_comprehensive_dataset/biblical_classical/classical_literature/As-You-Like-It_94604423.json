@@ -1,0 +1,14 @@
+{
+  "title": "As You Like It",
+  "author": "William Shakespeare",
+  "source": "Project Gutenberg",
+  "category": "biblical_classical",
+  "subcategory": "classical_literature",
+  "quality_score": 10.0,
+  "biblical_alignment": 7.0,
+  "word_count": 22519,
+  "url": "https://www.gutenberg.org/files/1121/1121-0.txt",
+  "hash": "946044235793a8e8c2614f4be38b276e",
+  "priority": "medium",
+  "filepath": "mvlm_comprehensive_dataset/biblical_classical/classical_literature/As-You-Like-It_94604423.txt"
+}

@@ -1,0 +1,14 @@
+{
+  "title": "The Scarlet Letter",
+  "author": "Nathaniel Hawthorne",
+  "source": "Project Gutenberg",
+  "category": "biblical_classical",
+  "subcategory": "virtue_character",
+  "quality_score": 10.0,
+  "biblical_alignment": 7.0,
+  "word_count": 85926,
+  "url": "https://www.gutenberg.org/files/33/33-0.txt",
+  "hash": "eabca650130009cb91591c7790bbf830",
+  "priority": "high",
+  "filepath": "mvlm_comprehensive_dataset/biblical_classical/virtue_character/The-Scarlet-Letter_eabca650.txt"
+}

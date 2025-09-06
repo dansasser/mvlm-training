@@ -1,0 +1,421 @@
+{
+  "timestamp": "2025-07-28T20:32:31.748352",
+  "server_url": "https://w5hni7c75lnd.manus.space",
+  "summary": {
+    "total_tests": 14,
+    "successful_tests": 10,
+    "success_rate": 0.7142857142857143,
+    "average_response_time": 0.5306402683258057
+  },
+  "detailed_results": {
+    "server_info": {
+      "success": true,
+      "status_code": 200,
+      "response_time": 0.45877623558044434,
+      "content_length": 4028,
+      "response_data": {
+        "agents": [
+          {
+            "name": "Ideator",
+            "role": "Brainstorms initial concepts, plots, characters, and outlines"
+          },
+          {
+            "name": "Drafter",
+            "role": "Creates the first full draft based on the outline"
+          },
+          {
+            "name": "Reviser",
+            "role": "Edits and improves the draft for clarity, flow, and style"
+          },
+          {
+            "name": "Critic",
+            "role": "Provides high-level critique and feedback"
+          }
+        ],
+        "demo_mode": true,
+        "description": "A backend server that orchestrates specialized AI agents for collaborative creative writing tasks",
+        "endpoints": {
+          "protocols": {
+            "/api/protocols": "List all available protocols and their status",
+            "/api/protocols/<protocol_id>": "Get detailed information about a specific protocol",
+            "/api/protocols/<protocol_id>/config": "Get or set protocol configuration",
+            "/api/protocols/<protocol_id>/disable": "Disable a specific protocol",
+            "/api/protocols/<protocol_id>/enable": "Enable a specific protocol",
+            "/api/protocols/<protocol_id>/presets/<preset_name>": "Get preset configurations",
+            "/api/protocols/<protocol_id>/validate": "Validate protocol configuration",
+            "/api/protocols/global/disable": "Disable all protocols globally",
+            "/api/protocols/global/enable": "Enable all protocols globally",
+            "/api/protocols/test": "Test protocol processing on sample text"
+          },
+          "recipes": {
+            "/api/detect": "Detect AI-generated content",
+            "/api/paraphrase": "Paraphrase text with tone options",
+            "/api/recipes/info": "Get detailed recipe information"
+          },
+          "styles": {
+            "/api/styles": "Get all available writing styles",
+            "/api/styles/<style_name>": "Get details about a specific style",
+            "/api/styles/categories": "Get all style categories",
+            "/api/styles/category/<category>": "Get styles in a specific category",
+            "/api/styles/info": "Get comprehensive styles system information",
+            "/api/styles/recommend": "Get style recommendations based on description"
+          },
+          "writing": {
+            "/api/cancel_job/<job_id>": "Cancel a running job",
+            "/api/job_result/<job_id>": "Get final result of a completed job",
+            "/api/job_status/<job_id>": "Get status of a specific job",
+            "/api/jobs": "Get all jobs in the system",
+            "/api/start_writing": "Start a new creative writing job (supports topic or outline input, style parameter, and protocol configurations)",
+            "/api/writing/info": "Get writing system information"
+          }
+        },
+        "features": {
+          "multi_agent_workflow": "Specialized agents adapt to different writing styles",
+          "outline_workflow": "Support for both topic-based and outline-based workflows (skip Ideator when outline provided)",
+          "pocp_compat_protocol": "Punctuation control protocol with configurable rules (disable, substitute, limit)",
+          "protocol_presets": "Pre-configured protocol settings (no em dashes, formal writing, minimal punctuation)",
+          "protocol_system": "Standardized text processing protocols for guaranteed output control",
+          "protocol_validation": "Configuration validation and testing before applying to writing jobs",
+          "real_time_tracking": "Monitor progress through each stage of the writing process",
+          "style_categories": "Organized by content type (Creative Fiction, Analytical Writing, Technical Writing, etc.)",
+          "style_recommendation": "AI-powered style recommendations based on content description",
+          "writing_styles": "Support for 7+ writing styles (creative, analytical, technical, business, academic, journalism, marketing)"
+        },
+        "name": "Multi-Agent Creative Writing Server",
+        "notice": "Server is running in DEMO MODE. Configure OPENAI_API_KEY environment variable for full functionality.",
+        "version": "1.0.0",
+        "workflow": [
+          "1. User submits topic OR outline, optional writing style, and optional protocol configurations via /api/start_writing",
+          "2a. If topic provided: Ideator generates outline and concepts using style-specific instructions",
+          "2b. If outline provided: Skip Ideator stage and proceed directly to Drafter",
+          "3. Drafter creates full draft from outline (generated or provided) in the specified style",
+          "4. Reviser improves draft quality according to style guidelines",
+          "5. Critic provides feedback based on style-specific criteria",
+          "6. All agent outputs are processed through configured protocols (e.g., punctuation control)",
+          "7. Final result available via /api/job_result/<job_id>"
+        ]
+      },
+      "error": null
+    },
+    "protocol_list": {
+      "success": true,
+      "status_code": 200,
+      "response_time": 0.6197977066040039,
+      "content_length": 1594,
+      "response_data": {
+        "protocol_system": {
+          "enabled_protocols": 2,
+          "execution_order": [
+            "pocp_compat",
+            "hip"
+          ],
+          "global_enabled": true,
+          "total_protocols": 2
+        },
+        "protocols": [
+          {
+            "config": {},
+            "default_config": {
+              "disable": [],
+              "fallback": "FLAG",
+              "limit": {},
+              "substitute": {}
+            },
+            "enabled": true,
+            "execution_order": 0,
+            "name": "POCP-Compat: Punctuated Output Control Protocol",
+            "protocol_id": "pocp_compat",
+            "version": "1.0"
+          },
+          {
+            "author": "Daniel T. Sasser II",
+            "configuration_options": {
+              "allowed_content_types": "List of allowed MIME types for content retrieval",
+              "follow_redirects": "Whether to follow HTTP redirects (default: true)",
+              "max_content_size": "Maximum content size to download in bytes (default: 10MB)",
+              "max_redirects": "Maximum number of redirects to follow (default: 5)",
+              "timeout": "Request timeout in seconds (default: 30)",
+              "user_agent": "User agent string for web requests",
+              "validate_ssl": "Whether to validate SSL certificates (default: true)"
+            },
+            "description": "AI agent hyperlink resolution and resource validation",
+            "execution_order": 1,
+            "id": "hip",
+            "name": "Hyperlink Interpretation Protocol",
+            "process_flow": [
+              "1. Parse: Extract target path, domain, or reference from hyperlink",
+              "2. Determine Route: Select appropriate access method based on link type",
+              "3. Resolve: Attempt to access resource using selected route",
+              "4. Perform Task: Execute required task (validation, content retrieval)",
+              "5. Confirm & Log: Log action and return results"
+            ],
+            "supported_schemes": [
+              "http",
+              "https",
+              "file",
+              "ftp",
+              "mailto"
+            ],
+            "use_cases": [
+              "Verifying file existence",
+              "Content retrieval and summarization",
+              "Workflow automation",
+              "Data validation"
+            ],
+            "version": "1.0"
+          }
+        ],
+        "status": "success"
+      },
+      "error": null
+    },
+    "style_list": {
+      "success": true,
+      "status_code": 200,
+      "response_time": 0.3050718307495117,
+      "content_length": 692981,
+      "response_data": null,
+      "error": null
+    },
+    "job_list": {
+      "success": true,
+      "status_code": 200,
+      "response_time": 0.5737473964691162,
+      "content_length": 563,
+      "response_data": {
+        "jobs": [
+          {
+            "created_at": 1753749131.2133126,
+            "critic_output": null,
+            "current_stage": "pending",
+            "drafter_output": null,
+            "error_message": null,
+            "final_output": null,
+            "ideator_output": null,
+            "job_id": "9b0c6e4f-e975-4d84-a56d-834ea079f568",
+            "outline": null,
+            "protocol_configs": {},
+            "reviser_output": null,
+            "status": "pending",
+            "style": "creative_novel",
+            "style_info": {
+              "category": "Creative Fiction",
+              "description": "Narrative fiction with character development, plot, and literary devices",
+              "name": "Creative Novel"
+            },
+            "topic": "A short test story",
+            "updated_at": 1753749131.2133126
+          }
+        ],
+        "total_count": 1
+      },
+      "error": null
+    },
+    "pocp_protocol_test": {
+      "success": true,
+      "status_code": 200,
+      "response_time": 0.565345048904419,
+      "content_length": 517,
+      "response_data": {
+        "errors": [],
+        "has_errors": false,
+        "has_warnings": false,
+        "metadata": {
+          "hip": {
+            "links_found": 0,
+            "links_processed": 0
+          },
+          "pocp_compat": {
+            "errors": [],
+            "flags": [],
+            "omissions": [
+              {
+                "char": "\u2014",
+                "position": 1,
+                "token": "EM_DASH"
+              }
+            ],
+            "reverts": [],
+            "rules_applied": [
+              "disable_EM_DASH"
+            ],
+            "substitutions": [],
+            "token_counts": {
+              "EM_DASH": 1,
+              "EXCLAMATION_POINT": 1,
+              "THREE_DOTS": 1
+            },
+            "warnings": []
+          }
+        },
+        "original_text": "This text has\u2014em dashes and... ellipses!",
+        "processed_text": "This text hasem dashes and... ellipses!",
+        "status": "success",
+        "warnings": []
+      },
+      "error": null
+    },
+    "hip_protocol_test": {
+      "success": true,
+      "status_code": 200,
+      "response_time": 0.34461188316345215,
+      "content_length": 493,
+      "response_data": {
+        "errors": [],
+        "has_errors": false,
+        "has_warnings": true,
+        "metadata": {
+          "hip": {
+            "links_found": 1,
+            "links_processed": 1
+          },
+          "pocp_compat": {
+            "status": "no_config"
+          }
+        },
+        "original_text": "Check this link: https://example.com/test",
+        "processed_text": "Check this link: https://example.com/test\n\n--- HIP Link Analysis ---\n\n1. https://example.com/test\n   Status: error\n   Error: 'HIPProtocol' object has no attribute 'default_config'\n",
+        "status": "success",
+        "warnings": [
+          "[pocp_compat] No POCP configuration provided"
+        ]
+      },
+      "error": null
+    },
+    "combined_protocol_test": {
+      "success": true,
+      "status_code": 200,
+      "response_time": 0.6445791721343994,
+      "content_length": 836,
+      "response_data": {
+        "errors": [],
+        "has_errors": false,
+        "has_warnings": false,
+        "metadata": {
+          "hip": {
+            "links_found": 1,
+            "links_processed": 1
+          },
+          "pocp_compat": {
+            "errors": [],
+            "flags": [],
+            "omissions": [
+              {
+                "char": "\u2014",
+                "position": 1,
+                "token": "EM_DASH"
+              },
+              {
+                "char": "\u2014",
+                "position": 6,
+                "token": "EM_DASH"
+              }
+            ],
+            "reverts": [],
+            "rules_applied": [
+              "disable_EM_DASH",
+              "disable_EM_DASH"
+            ],
+            "substitutions": [],
+            "token_counts": {
+              "COLON": 1,
+              "EM_DASH": 2,
+              "EXCLAMATION_POINT": 1,
+              "PERIOD": 1,
+              "THREE_DOTS": 1
+            },
+            "warnings": []
+          }
+        },
+        "original_text": "Research shows\u2014according to https://example.com\u2014that AI systems... are improving!",
+        "processed_text": "Research showsaccording to https://example.comthat AI systems... are improving!\n\n--- HIP Link Analysis ---\n\n1. https://example.comthat\n   Status: error\n   Error: 'HIPProtocol' object has no attribute 'default_config'\n",
+        "status": "success",
+        "warnings": []
+      },
+      "error": null
+    },
+    "topic-based_job": {
+      "success": true,
+      "status_code": 202,
+      "response_time": 0.5796291828155518,
+      "content_length": 303,
+      "response_data": {
+        "job_id": "a080ae57-c2b4-4180-8b88-6f38927ae635",
+        "message": "Writing job started with analytical_article style using topic input",
+        "status": "pending",
+        "style": "analytical_article",
+        "topic": "The future of AI in creative writing",
+        "workflow": "topic \u2192 ideator \u2192 drafter \u2192 reviser \u2192 critic"
+      },
+      "error": null
+    },
+    "outline-based_job": {
+      "success": true,
+      "status_code": 202,
+      "response_time": 0.6578719615936279,
+      "content_length": 324,
+      "response_data": {
+        "job_id": "f852ef24-23d9-4c2d-b3db-4e06409e54b6",
+        "message": "Writing job started with technical_documentation style using provided outline (Ideator stage skipped)",
+        "outline_provided": true,
+        "status": "pending",
+        "style": "technical_documentation",
+        "workflow": "outline \u2192 drafter \u2192 reviser \u2192 critic (ideator skipped)"
+      },
+      "error": null
+    },
+    "creative_writing_job": {
+      "success": true,
+      "status_code": 202,
+      "response_time": 0.5569722652435303,
+      "content_length": 285,
+      "response_data": {
+        "job_id": "fce51919-a3d8-47f2-94fc-697dc3a3c407",
+        "message": "Writing job started with creative_novel style using topic input",
+        "status": "pending",
+        "style": "creative_novel",
+        "topic": "A short story about robots",
+        "workflow": "topic \u2192 ideator \u2192 drafter \u2192 reviser \u2192 critic"
+      },
+      "error": null
+    },
+    "job_status_1": {
+      "success": false,
+      "status_code": 500,
+      "response_time": 0.7452137470245361,
+      "content_length": 101,
+      "response_data": {
+        "error": "Failed to get job status",
+        "message": "'JobQueue' object has no attribute 'get_job_status'"
+      },
+      "error": "HTTP 500: Internal Server Error"
+    },
+    "job_status_2": {
+      "success": false,
+      "status_code": 500,
+      "response_time": 0.6138548851013184,
+      "content_length": 101,
+      "response_data": {
+        "error": "Failed to get job status",
+        "message": "'JobQueue' object has no attribute 'get_job_status'"
+      },
+      "error": "HTTP 500: Internal Server Error"
+    },
+    "ai_detection_test": {
+      "success": false,
+      "status_code": 405,
+      "response_time": 0.6296937465667725,
+      "content_length": 153,
+      "response_data": null,
+      "error": "HTTP 405: Method Not Allowed"
+    },
+    "paraphrasing_test": {
+      "success": false,
+      "status_code": 405,
+      "response_time": 0.5408270359039307,
+      "content_length": 153,
+      "response_data": null,
+      "error": "HTTP 405: Method Not Allowed"
+    }
+  }
+}

@@ -1,0 +1,14 @@
+{
+  "title": "Nicomachean Ethics",
+  "author": "Aristotle",
+  "source": "Project Gutenberg",
+  "category": "educational",
+  "subcategory": "philosophy_ethics",
+  "quality_score": 10.0,
+  "biblical_alignment": 8.0,
+  "word_count": 116253,
+  "url": "https://www.gutenberg.org/files/8438/8438-0.txt",
+  "hash": "c16ab3d6cda609d660d6819e3a74aaa0",
+  "priority": "high",
+  "filepath": "mvlm_comprehensive_dataset/educational/philosophy_ethics/Nicomachean-Ethics_c16ab3d6.txt"
+}

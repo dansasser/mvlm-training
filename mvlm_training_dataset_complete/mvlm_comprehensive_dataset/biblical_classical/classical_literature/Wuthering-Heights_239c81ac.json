@@ -1,0 +1,14 @@
+{
+  "title": "Wuthering Heights",
+  "author": "Emily Bront\u00eb",
+  "source": "Project Gutenberg",
+  "category": "biblical_classical",
+  "subcategory": "classical_literature",
+  "quality_score": 10.0,
+  "biblical_alignment": 7.0,
+  "word_count": 118850,
+  "url": "https://www.gutenberg.org/files/768/768-0.txt",
+  "hash": "239c81ac912069d14337a888a7605355",
+  "priority": "medium",
+  "filepath": "mvlm_comprehensive_dataset/biblical_classical/classical_literature/Wuthering-Heights_239c81ac.txt"
+}

@@ -1,0 +1,14 @@
+{
+  "title": "The Imitation of Christ",
+  "author": "Thomas \u00e0 Kempis",
+  "source": "Project Gutenberg",
+  "category": "biblical_classical",
+  "subcategory": "historical_biblical",
+  "quality_score": 10.0,
+  "biblical_alignment": 8.0,
+  "word_count": 66300,
+  "url": "https://www.gutenberg.org/files/1653/1653-0.txt",
+  "hash": "9fba688507b89c00a0fb365a6f13848f",
+  "priority": "high",
+  "filepath": "mvlm_comprehensive_dataset/biblical_classical/historical_biblical/The-Imitation-of-Christ_9fba6885.txt"
+}

@@ -1,0 +1,203 @@
+{
+  "phase_2_summary": {
+    "total_documents": 30,
+    "total_words": 3152919,
+    "total_size_mb": 17.78,
+    "average_quality_score": 9.57,
+    "average_biblical_alignment": 6.79,
+    "collection_time_minutes": 8.9
+  },
+  "category_breakdown": {
+    "technical": {
+      "count": 2,
+      "words": 36630,
+      "avg_quality": 9.0,
+      "avg_biblical": 6.5
+    },
+    "educational": {
+      "count": 28,
+      "words": 3116289,
+      "avg_quality": 9.607142857142858,
+      "avg_biblical": 6.807142857142857
+    }
+  },
+  "author_distribution": {
+    "Henry David Thoreau": 2,
+    "Martin Fowler": 1,
+    "Dmitri Mendeleev": 1,
+    "Hamilton Madison Jay": 1,
+    "Alexis de Tocqueville": 1,
+    "Adam Smith": 1,
+    "Thomas Paine": 1,
+    "Thomas Jefferson": 1,
+    "Booker T. Washington": 1,
+    "Frederick Douglass": 1,
+    "Ralph Waldo Emerson": 1,
+    "Aristotle": 1,
+    "Plato": 1,
+    "Marcus Aurelius": 1,
+    "Epictetus": 1
+  },
+  "top_quality_books": [
+    {
+      "title": "Democracy in America",
+      "author": "Alexis de Tocqueville",
+      "category": "educational",
+      "quality_score": 10.0,
+      "biblical_alignment": 6.5,
+      "word_count": 187675
+    },
+    {
+      "title": "The Autobiography of Frederick Douglass",
+      "author": "Frederick Douglass",
+      "category": "educational",
+      "quality_score": 10.0,
+      "biblical_alignment": 6.5,
+      "word_count": 40750
+    },
+    {
+      "title": "Walden",
+      "author": "Henry David Thoreau",
+      "category": "educational",
+      "quality_score": 10.0,
+      "biblical_alignment": 6.5,
+      "word_count": 115783
+    },
+    {
+      "title": "Self-Reliance",
+      "author": "Ralph Waldo Emerson",
+      "category": "educational",
+      "quality_score": 10.0,
+      "biblical_alignment": 6.5,
+      "word_count": 95670
+    },
+    {
+      "title": "Nicomachean Ethics",
+      "author": "Aristotle",
+      "category": "educational",
+      "quality_score": 10.0,
+      "biblical_alignment": 8.0,
+      "word_count": 116253
+    },
+    {
+      "title": "The Republic",
+      "author": "Plato",
+      "category": "educational",
+      "quality_score": 10.0,
+      "biblical_alignment": 8.0,
+      "word_count": 219190
+    },
+    {
+      "title": "Meditations",
+      "author": "Marcus Aurelius",
+      "category": "educational",
+      "quality_score": 10.0,
+      "biblical_alignment": 6.5,
+      "word_count": 74884
+    },
+    {
+      "title": "Leviathan",
+      "author": "Thomas Hobbes",
+      "category": "educational",
+      "quality_score": 10.0,
+      "biblical_alignment": 6.5,
+      "word_count": 213346
+    },
+    {
+      "title": "The Social Contract",
+      "author": "Jean-Jacques Rousseau",
+      "category": "educational",
+      "quality_score": 10.0,
+      "biblical_alignment": 6.5,
+      "word_count": 123505
+    },
+    {
+      "title": "The Prince",
+      "author": "Niccol\u00f2 Machiavelli",
+      "category": "educational",
+      "quality_score": 10.0,
+      "biblical_alignment": 6.5,
+      "word_count": 49943
+    },
+    {
+      "title": "The Genealogy of Morals",
+      "author": "Friedrich Nietzsche",
+      "category": "educational",
+      "quality_score": 10.0,
+      "biblical_alignment": 6.5,
+      "word_count": 55362
+    },
+    {
+      "title": "On Writing Well",
+      "author": "William Zinsser",
+      "category": "educational",
+      "quality_score": 10.0,
+      "biblical_alignment": 6.5,
+      "word_count": 110750
+    },
+    {
+      "title": "Made to Stick",
+      "author": "Heath Brothers",
+      "category": "educational",
+      "quality_score": 10.0,
+      "biblical_alignment": 6.5,
+      "word_count": 133170
+    },
+    {
+      "title": "The Hero with a Thousand Faces",
+      "author": "Joseph Campbell",
+      "category": "educational",
+      "quality_score": 10.0,
+      "biblical_alignment": 6.5,
+      "word_count": 99584
+    },
+    {
+      "title": "The Art of Fiction",
+      "author": "John Gardner",
+      "category": "educational",
+      "quality_score": 10.0,
+      "biblical_alignment": 6.5,
+      "word_count": 109885
+    },
+    {
+      "title": "Principles of Chemistry",
+      "author": "Dmitri Mendeleev",
+      "category": "technical",
+      "quality_score": 9.5,
+      "biblical_alignment": 6.5,
+      "word_count": 20786
+    },
+    {
+      "title": "The Federalist Papers",
+      "author": "Hamilton Madison Jay",
+      "category": "educational",
+      "quality_score": 9.5,
+      "biblical_alignment": 7.3,
+      "word_count": 192347
+    },
+    {
+      "title": "Common Sense",
+      "author": "Thomas Paine",
+      "category": "educational",
+      "quality_score": 9.5,
+      "biblical_alignment": 6.5,
+      "word_count": 21997
+    },
+    {
+      "title": "Up From Slavery",
+      "author": "Booker T. Washington",
+      "category": "educational",
+      "quality_score": 9.5,
+      "biblical_alignment": 7.3,
+      "word_count": 76742
+    },
+    {
+      "title": "Discourse on Method",
+      "author": "Ren\u00e9 Descartes",
+      "category": "educational",
+      "quality_score": 9.5,
+      "biblical_alignment": 7.0,
+      "word_count": 25946
+    }
+  ]
+}

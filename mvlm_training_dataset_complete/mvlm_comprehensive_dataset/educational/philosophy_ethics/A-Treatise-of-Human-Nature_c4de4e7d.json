@@ -1,0 +1,14 @@
+{
+  "title": "A Treatise of Human Nature",
+  "author": "David Hume",
+  "source": "Project Gutenberg",
+  "category": "educational",
+  "subcategory": "philosophy_ethics",
+  "quality_score": 9.5,
+  "biblical_alignment": 6.5,
+  "word_count": 225756,
+  "url": "https://www.gutenberg.org/files/4705/4705-0.txt",
+  "hash": "c4de4e7d4b3e975f07078f42765409ab",
+  "priority": "medium",
+  "filepath": "mvlm_comprehensive_dataset/educational/philosophy_ethics/A-Treatise-of-Human-Nature_c4de4e7d.txt"
+}

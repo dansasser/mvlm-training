@@ -1,0 +1,14 @@
+{
+  "title": "The Art of Fiction",
+  "author": "John Gardner",
+  "source": "Project Gutenberg",
+  "category": "educational",
+  "subcategory": "language_communication",
+  "quality_score": 10.0,
+  "biblical_alignment": 6.5,
+  "word_count": 109885,
+  "url": "https://www.gutenberg.org/files/7423/7423-0.txt",
+  "hash": "908f2c507d5c10e82e5d3b5327ee6ddc",
+  "priority": "medium",
+  "filepath": "mvlm_comprehensive_dataset/educational/language_communication/The-Art-of-Fiction_908f2c50.txt"
+}

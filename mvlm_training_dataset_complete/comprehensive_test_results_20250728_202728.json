@@ -1,0 +1,252 @@
+{
+  "timestamp": "2025-07-28T20:27:28.350570",
+  "server_url": "https://9yhyi3czx81l.manus.space",
+  "summary": {
+    "total_tests": 12,
+    "successful_tests": 3,
+    "success_rate": 0.25,
+    "average_response_time": 0.4709506829579671
+  },
+  "detailed_results": {
+    "server_info": {
+      "success": true,
+      "status_code": 200,
+      "response_time": 0.45995140075683594,
+      "content_length": 4028,
+      "response_data": {
+        "agents": [
+          {
+            "name": "Ideator",
+            "role": "Brainstorms initial concepts, plots, characters, and outlines"
+          },
+          {
+            "name": "Drafter",
+            "role": "Creates the first full draft based on the outline"
+          },
+          {
+            "name": "Reviser",
+            "role": "Edits and improves the draft for clarity, flow, and style"
+          },
+          {
+            "name": "Critic",
+            "role": "Provides high-level critique and feedback"
+          }
+        ],
+        "demo_mode": true,
+        "description": "A backend server that orchestrates specialized AI agents for collaborative creative writing tasks",
+        "endpoints": {
+          "protocols": {
+            "/api/protocols": "List all available protocols and their status",
+            "/api/protocols/<protocol_id>": "Get detailed information about a specific protocol",
+            "/api/protocols/<protocol_id>/config": "Get or set protocol configuration",
+            "/api/protocols/<protocol_id>/disable": "Disable a specific protocol",
+            "/api/protocols/<protocol_id>/enable": "Enable a specific protocol",
+            "/api/protocols/<protocol_id>/presets/<preset_name>": "Get preset configurations",
+            "/api/protocols/<protocol_id>/validate": "Validate protocol configuration",
+            "/api/protocols/global/disable": "Disable all protocols globally",
+            "/api/protocols/global/enable": "Enable all protocols globally",
+            "/api/protocols/test": "Test protocol processing on sample text"
+          },
+          "recipes": {
+            "/api/detect": "Detect AI-generated content",
+            "/api/paraphrase": "Paraphrase text with tone options",
+            "/api/recipes/info": "Get detailed recipe information"
+          },
+          "styles": {
+            "/api/styles": "Get all available writing styles",
+            "/api/styles/<style_name>": "Get details about a specific style",
+            "/api/styles/categories": "Get all style categories",
+            "/api/styles/category/<category>": "Get styles in a specific category",
+            "/api/styles/info": "Get comprehensive styles system information",
+            "/api/styles/recommend": "Get style recommendations based on description"
+          },
+          "writing": {
+            "/api/cancel_job/<job_id>": "Cancel a running job",
+            "/api/job_result/<job_id>": "Get final result of a completed job",
+            "/api/job_status/<job_id>": "Get status of a specific job",
+            "/api/jobs": "Get all jobs in the system",
+            "/api/start_writing": "Start a new creative writing job (supports topic or outline input, style parameter, and protocol configurations)",
+            "/api/writing/info": "Get writing system information"
+          }
+        },
+        "features": {
+          "multi_agent_workflow": "Specialized agents adapt to different writing styles",
+          "outline_workflow": "Support for both topic-based and outline-based workflows (skip Ideator when outline provided)",
+          "pocp_compat_protocol": "Punctuation control protocol with configurable rules (disable, substitute, limit)",
+          "protocol_presets": "Pre-configured protocol settings (no em dashes, formal writing, minimal punctuation)",
+          "protocol_system": "Standardized text processing protocols for guaranteed output control",
+          "protocol_validation": "Configuration validation and testing before applying to writing jobs",
+          "real_time_tracking": "Monitor progress through each stage of the writing process",
+          "style_categories": "Organized by content type (Creative Fiction, Analytical Writing, Technical Writing, etc.)",
+          "style_recommendation": "AI-powered style recommendations based on content description",
+          "writing_styles": "Support for 7+ writing styles (creative, analytical, technical, business, academic, journalism, marketing)"
+        },
+        "name": "Multi-Agent Creative Writing Server",
+        "notice": "Server is running in DEMO MODE. Configure OPENAI_API_KEY environment variable for full functionality.",
+        "version": "1.0.0",
+        "workflow": [
+          "1. User submits topic OR outline, optional writing style, and optional protocol configurations via /api/start_writing",
+          "2a. If topic provided: Ideator generates outline and concepts using style-specific instructions",
+          "2b. If outline provided: Skip Ideator stage and proceed directly to Drafter",
+          "3. Drafter creates full draft from outline (generated or provided) in the specified style",
+          "4. Reviser improves draft quality according to style guidelines",
+          "5. Critic provides feedback based on style-specific criteria",
+          "6. All agent outputs are processed through configured protocols (e.g., punctuation control)",
+          "7. Final result available via /api/job_result/<job_id>"
+        ]
+      },
+      "error": null
+    },
+    "protocol_list": {
+      "success": false,
+      "status_code": null,
+      "response_time": 30.02178430557251,
+      "content_length": 0,
+      "response_data": null,
+      "error": "HTTPSConnectionPool(host='9yhyi3czx81l.manus.space', port=443): Read timed out. (read timeout=30)"
+    },
+    "style_list": {
+      "success": false,
+      "status_code": null,
+      "response_time": 30.039918661117554,
+      "content_length": 0,
+      "response_data": null,
+      "error": "HTTPSConnectionPool(host='9yhyi3czx81l.manus.space', port=443): Read timed out. (read timeout=30)"
+    },
+    "job_list": {
+      "success": false,
+      "status_code": null,
+      "response_time": 30.043883800506592,
+      "content_length": 0,
+      "response_data": null,
+      "error": "HTTPSConnectionPool(host='9yhyi3czx81l.manus.space', port=443): Read timed out. (read timeout=30)"
+    },
+    "pocp_protocol_test": {
+      "success": false,
+      "status_code": null,
+      "response_time": 30.038031816482544,
+      "content_length": 0,
+      "response_data": null,
+      "error": "HTTPSConnectionPool(host='9yhyi3czx81l.manus.space', port=443): Read timed out. (read timeout=30)"
+    },
+    "hip_protocol_test": {
+      "success": true,
+      "status_code": 200,
+      "response_time": 0.5283381938934326,
+      "content_length": 493,
+      "response_data": {
+        "errors": [],
+        "has_errors": false,
+        "has_warnings": true,
+        "metadata": {
+          "hip": {
+            "links_found": 1,
+            "links_processed": 1
+          },
+          "pocp_compat": {
+            "status": "no_config"
+          }
+        },
+        "original_text": "Check this link: https://example.com/test",
+        "processed_text": "Check this link: https://example.com/test\n\n--- HIP Link Analysis ---\n\n1. https://example.com/test\n   Status: error\n   Error: 'HIPProtocol' object has no attribute 'default_config'\n",
+        "status": "success",
+        "warnings": [
+          "[pocp_compat] No POCP configuration provided"
+        ]
+      },
+      "error": null
+    },
+    "combined_protocol_test": {
+      "success": true,
+      "status_code": 200,
+      "response_time": 0.4245624542236328,
+      "content_length": 836,
+      "response_data": {
+        "errors": [],
+        "has_errors": false,
+        "has_warnings": false,
+        "metadata": {
+          "hip": {
+            "links_found": 1,
+            "links_processed": 1
+          },
+          "pocp_compat": {
+            "errors": [],
+            "flags": [],
+            "omissions": [
+              {
+                "char": "\u2014",
+                "position": 1,
+                "token": "EM_DASH"
+              },
+              {
+                "char": "\u2014",
+                "position": 6,
+                "token": "EM_DASH"
+              }
+            ],
+            "reverts": [],
+            "rules_applied": [
+              "disable_EM_DASH",
+              "disable_EM_DASH"
+            ],
+            "substitutions": [],
+            "token_counts": {
+              "COLON": 1,
+              "EM_DASH": 2,
+              "EXCLAMATION_POINT": 1,
+              "PERIOD": 1,
+              "THREE_DOTS": 1
+            },
+            "warnings": []
+          }
+        },
+        "original_text": "Research shows\u2014according to https://example.com\u2014that AI systems... are improving!",
+        "processed_text": "Research showsaccording to https://example.comthat AI systems... are improving!\n\n--- HIP Link Analysis ---\n\n1. https://example.comthat\n   Status: error\n   Error: 'HIPProtocol' object has no attribute 'default_config'\n",
+        "status": "success",
+        "warnings": []
+      },
+      "error": null
+    },
+    "topic-based_job": {
+      "success": false,
+      "status_code": null,
+      "response_time": 30.017159938812256,
+      "content_length": 0,
+      "response_data": null,
+      "error": "HTTPSConnectionPool(host='9yhyi3czx81l.manus.space', port=443): Read timed out. (read timeout=30)"
+    },
+    "outline-based_job": {
+      "success": false,
+      "status_code": null,
+      "response_time": 30.045512437820435,
+      "content_length": 0,
+      "response_data": null,
+      "error": "HTTPSConnectionPool(host='9yhyi3czx81l.manus.space', port=443): Read timed out. (read timeout=30)"
+    },
+    "creative_writing_job": {
+      "success": false,
+      "status_code": null,
+      "response_time": 30.04579472541809,
+      "content_length": 0,
+      "response_data": null,
+      "error": "HTTPSConnectionPool(host='9yhyi3czx81l.manus.space', port=443): Read timed out. (read timeout=30)"
+    },
+    "ai_detection_test": {
+      "success": false,
+      "status_code": null,
+      "response_time": 30.03940486907959,
+      "content_length": 0,
+      "response_data": null,
+      "error": "HTTPSConnectionPool(host='9yhyi3czx81l.manus.space', port=443): Read timed out. (read timeout=30)"
+    },
+    "paraphrasing_test": {
+      "success": false,
+      "status_code": null,
+      "response_time": 30.045183420181274,
+      "content_length": 0,
+      "response_data": null,
+      "error": "HTTPSConnectionPool(host='9yhyi3czx81l.manus.space', port=443): Read timed out. (read timeout=30)"
+    }
+  }
+}

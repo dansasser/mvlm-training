@@ -1,0 +1,14 @@
+{
+  "title": "Democracy in America",
+  "author": "Alexis de Tocqueville",
+  "source": "Project Gutenberg",
+  "category": "educational",
+  "subcategory": "history_social",
+  "quality_score": 10.0,
+  "biblical_alignment": 6.5,
+  "word_count": 187675,
+  "url": "https://www.gutenberg.org/files/815/815-0.txt",
+  "hash": "84f151463e5d4a8fe3f2eb23bc892bdb",
+  "priority": "high",
+  "filepath": "mvlm_comprehensive_dataset/educational/history_social/Democracy-in-America_84f15146.txt"
+}

@@ -1,0 +1,281 @@
+{
+  "tests": [
+    {
+      "test_name": "Topic-Based Workflow with Research",
+      "test_type": "topic_based_research",
+      "input_data": {
+        "topic": "The revolutionary impact of cognitive governance on artificial intelligence development",
+        "style": "academic",
+        "length": "medium",
+        "research_enabled": true
+      },
+      "success": false,
+      "total_time": 5.89507269859314,
+      "job_id": null,
+      "stages_completed": null,
+      "final_output": null,
+      "error": "Unknown error",
+      "timestamp": "2025-07-29T12:10:24.860588",
+      "cognitive_governance_score": null
+    },
+    {
+      "test_name": "Outline-Based Workflow",
+      "test_type": "outline_based",
+      "input_data": {
+        "outline": "1. Introduction to SIM-ONE Framework\n2. Cognitive Governance Principles\n   - Deterministic control over AI behavior\n   - Energy efficiency through intelligent architecture\n3. Multi-Agent Architecture\n   - Ideator: Planning and research\n   - Drafter: Content creation\n   - Reviser: Quality improvement\n   - Critic: Final validation\n4. Protocol Integration\n   - ESL: Emotional intelligence\n   - REP: Structured reasoning\n   - CCP: Cognitive coordination\n   - EEP: Energy optimization\n   - VVP: Verification and validation\n5. Performance Results and Future Implications\n6. Conclusion",
+        "style": "technical",
+        "length": "long"
+      },
+      "success": false,
+      "total_time": 0.6121726036071777,
+      "job_id": null,
+      "stages_completed": null,
+      "final_output": null,
+      "error": "Unknown error",
+      "timestamp": "2025-07-29T12:10:25.473178",
+      "cognitive_governance_score": null
+    },
+    {
+      "test_name": "Style Variation - Academic",
+      "test_type": "style_variation",
+      "input_data": {
+        "topic": "The future of AI development through cognitive governance",
+        "style": "academic",
+        "length": "short"
+      },
+      "success": false,
+      "total_time": 0.6354608535766602,
+      "job_id": null,
+      "stages_completed": null,
+      "final_output": null,
+      "error": "Unknown error",
+      "timestamp": "2025-07-29T12:10:26.109243",
+      "cognitive_governance_score": null
+    },
+    {
+      "test_name": "Style Variation - Creative",
+      "test_type": "style_variation",
+      "input_data": {
+        "topic": "The future of AI development through cognitive governance",
+        "style": "creative",
+        "length": "short"
+      },
+      "success": false,
+      "total_time": 0.5274014472961426,
+      "job_id": null,
+      "stages_completed": null,
+      "final_output": null,
+      "error": "Unknown error",
+      "timestamp": "2025-07-29T12:10:27.142068",
+      "cognitive_governance_score": null
+    },
+    {
+      "test_name": "Style Variation - Technical",
+      "test_type": "style_variation",
+      "input_data": {
+        "topic": "The future of AI development through cognitive governance",
+        "style": "technical",
+        "length": "short"
+      },
+      "success": false,
+      "total_time": 0.7187607288360596,
+      "job_id": null,
+      "stages_completed": null,
+      "final_output": null,
+      "error": "Unknown error",
+      "timestamp": "2025-07-29T12:10:28.361389",
+      "cognitive_governance_score": null
+    },
+    {
+      "test_name": "Style Variation - Business",
+      "test_type": "style_variation",
+      "input_data": {
+        "topic": "The future of AI development through cognitive governance",
+        "style": "business",
+        "length": "short"
+      },
+      "success": false,
+      "total_time": 0.5389118194580078,
+      "job_id": null,
+      "stages_completed": null,
+      "final_output": null,
+      "error": "Unknown error",
+      "timestamp": "2025-07-29T12:10:29.400942",
+      "cognitive_governance_score": null
+    },
+    {
+      "test_name": "Style Variation - Journalistic",
+      "test_type": "style_variation",
+      "input_data": {
+        "topic": "The future of AI development through cognitive governance",
+        "style": "journalistic",
+        "length": "short"
+      },
+      "success": false,
+      "total_time": 0.5118622779846191,
+      "job_id": null,
+      "stages_completed": null,
+      "final_output": null,
+      "error": "Unknown error",
+      "timestamp": "2025-07-29T12:10:30.413471",
+      "cognitive_governance_score": null
+    },
+    {
+      "test_name": "Protocol Integration Test",
+      "test_type": "protocol_integration",
+      "input_data": {
+        "topic": "Testing cognitive governance protocols in action",
+        "style": "technical",
+        "protocol_configs": {
+          "esl": {
+            "emotional_sensitivity": 0.8
+          },
+          "rep": {
+            "reasoning_depth": "detailed"
+          },
+          "ccp": {
+            "coordination_strategy": "adaptive"
+          },
+          "eep": {
+            "strategy": "balanced"
+          },
+          "vvp": {
+            "validation_intensity": "thorough"
+          }
+        }
+      },
+      "success": false,
+      "total_time": 0.2976861000061035,
+      "job_id": null,
+      "stages_completed": null,
+      "final_output": null,
+      "error": "Unknown error",
+      "timestamp": "2025-07-29T12:10:31.211954",
+      "cognitive_governance_score": null
+    },
+    {
+      "test_name": "Concurrent Workflow 1",
+      "test_type": "concurrent",
+      "input_data": {
+        "topic": "Concurrent test 1: Energy efficiency in AI",
+        "style": "academic"
+      },
+      "success": false,
+      "total_time": 0.1792919635772705,
+      "job_id": null,
+      "stages_completed": null,
+      "final_output": null,
+      "error": "Unknown error",
+      "timestamp": "2025-07-29T12:10:31.392521",
+      "cognitive_governance_score": null
+    },
+    {
+      "test_name": "Concurrent Workflow 2",
+      "test_type": "concurrent",
+      "input_data": {
+        "topic": "Concurrent test 2: Multi-agent coordination",
+        "style": "technical"
+      },
+      "success": false,
+      "total_time": 0.4752511978149414,
+      "job_id": null,
+      "stages_completed": null,
+      "final_output": null,
+      "error": "Unknown error",
+      "timestamp": "2025-07-29T12:10:31.690097",
+      "cognitive_governance_score": null
+    },
+    {
+      "test_name": "Concurrent Workflow 3",
+      "test_type": "concurrent",
+      "input_data": {
+        "topic": "Concurrent test 3: Cognitive governance principles",
+        "style": "business"
+      },
+      "success": false,
+      "total_time": 0.9456617832183838,
+      "job_id": null,
+      "stages_completed": null,
+      "final_output": null,
+      "error": "Unknown error",
+      "timestamp": "2025-07-29T12:10:32.161885",
+      "cognitive_governance_score": null
+    },
+    {
+      "test_name": "Error Handling - Invalid Style",
+      "test_type": "error_handling",
+      "input_data": {
+        "topic": "Test topic",
+        "style": "invalid_style"
+      },
+      "success": true,
+      "total_time": 0.5581200122833252,
+      "job_id": null,
+      "stages_completed": null,
+      "final_output": null,
+      "error": null,
+      "timestamp": "2025-07-29T12:10:32.720869",
+      "cognitive_governance_score": 0.9
+    },
+    {
+      "test_name": "Error Handling - Empty Topic",
+      "test_type": "error_handling",
+      "input_data": {
+        "topic": "",
+        "style": "academic"
+      },
+      "success": true,
+      "total_time": 0.6897351741790771,
+      "job_id": null,
+      "stages_completed": null,
+      "final_output": null,
+      "error": null,
+      "timestamp": "2025-07-29T12:10:33.410948",
+      "cognitive_governance_score": 0.9
+    },
+    {
+      "test_name": "Error Handling - Missing Required Fields",
+      "test_type": "error_handling",
+      "input_data": {
+        "style": "academic"
+      },
+      "success": true,
+      "total_time": 0.5121057033538818,
+      "job_id": null,
+      "stages_completed": null,
+      "final_output": null,
+      "error": null,
+      "timestamp": "2025-07-29T12:10:33.923391",
+      "cognitive_governance_score": 0.9
+    },
+    {
+      "test_name": "Error Handling - Invalid Protocol Config",
+      "test_type": "error_handling",
+      "input_data": {
+        "topic": "Test topic",
+        "style": "academic",
+        "protocol_configs": {
+          "invalid_protocol": {}
+        }
+      },
+      "success": false,
+      "total_time": 0.6200046539306641,
+      "job_id": null,
+      "stages_completed": null,
+      "final_output": null,
+      "error": "Unexpected behavior for Invalid Protocol Config",
+      "timestamp": "2025-07-29T12:10:34.543749",
+      "cognitive_governance_score": null
+    }
+  ],
+  "summary": {
+    "total_tests": 15,
+    "successful_tests": 3,
+    "success_rate": 20.0,
+    "average_response_time": 0.5866536299387614,
+    "average_cognitive_governance_score": 0.9,
+    "workflow_operational": false,
+    "cognitive_governance_effective": true
+  },
+  "timestamp": "2025-07-29T12:10:18.965112"
+}

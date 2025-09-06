@@ -1,0 +1,233 @@
+{
+  "timestamp": "2025-07-28T20:58:43.481908",
+  "server_url": "https://e5h6i7cn3d3p.manus.space",
+  "overall_analysis": {
+    "overall_success_rate": 1.0,
+    "total_tests": 21,
+    "successful_tests": 21,
+    "avg_response_time": 0.5116185120173863,
+    "endpoints_tested": 7,
+    "production_ready": true
+  },
+  "endpoint_analysis": {
+    "Server Info": {
+      "success_rate": 1.0,
+      "total_tests": 3,
+      "successful_tests": 3,
+      "avg_response_time": 0.28980620702107746,
+      "min_response_time": 0.15194988250732422,
+      "max_response_time": 0.5631363391876221,
+      "std_dev": 0.23671383558905834,
+      "median_response_time": 0.15433239936828613,
+      "p95_response_time": 0.5222559452056884
+    },
+    "Protocol System": {
+      "success_rate": 1.0,
+      "total_tests": 3,
+      "successful_tests": 3,
+      "avg_response_time": 0.5424354871114095,
+      "min_response_time": 0.49182748794555664,
+      "max_response_time": 0.5900225639343262,
+      "std_dev": 0.049167191458955574,
+      "median_response_time": 0.5454564094543457,
+      "p95_response_time": 0.5855659484863281
+    },
+    "Writing Styles": {
+      "success_rate": 1.0,
+      "total_tests": 3,
+      "successful_tests": 3,
+      "avg_response_time": 0.6074607372283936,
+      "min_response_time": 0.577498197555542,
+      "max_response_time": 0.6631669998168945,
+      "std_dev": 0.048289133067305944,
+      "median_response_time": 0.5817170143127441,
+      "p95_response_time": 0.6550220012664795
+    },
+    "POCP Protocol": {
+      "success_rate": 1.0,
+      "total_tests": 3,
+      "successful_tests": 3,
+      "avg_response_time": 0.4902039368947347,
+      "min_response_time": 0.25570011138916016,
+      "max_response_time": 0.626051664352417,
+      "std_dev": 0.20393586603905775,
+      "median_response_time": 0.588860034942627,
+      "p95_response_time": 0.622332501411438
+    },
+    "Writing Job Creation": {
+      "success_rate": 1.0,
+      "total_tests": 3,
+      "successful_tests": 3,
+      "avg_response_time": 0.5429273446400961,
+      "min_response_time": 0.4417273998260498,
+      "max_response_time": 0.6429934501647949,
+      "std_dev": 0.10063781569762989,
+      "median_response_time": 0.5440611839294434,
+      "p95_response_time": 0.6331002235412597
+    },
+    "AI Detection": {
+      "success_rate": 1.0,
+      "total_tests": 3,
+      "successful_tests": 3,
+      "avg_response_time": 0.5121099154154459,
+      "min_response_time": 0.44576048851013184,
+      "max_response_time": 0.5733480453491211,
+      "std_dev": 0.06394716711930867,
+      "median_response_time": 0.517221212387085,
+      "p95_response_time": 0.5677353620529175
+    },
+    "Text Paraphrasing": {
+      "success_rate": 1.0,
+      "total_tests": 3,
+      "successful_tests": 3,
+      "avg_response_time": 0.5963859558105469,
+      "min_response_time": 0.5495152473449707,
+      "max_response_time": 0.642622709274292,
+      "std_dev": 0.04655696823181534,
+      "median_response_time": 0.5970199108123779,
+      "p95_response_time": 0.6380624294281005
+    }
+  },
+  "raw_results": {
+    "Server Info": [
+      {
+        "success": true,
+        "status_code": 200,
+        "response_time": 0.5631363391876221,
+        "run": 1
+      },
+      {
+        "success": true,
+        "status_code": 200,
+        "response_time": 0.15433239936828613,
+        "run": 2
+      },
+      {
+        "success": true,
+        "status_code": 200,
+        "response_time": 0.15194988250732422,
+        "run": 3
+      }
+    ],
+    "Protocol System": [
+      {
+        "success": true,
+        "status_code": 200,
+        "response_time": 0.49182748794555664,
+        "run": 1
+      },
+      {
+        "success": true,
+        "status_code": 200,
+        "response_time": 0.5454564094543457,
+        "run": 2
+      },
+      {
+        "success": true,
+        "status_code": 200,
+        "response_time": 0.5900225639343262,
+        "run": 3
+      }
+    ],
+    "Writing Styles": [
+      {
+        "success": true,
+        "status_code": 200,
+        "response_time": 0.577498197555542,
+        "run": 1
+      },
+      {
+        "success": true,
+        "status_code": 200,
+        "response_time": 0.6631669998168945,
+        "run": 2
+      },
+      {
+        "success": true,
+        "status_code": 200,
+        "response_time": 0.5817170143127441,
+        "run": 3
+      }
+    ],
+    "POCP Protocol": [
+      {
+        "success": true,
+        "status_code": 200,
+        "response_time": 0.588860034942627,
+        "run": 1
+      },
+      {
+        "success": true,
+        "status_code": 200,
+        "response_time": 0.25570011138916016,
+        "run": 2
+      },
+      {
+        "success": true,
+        "status_code": 200,
+        "response_time": 0.626051664352417,
+        "run": 3
+      }
+    ],
+    "Writing Job Creation": [
+      {
+        "success": true,
+        "status_code": 202,
+        "response_time": 0.5440611839294434,
+        "run": 1
+      },
+      {
+        "success": true,
+        "status_code": 202,
+        "response_time": 0.6429934501647949,
+        "run": 2
+      },
+      {
+        "success": true,
+        "status_code": 202,
+        "response_time": 0.4417273998260498,
+        "run": 3
+      }
+    ],
+    "AI Detection": [
+      {
+        "success": true,
+        "status_code": 200,
+        "response_time": 0.5733480453491211,
+        "run": 1
+      },
+      {
+        "success": true,
+        "status_code": 200,
+        "response_time": 0.517221212387085,
+        "run": 2
+      },
+      {
+        "success": true,
+        "status_code": 200,
+        "response_time": 0.44576048851013184,
+        "run": 3
+      }
+    ],
+    "Text Paraphrasing": [
+      {
+        "success": true,
+        "status_code": 200,
+        "response_time": 0.642622709274292,
+        "run": 1
+      },
+      {
+        "success": true,
+        "status_code": 200,
+        "response_time": 0.5495152473449707,
+        "run": 2
+      },
+      {
+        "success": true,
+        "status_code": 200,
+        "response_time": 0.5970199108123779,
+        "run": 3
+      }
+    ]
+  }
+}

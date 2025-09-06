@@ -1,0 +1,14 @@
+{
+  "title": "The Pilgrims Progress",
+  "author": "John Bunyan",
+  "source": "Project Gutenberg",
+  "category": "biblical_classical",
+  "subcategory": "historical_biblical",
+  "quality_score": 10.0,
+  "biblical_alignment": 10.0,
+  "word_count": 58050,
+  "url": "https://www.gutenberg.org/files/131/131-0.txt",
+  "hash": "c5e5a466b325c4512e3ccb521a67a3ab",
+  "priority": "high",
+  "filepath": "mvlm_comprehensive_dataset/biblical_classical/historical_biblical/The-Pilgrims-Progress_c5e5a466.txt"
+}

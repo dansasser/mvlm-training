@@ -1,0 +1,14 @@
+{
+  "title": "The Hunchback of Notre Dame",
+  "author": "Victor Hugo",
+  "source": "Project Gutenberg",
+  "category": "biblical_classical",
+  "subcategory": "virtue_character",
+  "quality_score": 10.0,
+  "biblical_alignment": 7.0,
+  "word_count": 187500,
+  "url": "https://www.gutenberg.org/files/2610/2610-0.txt",
+  "hash": "afe7e8bfe241e24f8fa7dff2652093c4",
+  "priority": "high",
+  "filepath": "mvlm_comprehensive_dataset/biblical_classical/virtue_character/The-Hunchback-of-Notre-Dame_afe7e8bf.txt"
+}

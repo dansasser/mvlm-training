@@ -1,0 +1,27 @@
+{
+  "analytical_article_example": {
+    "status": "submitted",
+    "job_id": "fe627ed9-827f-4219-87ce-25c4af0e5310",
+    "filename": "/home/ubuntu/analytical_article_example.md",
+    "job_data": {
+      "topic": "The impact of artificial intelligence on modern detective work and criminal investigations",
+      "style": "analytical_article"
+    },
+    "job_response": {
+      "job_id": "fe627ed9-827f-4219-87ce-25c4af0e5310",
+      "message": "Writing job started with analytical_article style using topic input",
+      "status": "pending",
+      "style": "analytical_article",
+      "topic": "The impact of artificial intelligence on modern detective work and criminal investigations",
+      "workflow": "topic \u2192 ideator \u2192 drafter \u2192 reviser \u2192 critic"
+    }
+  },
+  "creative_story_example": {
+    "status": "failed",
+    "error": "HTTPSConnectionPool(host='vgh0i1com9qm.manus.space', port=443): Read timed out. (read timeout=30)"
+  },
+  "technical_outline_example": {
+    "status": "failed",
+    "error": "HTTPSConnectionPool(host='vgh0i1com9qm.manus.space', port=443): Read timed out. (read timeout=30)"
+  }
+}

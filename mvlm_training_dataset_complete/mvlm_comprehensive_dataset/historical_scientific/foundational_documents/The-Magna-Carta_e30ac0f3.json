@@ -1,0 +1,14 @@
+{
+  "title": "The Magna Carta",
+  "author": "English Barons",
+  "source": "Project Gutenberg",
+  "category": "historical_scientific",
+  "subcategory": "foundational_documents",
+  "quality_score": 9.0,
+  "biblical_alignment": 7.0,
+  "word_count": 14505,
+  "url": "https://www.gutenberg.org/files/10000/10000-0.txt",
+  "hash": "e30ac0f30424b1d98d1b8d91f09eb68d",
+  "priority": "high",
+  "filepath": "mvlm_comprehensive_dataset/historical_scientific/foundational_documents/The-Magna-Carta_e30ac0f3.txt"
+}

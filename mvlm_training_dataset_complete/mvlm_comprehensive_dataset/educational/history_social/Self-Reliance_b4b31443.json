@@ -1,0 +1,14 @@
+{
+  "title": "Self-Reliance",
+  "author": "Ralph Waldo Emerson",
+  "source": "Project Gutenberg",
+  "category": "educational",
+  "subcategory": "history_social",
+  "quality_score": 10.0,
+  "biblical_alignment": 6.5,
+  "word_count": 95670,
+  "url": "https://www.gutenberg.org/files/16643/16643-0.txt",
+  "hash": "b4b314434951378988698f77bc466f40",
+  "priority": "medium",
+  "filepath": "mvlm_comprehensive_dataset/educational/history_social/Self-Reliance_b4b31443.txt"
+}

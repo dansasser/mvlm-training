@@ -1,0 +1,14 @@
+{
+  "title": "Mansfield Park",
+  "author": "Jane Austen",
+  "source": "Project Gutenberg",
+  "category": "biblical_classical",
+  "subcategory": "classical_literature",
+  "quality_score": 10.0,
+  "biblical_alignment": 7.0,
+  "word_count": 159630,
+  "url": "https://www.gutenberg.org/files/141/141-0.txt",
+  "hash": "51f7d2d6be7ba4a67e911f66a3803803",
+  "priority": "medium",
+  "filepath": "mvlm_comprehensive_dataset/biblical_classical/classical_literature/Mansfield-Park_51f7d2d6.txt"
+}

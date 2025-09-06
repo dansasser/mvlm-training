@@ -1,0 +1,104 @@
+{
+  "timestamp": "2025-07-28T19:57:15.655265",
+  "server_url": "https://vgh0i1com9qm.manus.space",
+  "tests": {
+    "api_endpoints": {
+      "GET__api_info": {
+        "success": false,
+        "response_time": 30.050127506256104,
+        "error": "HTTPSConnectionPool(host='vgh0i1com9qm.manus.space', port=443): Read timed out. (read timeout=30)",
+        "status_code": null
+      },
+      "GET__api_protocols": {
+        "success": false,
+        "response_time": 1.0768239498138428,
+        "error": "Expecting value: line 1 column 1 (char 0)",
+        "status_code": null
+      },
+      "GET__api_styles": {
+        "success": false,
+        "response_time": 30.042113780975342,
+        "error": "HTTPSConnectionPool(host='vgh0i1com9qm.manus.space', port=443): Read timed out. (read timeout=30)",
+        "status_code": null
+      },
+      "GET__api_jobs": {
+        "success": true,
+        "response_time": 0.48283934593200684,
+        "status_code": 200,
+        "data": {
+          "jobs": [],
+          "total_count": 0
+        },
+        "content_length": 28
+      }
+    },
+    "writing_jobs": {
+      "topic_based_short": {
+        "success": true,
+        "response_time": 8.033465147018433,
+        "status_code": 202,
+        "data": {
+          "job_id": "082eed4d-4fe0-4c62-a515-de74b4742525",
+          "message": "Writing job started with analytical_article style using topic input",
+          "status": "pending",
+          "style": "analytical_article",
+          "topic": "The future of AI in education",
+          "workflow": "topic \u2192 ideator \u2192 drafter \u2192 reviser \u2192 critic"
+        },
+        "content_length": 296,
+        "job_id": "082eed4d-4fe0-4c62-a515-de74b4742525"
+      },
+      "topic_based_creative": {
+        "success": false,
+        "response_time": 60.06539487838745,
+        "error": "HTTPSConnectionPool(host='vgh0i1com9qm.manus.space', port=443): Read timed out. (read timeout=60)",
+        "status_code": null
+      },
+      "outline_based": {
+        "success": true,
+        "response_time": 0.7118616104125977,
+        "status_code": 202,
+        "data": {
+          "job_id": "761044d4-ac03-4d28-b4a1-2ff847690ead",
+          "message": "Writing job started with technical_documentation style using provided outline (Ideator stage skipped)",
+          "outline_provided": true,
+          "status": "pending",
+          "style": "technical_documentation",
+          "workflow": "outline \u2192 drafter \u2192 reviser \u2192 critic (ideator skipped)"
+        },
+        "content_length": 324,
+        "job_id": "761044d4-ac03-4d28-b4a1-2ff847690ead"
+      }
+    },
+    "protocol_processing": {
+      "pocp_simple": {
+        "success": false,
+        "response_time": 0.3800485134124756,
+        "error": "405 Client Error: Method Not Allowed for url: https://vgh0i1com9qm.manus.space/api/protocols/test",
+        "status_code": 405
+      },
+      "hip_links": {
+        "success": false,
+        "response_time": 60.032111406326294,
+        "error": "HTTPSConnectionPool(host='vgh0i1com9qm.manus.space', port=443): Read timed out. (read timeout=60)",
+        "status_code": null
+      },
+      "combined_protocols": {
+        "success": false,
+        "response_time": 0.49231767654418945,
+        "error": "405 Client Error: Method Not Allowed for url: https://vgh0i1com9qm.manus.space/api/protocols/test",
+        "status_code": 405
+      }
+    },
+    "concurrent_load": {
+      "total_time": 30.039429187774658,
+      "num_requests": 5,
+      "successful_requests": 2,
+      "success_rate": 0.4,
+      "avg_response_time": 2.5526020526885986,
+      "min_response_time": 0.45352983474731445,
+      "max_response_time": 4.651674270629883,
+      "requests_per_second": 0.16644790314573896
+    }
+  }
+}

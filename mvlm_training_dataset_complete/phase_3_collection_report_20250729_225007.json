@@ -1,0 +1,203 @@
+{
+  "phase_3_summary": {
+    "total_documents": 40,
+    "total_words": 3604958,
+    "total_size_mb": 20.07,
+    "average_quality_score": 9.88,
+    "average_biblical_alignment": 7.97,
+    "collection_time_minutes": 4.1
+  },
+  "category_breakdown": {
+    "philosophical": {
+      "count": 16,
+      "words": 1969680,
+      "avg_quality": 10.0,
+      "avg_biblical": 8.89375
+    },
+    "historical_scientific": {
+      "count": 24,
+      "words": 1635278,
+      "avg_quality": 9.791666666666666,
+      "avg_biblical": 7.358333333333333
+    }
+  },
+  "author_distribution": {
+    "Plato": 3,
+    "Seneca": 2,
+    "John Locke": 2,
+    "Abraham Lincoln": 2,
+    "Francis Bacon": 2,
+    "Charles Darwin": 2,
+    "Aristotle": 1,
+    "Apuleius": 1,
+    "Thomas Aquinas": 1,
+    "Boethius": 1,
+    "Saint Augustine": 1,
+    "Anselm of Canterbury": 1,
+    "Ren\u00e9 Descartes": 1,
+    "Gottfried Leibniz": 1,
+    "Jean-Jacques Rousseau": 1
+  },
+  "top_quality_books": [
+    {
+      "title": "The Apology",
+      "author": "Plato",
+      "category": "philosophical",
+      "quality_score": 10.0,
+      "biblical_alignment": 9.0,
+      "word_count": 19073
+    },
+    {
+      "title": "Meno",
+      "author": "Plato",
+      "category": "philosophical",
+      "quality_score": 10.0,
+      "biblical_alignment": 9.0,
+      "word_count": 30920
+    },
+    {
+      "title": "The Laws",
+      "author": "Plato",
+      "category": "philosophical",
+      "quality_score": 10.0,
+      "biblical_alignment": 9.8,
+      "word_count": 195616
+    },
+    {
+      "title": "Prior Analytics",
+      "author": "Aristotle",
+      "category": "philosophical",
+      "quality_score": 10.0,
+      "biblical_alignment": 9.0,
+      "word_count": 115663
+    },
+    {
+      "title": "On the Shortness of Life",
+      "author": "Seneca",
+      "category": "philosophical",
+      "quality_score": 10.0,
+      "biblical_alignment": 9.0,
+      "word_count": 40605
+    },
+    {
+      "title": "On Tranquility of Mind",
+      "author": "Seneca",
+      "category": "philosophical",
+      "quality_score": 10.0,
+      "biblical_alignment": 9.0,
+      "word_count": 140078
+    },
+    {
+      "title": "The Golden Ass",
+      "author": "Apuleius",
+      "category": "philosophical",
+      "quality_score": 10.0,
+      "biblical_alignment": 7.5,
+      "word_count": 83702
+    },
+    {
+      "title": "Summa Theologica Part I",
+      "author": "Thomas Aquinas",
+      "category": "philosophical",
+      "quality_score": 10.0,
+      "biblical_alignment": 9.5,
+      "word_count": 504149
+    },
+    {
+      "title": "The Consolation of Philosophy",
+      "author": "Boethius",
+      "category": "philosophical",
+      "quality_score": 10.0,
+      "biblical_alignment": 9.5,
+      "word_count": 42710
+    },
+    {
+      "title": "The City of God",
+      "author": "Saint Augustine",
+      "category": "philosophical",
+      "quality_score": 10.0,
+      "biblical_alignment": 10.0,
+      "word_count": 231170
+    },
+    {
+      "title": "Monologion",
+      "author": "Anselm of Canterbury",
+      "category": "philosophical",
+      "quality_score": 10.0,
+      "biblical_alignment": 9.5,
+      "word_count": 105628
+    },
+    {
+      "title": "Principles of Philosophy",
+      "author": "Ren\u00e9 Descartes",
+      "category": "philosophical",
+      "quality_score": 10.0,
+      "biblical_alignment": 8.5,
+      "word_count": 31383
+    },
+    {
+      "title": "Monadology",
+      "author": "Gottfried Leibniz",
+      "category": "philosophical",
+      "quality_score": 10.0,
+      "biblical_alignment": 8.5,
+      "word_count": 139271
+    },
+    {
+      "title": "Two Treatises of Government",
+      "author": "John Locke",
+      "category": "philosophical",
+      "quality_score": 10.0,
+      "biblical_alignment": 8.5,
+      "word_count": 59424
+    },
+    {
+      "title": "A Letter Concerning Toleration",
+      "author": "John Locke",
+      "category": "philosophical",
+      "quality_score": 10.0,
+      "biblical_alignment": 8.5,
+      "word_count": 203443
+    },
+    {
+      "title": "Discourse on Inequality",
+      "author": "Jean-Jacques Rousseau",
+      "category": "philosophical",
+      "quality_score": 10.0,
+      "biblical_alignment": 7.5,
+      "word_count": 26845
+    },
+    {
+      "title": "The Articles of Confederation",
+      "author": "Continental Congress",
+      "category": "historical_scientific",
+      "quality_score": 10.0,
+      "biblical_alignment": 7.0,
+      "word_count": 50928
+    },
+    {
+      "title": "The Bill of Rights",
+      "author": "James Madison",
+      "category": "historical_scientific",
+      "quality_score": 10.0,
+      "biblical_alignment": 7.6,
+      "word_count": 61327
+    },
+    {
+      "title": "The Emancipation Proclamation",
+      "author": "Abraham Lincoln",
+      "category": "historical_scientific",
+      "quality_score": 10.0,
+      "biblical_alignment": 8.2,
+      "word_count": 48049
+    },
+    {
+      "title": "Washington Farewell Address",
+      "author": "George Washington",
+      "category": "historical_scientific",
+      "quality_score": 10.0,
+      "biblical_alignment": 8.7,
+      "word_count": 13269
+    }
+  ]
+}

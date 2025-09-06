@@ -1,0 +1,14 @@
+{
+  "title": "The Three Musketeers",
+  "author": "Alexandre Dumas",
+  "source": "Project Gutenberg",
+  "category": "biblical_classical",
+  "subcategory": "virtue_character",
+  "quality_score": 10.0,
+  "biblical_alignment": 7.0,
+  "word_count": 229429,
+  "url": "https://www.gutenberg.org/files/1257/1257-0.txt",
+  "hash": "c96b133b2a35db2131c7cf26ee28f951",
+  "priority": "high",
+  "filepath": "mvlm_comprehensive_dataset/biblical_classical/virtue_character/The-Three-Musketeers_c96b133b.txt"
+}

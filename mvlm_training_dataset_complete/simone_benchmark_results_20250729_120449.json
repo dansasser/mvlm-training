@@ -1,0 +1,379 @@
+{
+  "api_tests": [
+    {
+      "endpoint": "/api/info",
+      "method": "GET",
+      "description": "Server Information",
+      "success": true,
+      "response_time": 5.889303684234619,
+      "status_code": 200,
+      "content_type": "JSON",
+      "response_size": 5677,
+      "error": null,
+      "timestamp": "2025-07-29T12:04:23.733199"
+    },
+    {
+      "endpoint": "/api/protocols",
+      "method": "GET",
+      "description": "Protocol List",
+      "success": true,
+      "response_time": 0.5755834579467773,
+      "status_code": 200,
+      "content_type": "JSON",
+      "response_size": 5422,
+      "error": null,
+      "timestamp": "2025-07-29T12:04:24.509606"
+    },
+    {
+      "endpoint": "/api/protocols/test",
+      "method": "POST",
+      "description": "Protocol Test",
+      "success": true,
+      "response_time": 0.7347652912139893,
+      "status_code": 200,
+      "content_type": "JSON",
+      "response_size": 715,
+      "error": null,
+      "timestamp": "2025-07-29T12:04:25.445119"
+    },
+    {
+      "endpoint": "/api/esl/info",
+      "method": "GET",
+      "description": "ESL Protocol Info",
+      "success": true,
+      "response_time": 0.6405198574066162,
+      "status_code": 200,
+      "content_type": "JSON",
+      "response_size": 969,
+      "error": null,
+      "timestamp": "2025-07-29T12:04:26.286320"
+    },
+    {
+      "endpoint": "/api/esl/test",
+      "method": "POST",
+      "description": "ESL Test",
+      "success": true,
+      "response_time": 0.6594400405883789,
+      "status_code": 200,
+      "content_type": "JSON",
+      "response_size": 311,
+      "error": null,
+      "timestamp": "2025-07-29T12:04:27.146392"
+    },
+    {
+      "endpoint": "/api/esl/analyze",
+      "method": "POST",
+      "description": "ESL Emotional Analysis",
+      "success": true,
+      "response_time": 0.5876486301422119,
+      "status_code": 200,
+      "content_type": "JSON",
+      "response_size": 281,
+      "error": null,
+      "timestamp": "2025-07-29T12:04:27.934615"
+    },
+    {
+      "endpoint": "/api/rep/info",
+      "method": "GET",
+      "description": "REP Protocol Info",
+      "success": true,
+      "response_time": 0.6098523139953613,
+      "status_code": 200,
+      "content_type": "JSON",
+      "response_size": 1597,
+      "error": null,
+      "timestamp": "2025-07-29T12:04:28.745102"
+    },
+    {
+      "endpoint": "/api/rep/test",
+      "method": "POST",
+      "description": "REP Test",
+      "success": false,
+      "response_time": 0.5657072067260742,
+      "status_code": 500,
+      "content_type": "JSON",
+      "response_size": 166,
+      "error": null,
+      "timestamp": "2025-07-29T12:04:29.511460"
+    },
+    {
+      "endpoint": "/api/rep/reason",
+      "method": "POST",
+      "description": "REP Reasoning",
+      "success": false,
+      "response_time": 0.6192541122436523,
+      "status_code": 405,
+      "content_type": "TEXT/HTML",
+      "response_size": 153,
+      "error": null,
+      "timestamp": "2025-07-29T12:04:30.331368"
+    },
+    {
+      "endpoint": "/api/ccp/info",
+      "method": "GET",
+      "description": "CCP Protocol Info",
+      "success": true,
+      "response_time": 0.6982173919677734,
+      "status_code": 200,
+      "content_type": "JSON",
+      "response_size": 405,
+      "error": null,
+      "timestamp": "2025-07-29T12:04:31.237950"
+    },
+    {
+      "endpoint": "/api/ccp/status",
+      "method": "GET",
+      "description": "CCP Status",
+      "success": false,
+      "response_time": 0.6981172561645508,
+      "status_code": 500,
+      "content_type": "JSON",
+      "response_size": 114,
+      "error": null,
+      "timestamp": "2025-07-29T12:04:32.136801"
+    },
+    {
+      "endpoint": "/api/ccp/test",
+      "method": "POST",
+      "description": "CCP Test",
+      "success": false,
+      "response_time": 0.4588768482208252,
+      "status_code": 500,
+      "content_type": "JSON",
+      "response_size": 120,
+      "error": null,
+      "timestamp": "2025-07-29T12:04:32.796336"
+    },
+    {
+      "endpoint": "/api/eep/info",
+      "method": "GET",
+      "description": "EEP Protocol Info",
+      "success": true,
+      "response_time": 0.8221628665924072,
+      "status_code": 200,
+      "content_type": "JSON",
+      "response_size": 1192,
+      "error": null,
+      "timestamp": "2025-07-29T12:04:33.819062"
+    },
+    {
+      "endpoint": "/api/eep/status",
+      "method": "GET",
+      "description": "EEP Status",
+      "success": false,
+      "response_time": 0.6649963855743408,
+      "status_code": 500,
+      "content_type": "JSON",
+      "response_size": 97,
+      "error": null,
+      "timestamp": "2025-07-29T12:04:34.684677"
+    },
+    {
+      "endpoint": "/api/eep/metrics",
+      "method": "GET",
+      "description": "EEP Metrics",
+      "success": false,
+      "response_time": 0.7041239738464355,
+      "status_code": 500,
+      "content_type": "JSON",
+      "response_size": 92,
+      "error": null,
+      "timestamp": "2025-07-29T12:04:35.589399"
+    },
+    {
+      "endpoint": "/api/vvp/info",
+      "method": "GET",
+      "description": "VVP Protocol Info",
+      "success": true,
+      "response_time": 0.4257230758666992,
+      "status_code": 200,
+      "content_type": "JSON",
+      "response_size": 1157,
+      "error": null,
+      "timestamp": "2025-07-29T12:04:36.215781"
+    },
+    {
+      "endpoint": "/api/vvp/test",
+      "method": "POST",
+      "description": "VVP Test",
+      "success": true,
+      "response_time": 0.6401259899139404,
+      "status_code": 200,
+      "content_type": "JSON",
+      "response_size": 3766,
+      "error": null,
+      "timestamp": "2025-07-29T12:04:37.056789"
+    },
+    {
+      "endpoint": "/api/writing/info",
+      "method": "GET",
+      "description": "Writing System Info",
+      "success": true,
+      "response_time": 0.506098747253418,
+      "status_code": 200,
+      "content_type": "TEXT/HTML",
+      "response_size": 692345,
+      "error": null,
+      "timestamp": "2025-07-29T12:04:37.766815"
+    },
+    {
+      "endpoint": "/api/start_writing",
+      "method": "POST",
+      "description": "Start Writing Job",
+      "success": false,
+      "response_time": 0.5402846336364746,
+      "status_code": 405,
+      "content_type": "TEXT/HTML",
+      "response_size": 153,
+      "error": null,
+      "timestamp": "2025-07-29T12:04:38.507831"
+    },
+    {
+      "endpoint": "/api/styles",
+      "method": "GET",
+      "description": "Writing Styles List",
+      "success": true,
+      "response_time": 0.44199562072753906,
+      "status_code": 200,
+      "content_type": "TEXT/HTML",
+      "response_size": 692345,
+      "error": null,
+      "timestamp": "2025-07-29T12:04:39.152765"
+    },
+    {
+      "endpoint": "/api/styles/info",
+      "method": "GET",
+      "description": "Styles System Info",
+      "success": true,
+      "response_time": 0.6239490509033203,
+      "status_code": 200,
+      "content_type": "TEXT/HTML",
+      "response_size": 692345,
+      "error": null,
+      "timestamp": "2025-07-29T12:04:39.979500"
+    },
+    {
+      "endpoint": "/api/recipes/info",
+      "method": "GET",
+      "description": "Recipe System Info",
+      "success": true,
+      "response_time": 0.6632733345031738,
+      "status_code": 200,
+      "content_type": "JSON",
+      "response_size": 1119,
+      "error": null,
+      "timestamp": "2025-07-29T12:04:40.844038"
+    },
+    {
+      "endpoint": "/api/detect",
+      "method": "POST",
+      "description": "AI Detection",
+      "success": true,
+      "response_time": 0.6069333553314209,
+      "status_code": 200,
+      "content_type": "JSON",
+      "response_size": 481,
+      "error": null,
+      "timestamp": "2025-07-29T12:04:41.651652"
+    },
+    {
+      "endpoint": "/api/paraphrase",
+      "method": "POST",
+      "description": "Text Paraphrasing",
+      "success": false,
+      "response_time": 0.508493185043335,
+      "status_code": 400,
+      "content_type": "JSON",
+      "response_size": 97,
+      "error": null,
+      "timestamp": "2025-07-29T12:04:42.360740"
+    }
+  ],
+  "protocol_benchmarks": [
+    {
+      "protocol_id": "esl",
+      "protocol_name": "Emotional Salience Layer",
+      "info_response_time": 0.6540212631225586,
+      "test_response_time": 0.5119779109954834,
+      "functionality_score": 1.0,
+      "accuracy_score": null,
+      "resource_efficiency": null,
+      "error_rate": 0.0
+    },
+    {
+      "protocol_id": "rep",
+      "protocol_name": "Reasoning and Explanation",
+      "info_response_time": 0.32965087890625,
+      "test_response_time": 0.5715868473052979,
+      "functionality_score": 1.0,
+      "accuracy_score": null,
+      "resource_efficiency": null,
+      "error_rate": 0.0
+    },
+    {
+      "protocol_id": "ccp",
+      "protocol_name": "Cognitive Control",
+      "info_response_time": 0.5238609313964844,
+      "test_response_time": 0.624157190322876,
+      "functionality_score": 1.0,
+      "accuracy_score": null,
+      "resource_efficiency": null,
+      "error_rate": 0.0
+    },
+    {
+      "protocol_id": "eep",
+      "protocol_name": "Energy Efficiency",
+      "info_response_time": 0.6259849071502686,
+      "test_response_time": 0.2923750877380371,
+      "functionality_score": 1.0,
+      "accuracy_score": null,
+      "resource_efficiency": null,
+      "error_rate": 0.0
+    },
+    {
+      "protocol_id": "vvp",
+      "protocol_name": "Verification and Validation",
+      "info_response_time": 0.42119407653808594,
+      "test_response_time": 0.5868475437164307,
+      "functionality_score": 1.0,
+      "accuracy_score": null,
+      "resource_efficiency": null,
+      "error_rate": 0.0
+    }
+  ],
+  "workflow_benchmarks": [],
+  "system_metrics": {
+    "cpu_usage_percent": 0.3,
+    "memory_usage_percent": 35.2,
+    "memory_available_gb": 2.495037078857422,
+    "disk_usage_percent": 18.3,
+    "disk_free_gb": 31.28850555419922,
+    "timestamp": "2025-07-29T12:04:49.647485"
+  },
+  "summary": {
+    "benchmark_timestamp": "2025-07-29T12:04:17.843445",
+    "total_duration_seconds": 31.804398,
+    "api_statistics": {
+      "total_tests": 24,
+      "successful_tests": 16,
+      "success_rate_percent": 66.67,
+      "average_response_time_ms": 945.35,
+      "median_response_time_ms": 632.04
+    },
+    "protocol_statistics": {
+      "total_protocols": 5,
+      "average_functionality_score": 1.0,
+      "protocols_operational": 5
+    },
+    "workflow_statistics": {
+      "total_workflows_tested": 0,
+      "successful_workflows": 0
+    },
+    "overall_assessment": {
+      "overall_score": 0.8,
+      "system_status": "FAIR",
+      "cognitive_governance_operational": false,
+      "ready_for_mvlm_development": false
+    }
+  }
+}

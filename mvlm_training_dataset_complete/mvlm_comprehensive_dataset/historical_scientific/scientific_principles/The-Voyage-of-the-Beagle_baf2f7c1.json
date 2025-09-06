@@ -1,0 +1,14 @@
+{
+  "title": "The Voyage of the Beagle",
+  "author": "Charles Darwin",
+  "source": "Project Gutenberg",
+  "category": "historical_scientific",
+  "subcategory": "scientific_principles",
+  "quality_score": 10.0,
+  "biblical_alignment": 7.0,
+  "word_count": 205661,
+  "url": "https://www.gutenberg.org/files/944/944-0.txt",
+  "hash": "baf2f7c1e7239146a3161973e118b953",
+  "priority": "medium",
+  "filepath": "mvlm_comprehensive_dataset/historical_scientific/scientific_principles/The-Voyage-of-the-Beagle_baf2f7c1.txt"
+}

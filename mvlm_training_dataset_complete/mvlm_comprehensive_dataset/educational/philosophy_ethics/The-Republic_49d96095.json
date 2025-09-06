@@ -1,0 +1,14 @@
+{
+  "title": "The Republic",
+  "author": "Plato",
+  "source": "Project Gutenberg",
+  "category": "educational",
+  "subcategory": "philosophy_ethics",
+  "quality_score": 10.0,
+  "biblical_alignment": 8.0,
+  "word_count": 219190,
+  "url": "https://www.gutenberg.org/files/1497/1497-0.txt",
+  "hash": "49d96095f1c9eafc5a81bc6511b96b97",
+  "priority": "high",
+  "filepath": "mvlm_comprehensive_dataset/educational/philosophy_ethics/The-Republic_49d96095.txt"
+}

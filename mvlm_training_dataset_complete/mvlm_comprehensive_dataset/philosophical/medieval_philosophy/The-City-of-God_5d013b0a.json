@@ -1,0 +1,14 @@
+{
+  "title": "The City of God",
+  "author": "Saint Augustine",
+  "source": "Project Gutenberg",
+  "category": "philosophical",
+  "subcategory": "medieval_philosophy",
+  "quality_score": 10.0,
+  "biblical_alignment": 10.0,
+  "word_count": 231170,
+  "url": "https://www.gutenberg.org/files/45304/45304-0.txt",
+  "hash": "5d013b0a3ab1ff971494bd364cd0e96e",
+  "priority": "high",
+  "filepath": "mvlm_comprehensive_dataset/philosophical/medieval_philosophy/The-City-of-God_5d013b0a.txt"
+}

@@ -1,0 +1,14 @@
+{
+  "title": "Les Mis\u00e9rables",
+  "author": "Victor Hugo",
+  "source": "Project Gutenberg",
+  "category": "biblical_classical",
+  "subcategory": "virtue_character",
+  "quality_score": 10.0,
+  "biblical_alignment": 7.0,
+  "word_count": 565612,
+  "url": "https://www.gutenberg.org/files/135/135-0.txt",
+  "hash": "de7db79ef226ce395e79c4c758e69a67",
+  "priority": "high",
+  "filepath": "mvlm_comprehensive_dataset/biblical_classical/virtue_character/Les-Mis\u00e9rables_de7db79e.txt"
+}

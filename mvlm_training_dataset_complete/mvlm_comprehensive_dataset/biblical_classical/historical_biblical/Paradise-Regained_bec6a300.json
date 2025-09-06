@@ -1,0 +1,14 @@
+{
+  "title": "Paradise Regained",
+  "author": "John Milton",
+  "source": "Project Gutenberg",
+  "category": "biblical_classical",
+  "subcategory": "historical_biblical",
+  "quality_score": 9.5,
+  "biblical_alignment": 7.5,
+  "word_count": 18779,
+  "url": "https://www.gutenberg.org/files/58/58-0.txt",
+  "hash": "bec6a300185755efaa017aa8bac27d1e",
+  "priority": "medium",
+  "filepath": "mvlm_comprehensive_dataset/biblical_classical/historical_biblical/Paradise-Regained_bec6a300.txt"
+}

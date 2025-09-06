@@ -1,0 +1,14 @@
+{
+  "title": "The Screwtape Letters",
+  "author": "C.S. Lewis",
+  "source": "Project Gutenberg",
+  "category": "biblical_classical",
+  "subcategory": "historical_biblical",
+  "quality_score": 8.5,
+  "biblical_alignment": 10.0,
+  "word_count": 1328,
+  "url": "https://www.gutenberg.org/files/3/3-0.txt",
+  "hash": "2d8c47caf26d30c2fe55f2ce24c0228c",
+  "priority": "high",
+  "filepath": "mvlm_comprehensive_dataset/biblical_classical/historical_biblical/The-Screwtape-Letters_2d8c47ca.txt"
+}

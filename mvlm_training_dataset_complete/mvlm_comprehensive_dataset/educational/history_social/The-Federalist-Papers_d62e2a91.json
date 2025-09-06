@@ -1,0 +1,14 @@
+{
+  "title": "The Federalist Papers",
+  "author": "Hamilton Madison Jay",
+  "source": "Project Gutenberg",
+  "category": "educational",
+  "subcategory": "history_social",
+  "quality_score": 9.5,
+  "biblical_alignment": 7.3,
+  "word_count": 192347,
+  "url": "https://www.gutenberg.org/files/1404/1404-0.txt",
+  "hash": "d62e2a91965a8cb707684226771ed71c",
+  "priority": "high",
+  "filepath": "mvlm_comprehensive_dataset/educational/history_social/The-Federalist-Papers_d62e2a91.txt"
+}

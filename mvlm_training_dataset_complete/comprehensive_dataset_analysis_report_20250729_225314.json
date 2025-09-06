@@ -1,0 +1,439 @@
+{
+  "analysis_timestamp": "2025-07-29T22:53:14.669200",
+  "analysis_duration_minutes": 0.08,
+  "dataset_overview": {
+    "total_documents": 158,
+    "total_words": 17551178,
+    "total_size_mb": 97.44,
+    "average_quality_score": 9.86,
+    "average_biblical_alignment": 7.97,
+    "quality_std": 0.37,
+    "biblical_std": 1.34,
+    "min_quality": 8.5,
+    "max_quality": 10.0,
+    "min_biblical": 6.5,
+    "max_biblical": 10.0,
+    "categories": {
+      "biblical_classical": 88,
+      "technical": 2,
+      "educational": 28,
+      "philosophical": 16,
+      "historical_scientific": 24
+    },
+    "subcategories": {
+      "contemporary_biblical": 25,
+      "historical_biblical": 20,
+      "classical_literature": 22,
+      "virtue_character": 21,
+      "programming_software": 1,
+      "scientific_mathematical": 1,
+      "history_social": 10,
+      "philosophy_ethics": 13,
+      "language_communication": 5,
+      "classical_philosophy": 7,
+      "medieval_philosophy": 4,
+      "modern_philosophy": 5,
+      "foundational_documents": 14,
+      "scientific_principles": 6,
+      "wisdom_literature": 4
+    },
+    "top_authors": {
+      "Charles Stanley": 13,
+      "John MacArthur": 12,
+      "William Shakespeare": 5,
+      "G.K. Chesterton": 4,
+      "Charles Dickens": 4,
+      "Plato": 4,
+      "C.S. Lewis": 3,
+      "John Bunyan": 3,
+      "Saint Augustine": 3,
+      "George Eliot": 3,
+      "Jane Austen": 3,
+      "Mark Twain": 3,
+      "Alexandre Dumas": 3,
+      "Robert Louis Stevenson": 3,
+      "John Locke": 3
+    },
+    "word_count_stats": {
+      "mean": 111083.0,
+      "median": 81268.0,
+      "std": 104626.0,
+      "min": 1328,
+      "max": 566192
+    }
+  },
+  "quality_analysis": {
+    "quality_distribution": {
+      "10.0": 132,
+      "9.5-9.9": 15,
+      "9.0-9.4": 3,
+      "8.5-8.9": 8,
+      "8.0-8.4": 0,
+      "<8.0": 0
+    },
+    "biblical_distribution": {
+      "9.0+": 49,
+      "8.0-8.9": 14,
+      "7.0-7.9": 74,
+      "6.0-6.9": 21,
+      "<6.0": 0
+    },
+    "category_statistics": {
+      "biblical_classical": {
+        "count": 88,
+        "avg_quality": 9.95,
+        "avg_biblical": 8.38,
+        "quality_std": 0.24,
+        "biblical_std": 1.44
+      },
+      "technical": {
+        "count": 2,
+        "avg_quality": 9.0,
+        "avg_biblical": 6.5,
+        "quality_std": 0.5,
+        "biblical_std": 0.0
+      },
+      "educational": {
+        "count": 28,
+        "avg_quality": 9.61,
+        "avg_biblical": 6.81,
+        "quality_std": 0.52,
+        "biblical_std": 0.5
+      },
+      "philosophical": {
+        "count": 16,
+        "avg_quality": 10.0,
+        "avg_biblical": 8.89,
+        "quality_std": 0.0,
+        "biblical_std": 0.69
+      },
+      "historical_scientific": {
+        "count": 24,
+        "avg_quality": 9.79,
+        "avg_biblical": 7.36,
+        "quality_std": 0.41,
+        "biblical_std": 0.52
+      }
+    },
+    "correlation_quality_biblical": 0.13
+  },
+  "diversity_analysis": {
+    "author_diversity": 88,
+    "category_diversity": 5,
+    "subcategory_diversity": 15,
+    "author_distribution": {
+      "Charles Stanley": 13,
+      "John MacArthur": 12,
+      "William Shakespeare": 5,
+      "G.K. Chesterton": 4,
+      "Charles Dickens": 4,
+      "Plato": 4,
+      "C.S. Lewis": 3,
+      "John Bunyan": 3,
+      "Saint Augustine": 3,
+      "George Eliot": 3,
+      "Jane Austen": 3,
+      "Mark Twain": 3,
+      "Alexandre Dumas": 3,
+      "Robert Louis Stevenson": 3,
+      "John Locke": 3,
+      "George MacDonald": 2,
+      "John Milton": 2,
+      "Louisa May Alcott": 2,
+      "Victor Hugo": 2,
+      "Daniel Defoe": 2
+    },
+    "category_distribution": {
+      "biblical_classical": 88,
+      "technical": 2,
+      "educational": 28,
+      "philosophical": 16,
+      "historical_scientific": 24
+    },
+    "subcategory_distribution": {
+      "contemporary_biblical": 25,
+      "historical_biblical": 20,
+      "classical_literature": 22,
+      "virtue_character": 21,
+      "programming_software": 1,
+      "scientific_mathematical": 1,
+      "history_social": 10,
+      "philosophy_ethics": 13,
+      "language_communication": 5,
+      "classical_philosophy": 7,
+      "medieval_philosophy": 4,
+      "modern_philosophy": 5,
+      "foundational_documents": 14,
+      "scientific_principles": 6,
+      "wisdom_literature": 4
+    },
+    "time_period_distribution": {
+      "Contemporary (1900+ AD)": 32,
+      "Unknown Period": 78,
+      "Medieval (500-1500 AD)": 4,
+      "Ancient (Pre-500 AD)": 11,
+      "Renaissance (1500-1700 AD)": 11,
+      "Modern (1800-1900 AD)": 14,
+      "Enlightenment (1700-1800 AD)": 8
+    },
+    "content_type_distribution": {
+      "Biblical/Theological": 29,
+      "Wisdom Literature": 10,
+      "Other": 87,
+      "Classical Literature": 15,
+      "Historical Documents": 5,
+      "Philosophy": 9,
+      "Scientific Works": 3
+    },
+    "word_count_range": {
+      "min": 1328,
+      "max": 566192,
+      "range": 564864
+    }
+  },
+  "biblical_alignment_analysis": {
+    "alignment_group_distribution": {
+      "Excellent (9.0+)": 49,
+      "Very Good (8.0-8.9)": 14,
+      "Good (7.0-7.9)": 74,
+      "Acceptable (6.0-6.9)": 21,
+      "Below Threshold (<6.0)": 0
+    },
+    "alignment_group_statistics": {
+      "Excellent (9.0+)": {
+        "count": 49,
+        "percentage": 31.0,
+        "avg_quality": 9.93,
+        "top_authors": [
+          [
+            "Charles Stanley",
+            13
+          ],
+          [
+            "John MacArthur",
+            12
+          ],
+          [
+            "G.K. Chesterton",
+            4
+          ],
+          [
+            "C.S. Lewis",
+            3
+          ],
+          [
+            "John Bunyan",
+            3
+          ]
+        ]
+      },
+      "Very Good (8.0-8.9)": {
+        "count": 14,
+        "percentage": 8.9,
+        "avg_quality": 9.86,
+        "top_authors": [
+          [
+            "Thomas Jefferson",
+            2
+          ],
+          [
+            "John Locke",
+            2
+          ],
+          [
+            "Abraham Lincoln",
+            2
+          ],
+          [
+            "Thomas \u00e0 Kempis",
+            1
+          ],
+          [
+            "Saint Augustine",
+            1
+          ]
+        ]
+      },
+      "Good (7.0-7.9)": {
+        "count": 74,
+        "percentage": 46.8,
+        "avg_quality": 9.86,
+        "top_authors": [
+          [
+            "William Shakespeare",
+            5
+          ],
+          [
+            "Charles Dickens",
+            4
+          ],
+          [
+            "George Eliot",
+            3
+          ],
+          [
+            "Jane Austen",
+            3
+          ],
+          [
+            "Mark Twain",
+            3
+          ]
+        ]
+      },
+      "Acceptable (6.0-6.9)": {
+        "count": 21,
+        "percentage": 13.3,
+        "avg_quality": 9.69,
+        "top_authors": [
+          [
+            "Martin Fowler",
+            1
+          ],
+          [
+            "Dmitri Mendeleev",
+            1
+          ],
+          [
+            "Alexis de Tocqueville",
+            1
+          ],
+          [
+            "Adam Smith",
+            1
+          ],
+          [
+            "Thomas Paine",
+            1
+          ]
+        ]
+      }
+    },
+    "category_alignment_averages": {
+      "biblical_classical": 8.38,
+      "technical": 6.5,
+      "educational": 6.81,
+      "philosophical": 8.89,
+      "historical_scientific": 7.36
+    },
+    "author_type_statistics": {
+      "Biblical/Theological Authors": {
+        "count": 32,
+        "avg_alignment": 9.83,
+        "std_alignment": 0.62,
+        "min_alignment": 7.0,
+        "max_alignment": 10.0
+      },
+      "Classical Philosophers": {
+        "count": 8,
+        "avg_alignment": 8.35,
+        "std_alignment": 0.98,
+        "min_alignment": 6.5,
+        "max_alignment": 9.8
+      },
+      "Modern Thinkers": {
+        "count": 4,
+        "avg_alignment": 8.15,
+        "std_alignment": 0.09,
+        "min_alignment": 8.0,
+        "max_alignment": 8.2
+      },
+      "Other Authors": {
+        "count": 114,
+        "avg_alignment": 7.42,
+        "std_alignment": 1.01,
+        "min_alignment": 6.5,
+        "max_alignment": 10.0
+      }
+    },
+    "overall_alignment_score": 7.97,
+    "high_alignment_percentage": 39.9
+  },
+  "training_readiness_analysis": {
+    "training_status": "Ready for Training",
+    "overall_readiness_score": 89.0,
+    "readiness_breakdown": {
+      "word_count_readiness": 87.8,
+      "document_count_readiness": 79.0,
+      "quality_readiness": 98.6,
+      "biblical_readiness": 79.7,
+      "diversity_readiness": 100.0
+    },
+    "current_metrics": {
+      "total_words": 17551178,
+      "total_documents": 158,
+      "avg_quality": 9.85759493670886,
+      "avg_biblical": 7.9715189873417724,
+      "unique_categories": 5,
+      "unique_authors": 88,
+      "high_quality_docs": 158,
+      "high_biblical_docs": 158
+    },
+    "requirements": {
+      "minimum_words": 10000000,
+      "target_words": 20000000,
+      "minimum_documents": 100,
+      "target_documents": 200,
+      "minimum_quality": 8.0,
+      "minimum_biblical": 6.5,
+      "minimum_categories": 3,
+      "minimum_authors": 20
+    },
+    "recommendations": [],
+    "estimated_training_time": {
+      "small_model_125M": {
+        "parameters": "125,000,000",
+        "training_tokens": "68,449,593",
+        "v100_hours": 2.4,
+        "h100_hours": 0.8,
+        "v100_cost_estimate": "$5.0",
+        "h100_cost_estimate": "$6.0"
+      },
+      "medium_model_350M": {
+        "parameters": "350,000,000",
+        "training_tokens": "68,449,593",
+        "v100_hours": 6.3,
+        "h100_hours": 1.6,
+        "v100_cost_estimate": "$13.0",
+        "h100_cost_estimate": "$13.0"
+      }
+    },
+    "dataset_quality_grade": "A (Excellent)"
+  },
+  "executive_summary": {
+    "dataset_scale": "158 documents, 17,551,178 words",
+    "quality_assessment": "Excellent quality with 9.9/10 average score",
+    "biblical_foundation": "Strong biblical alignment with 8.0/10 average",
+    "training_status": "Ready for Training",
+    "readiness_score": "89.0% ready for MVLM training",
+    "key_strengths": [
+      "Comprehensive MacArthur and Stanley theological foundation",
+      "High-quality classical literature and philosophy",
+      "Strong biblical worldview alignment across all categories",
+      "Diverse content spanning multiple time periods and domains"
+    ],
+    "strategic_impact": "First biblically-grounded MVLM training dataset with energy-efficient AGI potential"
+  },
+  "recommendations": {
+    "immediate_actions": [
+      "Proceed with MVLM training using current dataset",
+      "Begin with 125M parameter model for initial validation",
+      "Use Digital Ocean H100 GPU for optimal cost-efficiency"
+    ],
+    "optimization_opportunities": [
+      "Consider adding more technical documentation if needed",
+      "Monitor training convergence for potential data augmentation",
+      "Prepare validation dataset from held-out documents"
+    ],
+    "long_term_strategy": [
+      "Use trained MVLM to validate SIM-ONE Framework effectiveness",
+      "Develop additional specialized datasets for domain-specific training",
+      "Create benchmark suite for biblically-aligned AI evaluation"
+    ],
+    "risk_mitigation": [
+      "Backup dataset to multiple locations before training",
+      "Document all preprocessing steps for reproducibility",
+      "Prepare fallback training strategies if initial approach needs adjustment"
+    ]
+  }
+}
