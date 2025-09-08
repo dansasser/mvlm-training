@@ -25,7 +25,7 @@ class PrioritaryConfig:
         Stride when creating training windows.
     """
 
-    vocab_size: int = 131
+    vocab_size: int = 8000
     hidden_dim: int = 512
     num_heads: int = 8
     ff_dim: int = 2048

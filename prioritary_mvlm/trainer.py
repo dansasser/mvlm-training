@@ -76,8 +76,9 @@ class PrioritaryTrainer:
 
         # ------------------------------------------------------------------
         # Tokenizer and model
-        self.tokenizer = PrioritaryTokenizer.from_pretrained("gpt2")
-        self.tokenizer.pad_token = self.tokenizer.eos_token
+        self.tokenizer = PrioritaryTokenizer()
+        # Ensure the configuration matches the tokenizer vocabulary
+        self.config.vocab_size = len(self.tokenizer)
 
         model_cfg = GPT2Config(
             vocab_size=self.config.vocab_size,
@@ -85,9 +86,9 @@ class PrioritaryTrainer:
             n_head=self.config.n_head,
             n_embd=self.config.n_embd,
             n_positions=self.config.max_length,
-            bos_token_id=50256,
-            eos_token_id=50256,
-            pad_token_id=50256,
+            bos_token_id=self.tokenizer.bos_token_id,
+            eos_token_id=self.tokenizer.eos_token_id,
+            pad_token_id=self.tokenizer.pad_token_id,
         )
         self.model = PrioritaryMVLM(model_cfg)
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -216,16 +217,17 @@ class PrioritaryTrainer:
 
         self.model.eval()
         with torch.no_grad():
-            input_ids = self.tokenizer.encode(prompt, return_tensors="pt").to(self.device)
+            encoded = self.tokenizer.encode(prompt)
+            input_ids = torch.tensor([encoded], dtype=torch.long).to(self.device)
             output = self.model.generate(
                 input_ids,
                 max_length=max_length,
                 num_return_sequences=1,
                 temperature=0.8,
                 do_sample=True,
-                pad_token_id=self.tokenizer.eos_token_id,
+                pad_token_id=self.tokenizer.pad_token_id,
             )
-        return self.tokenizer.decode(output[0], skip_special_tokens=True)
+        return self.tokenizer.decode(output[0].tolist())
 
     # ------------------------------------------------------------------
     def save_checkpoint(self, name: str = "checkpoint.pt") -> Path:

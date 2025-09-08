@@ -12,7 +12,7 @@ from torch import Tensor
 class PrioritaryConfig:
     """Configuration for :class:`PrioritaryMVLM`."""
 
-    vocab_size: int = 50257
+    vocab_size: int = 8000
     max_position_embeddings: int = 512
     hidden_size: int = 256
     num_hidden_layers: int = 4

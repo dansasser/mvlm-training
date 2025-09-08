@@ -23,7 +23,7 @@ class PrioritaryConfig:
         Stride used when creating training windows from long texts.
     """
 
-    vocab_size: int = 50257
+    vocab_size: int = 8000
     n_layer: int = 4
     n_head: int = 8
     n_embd: int = 256
