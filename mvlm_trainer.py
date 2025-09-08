@@ -52,6 +52,7 @@ class MVLMConfig:
         self.warmup_steps = 500
         self.max_grad_norm = 1.0
         self.weight_decay = 0.01
+        self.gradient_accumulation_steps = 1
         
         # Data parameters
         self.max_length = 512
@@ -264,55 +265,63 @@ class MVLMTrainer:
         total_loss = 0
         total_base_loss = 0
         num_batches = 0
-        
+
+        self.optimizer.zero_grad()
         for batch_idx, batch in enumerate(self.dataloader):
             # Compute loss
             loss, base_loss = self.compute_loss(batch)
-            
-            # Backward pass
-            self.optimizer.zero_grad()
+            loss = loss / self.config.gradient_accumulation_steps
             loss.backward()
-            
-            # Gradient clipping
-            torch.nn.utils.clip_grad_norm_(self.model.parameters(), self.config.max_grad_norm)
-            
-            # Optimizer step
-            self.optimizer.step()
-            if self.global_step < self.config.warmup_steps:
-                self.scheduler.step()
-            
-            # Update statistics
-            total_loss += loss.item()
+
+            total_loss += loss.item() * self.config.gradient_accumulation_steps
             total_base_loss += base_loss.item()
-            num_batches += 1
-            self.global_step += 1
-            
-            # Logging
-            if batch_idx % self.config.log_interval == 0:
-                avg_loss = total_loss / num_batches
-                avg_base_loss = total_base_loss / num_batches
-                lr = self.optimizer.param_groups[0]['lr']
-                
-                logger.info(
-                    f"Epoch {self.epoch}, Batch {batch_idx}/{len(self.dataloader)}, "
-                    f"Loss: {avg_loss:.4f}, Base Loss: {avg_base_loss:.4f}, "
-                    f"LR: {lr:.2e}, Step: {self.global_step}"
+
+            if (
+                (batch_idx + 1) % self.config.gradient_accumulation_steps == 0
+                or (batch_idx + 1) == len(self.dataloader)
+            ):
+                # Gradient clipping
+                torch.nn.utils.clip_grad_norm_(
+                    self.model.parameters(), self.config.max_grad_norm
                 )
-                
-                # Record training history
-                self.training_history.append({
-                    'epoch': self.epoch,
-                    'batch': batch_idx,
-                    'loss': avg_loss,
-                    'base_loss': avg_base_loss,
-                    'learning_rate': lr,
-                    'global_step': self.global_step
-                })
-            
-            # Save checkpoint
-            if self.global_step % self.config.save_interval == 0:
-                self.save_checkpoint(f"checkpoint_step_{self.global_step}")
-        
+
+                # Optimizer step
+                self.optimizer.step()
+                self.optimizer.zero_grad()
+                if self.global_step < self.config.warmup_steps:
+                    self.scheduler.step()
+
+                num_batches += 1
+                self.global_step += 1
+
+                # Logging
+                if self.global_step % self.config.log_interval == 0:
+                    avg_loss = total_loss / num_batches
+                    avg_base_loss = total_base_loss / num_batches
+                    lr = self.optimizer.param_groups[0]["lr"]
+
+                    logger.info(
+                        f"Epoch {self.epoch}, Step {self.global_step}, "
+                        f"Loss: {avg_loss:.4f}, Base Loss: {avg_base_loss:.4f}, "
+                        f"LR: {lr:.2e}"
+                    )
+
+                    # Record training history
+                    self.training_history.append(
+                        {
+                            "epoch": self.epoch,
+                            "batch": batch_idx,
+                            "loss": avg_loss,
+                            "base_loss": avg_base_loss,
+                            "learning_rate": lr,
+                            "global_step": self.global_step,
+                        }
+                    )
+
+                # Save checkpoint
+                if self.global_step % self.config.save_interval == 0:
+                    self.save_checkpoint(f"checkpoint_step_{self.global_step}")
+
         return total_loss / num_batches
     
     def evaluate(self):
@@ -551,6 +560,8 @@ def main():
                        help='Number of training epochs')
     parser.add_argument('--max_length', type=int, default=512,
                        help='Maximum sequence length')
+    parser.add_argument('--gradient_accumulation_steps', type=int, default=1,
+                       help='Number of steps to accumulate gradients before optimizing')
     
     args = parser.parse_args()
     
@@ -560,6 +571,7 @@ def main():
     config.learning_rate = args.learning_rate
     config.num_epochs = args.num_epochs
     config.max_length = args.max_length
+    config.gradient_accumulation_steps = args.gradient_accumulation_steps
     
     # Check for GPU
     if not torch.cuda.is_available():

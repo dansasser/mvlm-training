@@ -138,6 +138,8 @@ sudo reboot
 ```bash
 # Reduce batch size in training script
 python mvlm_trainer.py --batch_size 4
+# Or use gradient accumulation
+python mvlm_trainer.py --batch_size 4 --gradient_accumulation_steps 2
 ```
 
 #### 3. Dataset Not Found

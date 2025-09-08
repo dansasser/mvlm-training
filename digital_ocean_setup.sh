@@ -210,7 +210,7 @@ fi
 
 echo ""
 echo "To start training, run:"
-echo "python mvlm_trainer.py --data_dir data/mvlm_comprehensive_dataset"
+echo "python mvlm_trainer.py --data_dir data/mvlm_comprehensive_dataset --gradient_accumulation_steps 1"
 echo ""
 EOF
 
@@ -254,7 +254,8 @@ python mvlm_trainer.py \
     --batch_size 8 \
     --learning_rate 5e-5 \
     --num_epochs 3 \
-    --max_length 512
+    --max_length 512 \
+    --gradient_accumulation_steps 1
 
 echo ""
 echo "Training completed!"
