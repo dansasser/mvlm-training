@@ -3,30 +3,33 @@ from dataclasses import dataclass
 
 @dataclass
 class PrioritaryConfig:
-    """Configuration for the Prioritary MVLM model and training.
+    """Configuration for the SIM-ONE transformer and training.
 
     Attributes
     ----------
     vocab_size: int
         Size of the tokenizer vocabulary.
-    n_layer: int
-        Number of transformer layers.
-    n_head: int
+    hidden_dim: int
+        Dimension of transformer embeddings.
+    num_heads: int
         Number of attention heads.
-    n_embd: int
-        Embedding dimensionality.
+    ff_dim: int
+        Dimension of feedforward layer.
+    num_layers: int
+        Number of transformer blocks.
     batch_size: int
         Batch size used during training.
     max_length: int
-        Maximum sequence length for training examples.
+        Maximum sequence length.
     stride: int
-        Stride used when creating training windows from long texts.
+        Stride when creating training windows.
     """
 
-    vocab_size: int = 50257
-    n_layer: int = 4
-    n_head: int = 8
-    n_embd: int = 256
+    vocab_size: int = 131
+    hidden_dim: int = 512
+    num_heads: int = 8
+    ff_dim: int = 2048
+    num_layers: int = 6
     batch_size: int = 8
     max_length: int = 512
     stride: int = 128
@@ -38,3 +41,6 @@ class PrioritaryConfig:
     gradient_accumulation_steps: int = 1
     log_interval: int = 10
     eval_interval: int = 100
+    lambda_policy: float = 1.0
+    lambda_memory: float = 1.0
+    lambda_energy: float = 1.0
