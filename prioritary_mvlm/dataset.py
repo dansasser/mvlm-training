@@ -6,12 +6,12 @@ import torch
 from torch.utils.data import Dataset
 
 if TYPE_CHECKING:
-    from prioritary_tokenizer import PrioritaryTokenizer
-    from prioritary_config import PrioritaryConfig
+    from .tokenizer import PrioritaryTokenizer
+    from .config import PrioritaryConfig
 
 
 class WeightedTextDataset(Dataset):
-    """Dataset class for training with prioritized weighting."""
+    """Dataset class that pairs text files with JSON metadata."""
 
     def __init__(self, data_dir: str, tokenizer: 'PrioritaryTokenizer', config: 'PrioritaryConfig'):
         self.tokenizer = tokenizer
@@ -23,11 +23,10 @@ class WeightedTextDataset(Dataset):
         data_path = Path(data_dir)
         for txt_file in data_path.rglob("*.txt"):
             json_file = txt_file.with_suffix('.json')
-            if json_file.exists():
-                with open(json_file, 'r') as f:
-                    metadata = json.load(f)
-            else:
-                metadata = {'quality_score': 8.0, 'biblical_alignment': 7.0}
+            if not json_file.exists():
+                continue
+            with open(json_file, 'r') as f:
+                metadata = json.load(f)
             try:
                 with open(txt_file, 'r', encoding='utf-8') as f:
                     text = f.read()
