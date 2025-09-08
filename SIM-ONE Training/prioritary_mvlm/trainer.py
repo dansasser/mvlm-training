@@ -16,7 +16,7 @@ from torch.utils.data import DataLoader
 from .config import PrioritaryConfig
 from .dataset import WeightedTextDataset
 from .tokenizer import PrioritaryTokenizer
-from .simone_model import SIMONEModel
+from simone_transformer.simone_model import SIMONEModel
 from .losses import compute_policy_loss, compute_memory_loss, compute_energy_loss
 
 

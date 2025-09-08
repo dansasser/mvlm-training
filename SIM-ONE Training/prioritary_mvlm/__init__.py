@@ -1,4 +1,4 @@
-from .simone_model import SIMONEModel
+from simone_transformer.simone_model import SIMONEModel
 from .tokenizer import PrioritaryTokenizer
 from .trainer import PrioritaryTrainer
 from .config import PrioritaryConfig

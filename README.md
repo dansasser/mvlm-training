@@ -37,8 +37,8 @@ This repository provides the reference implementation of the SIM-ONE Transformer
 
 ## Files
 
-* `simone_model.py` → Core SIM-ONE transformer implementation.
-* `losses.py` → Multi-objective loss functions (policy, memory, energy).
+* `simone_transformer/simone_model.py` → Core SIM-ONE transformer implementation.
+* `prioritary_mvlm/losses.py` → Multi-objective loss functions (policy, memory, energy).
 * `train.py` → Training loop with toy and production support.
 * `README.md` → This document.
 
