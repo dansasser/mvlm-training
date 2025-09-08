@@ -8,6 +8,9 @@ and trained using `PrioritaryTrainer` for experiments and fine-tuning.
 
 ## Training
 
+For a complete walkthrough from environment setup to sampling, see the
+[Prioritary Training Complete Guide](PRIORITARY_TRAINING_COMPLETE_GUIDE.md).
+
 1. Prepare a dataset returning token ID tensors.
 2. Initialise the tokenizer and model:
    ```python
