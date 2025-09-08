@@ -148,7 +148,8 @@ python mvlm_trainer.py \
     --batch_size 8 \
     --learning_rate 5e-5 \
     --num_epochs 3 \
-    --max_length 512
+    --max_length 512 \
+    --gradient_accumulation_steps 1
 ```
 
 ### Step 3.2: Monitor Training Progress
