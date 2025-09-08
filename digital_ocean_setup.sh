@@ -34,10 +34,11 @@ print_header() {
     echo -e "${BLUE}[STEP]${NC} $1"
 }
 
-# Check if running as root
+# Check user privileges
 if [[ $EUID -eq 0 ]]; then
-   print_error "This script should not be run as root. Please run as a regular user with sudo privileges."
-   exit 1
+   print_warning "Running as root. Proceeding with elevated privileges."
+else
+   print_status "Running as non-root user. Sudo will be used for required commands."
 fi
 
 # Update system
