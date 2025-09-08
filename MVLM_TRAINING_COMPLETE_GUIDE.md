@@ -504,31 +504,28 @@ EOF
 # Edit src/utils/openai_client_simple.py
 # Replace OpenAI calls with local MVLM
 
-from transformers import GPT2LMHeadModel, GPT2Tokenizer
+from prioritary_mvlm import SIMONEModel, PrioritaryTokenizer
 import torch
 
 class MVLMClient:
-    def __init__(self, model_path="src/models/mvlm/"):
+    def __init__(self, model_path="src/models/mvlm.pt"):
         self.device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-        self.model = GPT2LMHeadModel.from_pretrained(model_path)
-        self.tokenizer = GPT2Tokenizer.from_pretrained(model_path)
+        self.tokenizer = PrioritaryTokenizer()
+        self.model = SIMONEModel(vocab_size=len(self.tokenizer))
+        self.model.load_state_dict(torch.load(model_path, map_location=self.device))
         self.model.to(self.device)
         self.model.eval()
     
     def generate_response(self, prompt, max_length=512, temperature=0.8):
-        inputs = self.tokenizer.encode(prompt, return_tensors='pt').to(self.device)
-        
+        ids = self.tokenizer.encode(prompt)
+        input_ids = torch.tensor([ids], device=self.device)
+
         with torch.no_grad():
-            outputs = self.model.generate(
-                inputs,
-                max_length=max_length,
-                temperature=temperature,
-                do_sample=True,
-                pad_token_id=self.tokenizer.eos_token_id
-            )
-        
-        response = self.tokenizer.decode(outputs[0], skip_special_tokens=True)
-        return response[len(prompt):].strip()
+            logits, _ = self.model(input_ids)
+            next_id = logits[0, -1].argmax().item()
+            ids.append(next_id)
+
+        return self.tokenizer.decode(ids[len(self.tokenizer.encode(prompt)):])
 ```
 
 ### Step 6.4: Test Integration
