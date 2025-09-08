@@ -30,3 +30,11 @@ class PrioritaryConfig:
     batch_size: int = 8
     max_length: int = 512
     stride: int = 128
+    learning_rate: float = 5e-5
+    num_epochs: int = 3
+    warmup_steps: int = 100
+    max_grad_norm: float = 1.0
+    weight_decay: float = 0.01
+    gradient_accumulation_steps: int = 1
+    log_interval: int = 10
+    eval_interval: int = 100
