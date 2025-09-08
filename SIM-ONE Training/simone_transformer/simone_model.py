@@ -60,25 +60,30 @@ class SIMONEModel(nn.Module):
 
         self.lm_head = nn.Linear(hidden_dim, vocab_size, bias=False)
 
-    def forward(self, input_ids, mask=None, policy_mask=None):
+    def forward(self, input_ids, policy_mask=None):
         batch_size, seq_len = input_ids.size()
         device = input_ids.device
 
         pos = torch.arange(0, seq_len, dtype=torch.long, device=device).unsqueeze(0)
         x = self.token_emb(input_ids) + self.pos_emb(pos)
 
-        policy_logits_all, memory_signals_all, trace_all = [], [], []
+        # build a lower-triangular mask to prevent attention to future tokens
+        mask = torch.triu(torch.ones(seq_len, seq_len, device=device), diagonal=1).bool()
+
+        policy_logits_all, memory_signals_all, trace_all, attn_weights_all = [], [], [], []
 
         for layer in self.layers:
             x, outputs = layer(x, mask=mask, policy_mask=policy_mask)
             policy_logits_all.append(outputs["policy_logits"])
             memory_signals_all.append(outputs["memory_signals"])
             trace_all.append(outputs["trace"])
+            attn_weights_all.append(outputs["attn_weights"])
 
         logits = self.lm_head(x)
 
         return logits, {
             "policy_logits": policy_logits_all,
             "memory_signals": memory_signals_all,
-            "trace": trace_all
+            "trace": trace_all,
+            "attn_weights": attn_weights_all
         }
