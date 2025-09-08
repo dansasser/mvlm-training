@@ -48,17 +48,33 @@ class SIMONEBlock(nn.Module):
 
 
 class SIMONEModel(nn.Module):
-    def __init__(self, vocab_size, hidden_dim=512, num_heads=8, ff_dim=2048, num_layers=6, max_seq_len=512, dropout=0.1):
+    def __init__(
+        self,
+        vocab_size,
+        hidden_dim=512,
+        num_heads=8,
+        ff_dim=2048,
+        num_layers=6,
+        max_seq_len=512,
+        dropout=0.1,
+        emb_dropout=0.1,
+        block_dropout=0.1,
+    ):
         super().__init__()
         self.token_emb = nn.Embedding(vocab_size, hidden_dim)
         self.pos_emb = nn.Embedding(max_seq_len, hidden_dim)
+        self.emb_dropout = nn.Dropout(emb_dropout)
 
         self.layers = nn.ModuleList([
             SIMONEBlock(hidden_dim, num_heads, ff_dim, dropout=dropout)
             for _ in range(num_layers)
         ])
 
+        self.block_dropout = nn.Dropout(block_dropout)
         self.lm_head = nn.Linear(hidden_dim, vocab_size, bias=False)
+
+        # Tie token embedding and LM head weights
+        self.lm_head.weight = self.token_emb.weight
 
     def forward(self, input_ids, mask=None, policy_mask=None):
         batch_size, seq_len = input_ids.size()
@@ -66,11 +82,13 @@ class SIMONEModel(nn.Module):
 
         pos = torch.arange(0, seq_len, dtype=torch.long, device=device).unsqueeze(0)
         x = self.token_emb(input_ids) + self.pos_emb(pos)
+        x = self.emb_dropout(x)
 
         policy_logits_all, memory_signals_all, trace_all = [], [], []
 
         for layer in self.layers:
             x, outputs = layer(x, mask=mask, policy_mask=policy_mask)
+            x = self.block_dropout(x)
             policy_logits_all.append(outputs["policy_logits"])
             memory_signals_all.append(outputs["memory_signals"])
             trace_all.append(outputs["trace"])

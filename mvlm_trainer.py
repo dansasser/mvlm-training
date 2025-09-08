@@ -44,7 +44,7 @@ class MVLMConfig:
         self.n_layer = 12       # Number of transformer layers
         self.n_head = 12        # Number of attention heads
         self.n_inner = 3072     # Feed-forward dimension
-        
+
         # Training parameters
         self.batch_size = 8
         self.learning_rate = 5e-5
@@ -53,6 +53,10 @@ class MVLMConfig:
         self.max_grad_norm = 1.0
         self.weight_decay = 0.01
         self.gradient_accumulation_steps = 1
+        self.emb_dropout = 0.1
+        self.resid_dropout = 0.1
+        self.attn_dropout = 0.1
+        self.label_smoothing = 0.0
         
         # Data parameters
         self.max_length = 512
@@ -201,16 +205,16 @@ class MVLMTrainer:
             n_head=self.config.n_head,
             n_inner=self.config.n_inner,
             activation_function="gelu_new",
-            resid_pdrop=0.1,
-            embd_pdrop=0.1,
-            attn_pdrop=0.1,
+            resid_pdrop=self.config.resid_dropout,
+            embd_pdrop=self.config.emb_dropout,
+            attn_pdrop=self.config.attn_dropout,
             layer_norm_epsilon=1e-5,
             initializer_range=0.02,
             summary_type="cls_index",
             summary_use_proj=True,
             summary_activation=None,
             summary_proj_to_labels=True,
-            summary_first_dropout=0.1,
+            summary_first_dropout=self.config.emb_dropout,
             use_cache=True,
             bos_token_id=50256,
             eos_token_id=50256,
@@ -233,8 +237,13 @@ class MVLMTrainer:
         input_ids = batch['input_ids'].to(self.device)
         labels = batch['labels'].to(self.device)
         
-        outputs = self.model(input_ids=input_ids, labels=labels)
-        base_loss = outputs.loss
+        outputs = self.model(input_ids=input_ids)
+        logits = outputs.logits
+        loss_fct = nn.CrossEntropyLoss(
+            ignore_index=self.tokenizer.pad_token_id,
+            label_smoothing=self.config.label_smoothing,
+        )
+        base_loss = loss_fct(logits.view(-1, logits.size(-1)), labels.view(-1))
         
         # Apply biblical worldview weighting
         biblical_weights = []
@@ -281,9 +290,10 @@ class MVLMTrainer:
                 or (batch_idx + 1) == len(self.dataloader)
             ):
                 # Gradient clipping
-                torch.nn.utils.clip_grad_norm_(
-                    self.model.parameters(), self.config.max_grad_norm
-                )
+                if self.config.max_grad_norm is not None:
+                    torch.nn.utils.clip_grad_norm_(
+                        self.model.parameters(), self.config.max_grad_norm
+                    )
 
                 # Optimizer step
                 self.optimizer.step()
@@ -562,6 +572,16 @@ def main():
                        help='Maximum sequence length')
     parser.add_argument('--gradient_accumulation_steps', type=int, default=1,
                        help='Number of steps to accumulate gradients before optimizing')
+    parser.add_argument('--emb_dropout', type=float, default=0.1,
+                       help='Embedding dropout rate')
+    parser.add_argument('--resid_dropout', type=float, default=0.1,
+                       help='Residual dropout rate')
+    parser.add_argument('--attn_dropout', type=float, default=0.1,
+                       help='Attention dropout rate')
+    parser.add_argument('--label_smoothing', type=float, default=0.0,
+                       help='Label smoothing factor')
+    parser.add_argument('--max_grad_norm', type=float, default=1.0,
+                       help='Max gradient norm for clipping (set to 0 to disable)')
     
     args = parser.parse_args()
     
@@ -572,6 +592,11 @@ def main():
     config.num_epochs = args.num_epochs
     config.max_length = args.max_length
     config.gradient_accumulation_steps = args.gradient_accumulation_steps
+    config.emb_dropout = args.emb_dropout
+    config.resid_dropout = args.resid_dropout
+    config.attn_dropout = args.attn_dropout
+    config.label_smoothing = args.label_smoothing
+    config.max_grad_norm = None if args.max_grad_norm == 0 else args.max_grad_norm
     
     # Check for GPU
     if not torch.cuda.is_available():
