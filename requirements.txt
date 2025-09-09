@@ -1,0 +1,42 @@
+# Core Dependencies for SIM-ONE Training
+torch>=2.0.0
+torchvision>=0.15.0
+torchaudio>=2.0.0
+numpy>=1.21.0
+matplotlib>=3.5.0
+scipy>=1.8.0
+scikit-learn>=1.1.0
+
+# Transformers and NLP
+transformers>=4.21.0
+tokenizers>=0.13.0
+datasets>=2.5.0
+evaluate>=0.3.0
+
+# Training utilities
+accelerate>=0.21.0
+deepspeed>=0.9.0
+wandb>=0.13.0
+tensorboard>=2.10.0
+
+# Data processing
+pandas>=1.5.0
+tqdm>=4.64.0
+nltk>=3.7
+regex>=2022.7.0
+
+# System utilities
+psutil>=5.9.0
+pynvml>=11.4.1
+gpustat>=1.0.0
+
+# Optional optimizations
+flash-attn>=2.0.0; sys_platform != "darwin"
+xformers>=0.0.20; sys_platform != "darwin"
+triton>=2.0.0; sys_platform != "darwin"
+
+# Development tools
+jupyter>=1.0.0
+ipython>=8.5.0
+black>=22.6.0
+isort>=5.10.0

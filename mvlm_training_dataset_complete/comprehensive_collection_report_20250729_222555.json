@@ -1,0 +1,240 @@
+{
+  "collection_summary": {
+    "total_documents": 88,
+    "total_words": 10793301,
+    "total_size_mb": 59.53,
+    "average_quality_score": 9.95,
+    "average_biblical_alignment": 8.38,
+    "collection_time_minutes": 15.3,
+    "success_rate": "100.0%"
+  },
+  "category_breakdown": {
+    "biblical_classical": {
+      "count": 88,
+      "words": 10793301,
+      "avg_quality": 9.948863636363637,
+      "avg_biblical": 8.375
+    }
+  },
+  "quality_distribution": {
+    "10.0": 83,
+    "9.5-9.9": 3,
+    "9.0-9.4": 0,
+    "8.5-8.9": 2,
+    "8.0-8.4": 0
+  },
+  "biblical_alignment_distribution": {
+    "9.0+": 39,
+    "8.0-8.9": 2,
+    "7.0-7.9": 47,
+    "6.0-6.9": 0
+  },
+  "author_distribution": {
+    "Charles Stanley": 13,
+    "John MacArthur": 12,
+    "William Shakespeare": 5,
+    "G.K. Chesterton": 4,
+    "Charles Dickens": 4,
+    "C.S. Lewis": 3,
+    "John Bunyan": 3,
+    "George Eliot": 3,
+    "Jane Austen": 3,
+    "Mark Twain": 3,
+    "Alexandre Dumas": 3,
+    "Robert Louis Stevenson": 3,
+    "George MacDonald": 2,
+    "Saint Augustine": 2,
+    "John Milton": 2,
+    "Louisa May Alcott": 2,
+    "Victor Hugo": 2,
+    "Daniel Defoe": 2,
+    "Nathaniel Hawthorne": 2,
+    "James Fenimore Cooper": 2
+  },
+  "top_quality_books": [
+    {
+      "title": "The Gospel According to Jesus",
+      "author": "John MacArthur",
+      "category": "biblical_classical",
+      "quality_score": 10.0,
+      "biblical_alignment": 10.0,
+      "word_count": 70800
+    },
+    {
+      "title": "Twelve Ordinary Men",
+      "author": "John MacArthur",
+      "category": "biblical_classical",
+      "quality_score": 10.0,
+      "biblical_alignment": 10.0,
+      "word_count": 111085
+    },
+    {
+      "title": "How to Study the Bible",
+      "author": "John MacArthur",
+      "category": "biblical_classical",
+      "quality_score": 10.0,
+      "biblical_alignment": 10.0,
+      "word_count": 127359
+    },
+    {
+      "title": "The Truth War",
+      "author": "John MacArthur",
+      "category": "biblical_classical",
+      "quality_score": 10.0,
+      "biblical_alignment": 10.0,
+      "word_count": 138817
+    },
+    {
+      "title": "Strange Fire",
+      "author": "John MacArthur",
+      "category": "biblical_classical",
+      "quality_score": 10.0,
+      "biblical_alignment": 10.0,
+      "word_count": 184478
+    },
+    {
+      "title": "How to Listen to God",
+      "author": "Charles Stanley",
+      "category": "biblical_classical",
+      "quality_score": 10.0,
+      "biblical_alignment": 10.0,
+      "word_count": 157558
+    },
+    {
+      "title": "Success Gods Way",
+      "author": "Charles Stanley",
+      "category": "biblical_classical",
+      "quality_score": 10.0,
+      "biblical_alignment": 10.0,
+      "word_count": 121789
+    },
+    {
+      "title": "The Blessings of Brokenness",
+      "author": "Charles Stanley",
+      "category": "biblical_classical",
+      "quality_score": 10.0,
+      "biblical_alignment": 10.0,
+      "word_count": 157969
+    },
+    {
+      "title": "When the Enemy Strikes",
+      "author": "Charles Stanley",
+      "category": "biblical_classical",
+      "quality_score": 10.0,
+      "biblical_alignment": 10.0,
+      "word_count": 212794
+    },
+    {
+      "title": "Handle with Prayer",
+      "author": "Charles Stanley",
+      "category": "biblical_classical",
+      "quality_score": 10.0,
+      "biblical_alignment": 10.0,
+      "word_count": 26525
+    },
+    {
+      "title": "The Book on Leadership",
+      "author": "John MacArthur",
+      "category": "biblical_classical",
+      "quality_score": 10.0,
+      "biblical_alignment": 10.0,
+      "word_count": 25958
+    },
+    {
+      "title": "Anxious for Nothing",
+      "author": "John MacArthur",
+      "category": "biblical_classical",
+      "quality_score": 10.0,
+      "biblical_alignment": 10.0,
+      "word_count": 34865
+    },
+    {
+      "title": "The Battle for the Beginning",
+      "author": "John MacArthur",
+      "category": "biblical_classical",
+      "quality_score": 10.0,
+      "biblical_alignment": 10.0,
+      "word_count": 30835
+    },
+    {
+      "title": "Why Government Cannot Save You",
+      "author": "John MacArthur",
+      "category": "biblical_classical",
+      "quality_score": 10.0,
+      "biblical_alignment": 10.0,
+      "word_count": 30585
+    },
+    {
+      "title": "The MacArthur New Testament Commentary Romans",
+      "author": "John MacArthur",
+      "category": "biblical_classical",
+      "quality_score": 10.0,
+      "biblical_alignment": 10.0,
+      "word_count": 18394
+    },
+    {
+      "title": "Slave: The Hidden Truth About Your Identity in Christ",
+      "author": "John MacArthur",
+      "category": "biblical_classical",
+      "quality_score": 10.0,
+      "biblical_alignment": 10.0,
+      "word_count": 31447
+    },
+    {
+      "title": "The MacArthur Study Bible Commentary Ephesians",
+      "author": "John MacArthur",
+      "category": "biblical_classical",
+      "quality_score": 10.0,
+      "biblical_alignment": 10.0,
+      "word_count": 73001
+    },
+    {
+      "title": "Finding Peace",
+      "author": "Charles Stanley",
+      "category": "biblical_classical",
+      "quality_score": 10.0,
+      "biblical_alignment": 10.0,
+      "word_count": 75042
+    },
+    {
+      "title": "Courageous Faith",
+      "author": "Charles Stanley",
+      "category": "biblical_classical",
+      "quality_score": 10.0,
+      "biblical_alignment": 10.0,
+      "word_count": 164225
+    },
+    {
+      "title": "Into His Presence",
+      "author": "Charles Stanley",
+      "category": "biblical_classical",
+      "quality_score": 10.0,
+      "biblical_alignment": 10.0,
+      "word_count": 185390
+    }
+  ],
+  "collection_statistics": {
+    "total_collected": 88,
+    "total_failed": 0,
+    "category_counts": {
+      "biblical_classical": 88,
+      "technical": 0,
+      "educational": 0,
+      "philosophical": 0,
+      "historical_scientific": 0
+    },
+    "quality_distribution": {
+      "10.0": 83,
+      "9.5-9.9": 3,
+      "9.0-9.4": 0,
+      "8.5-8.9": 2,
+      "8.0-8.4": 0
+    },
+    "biblical_alignment_distribution": {
+      "9.0+": 39,
+      "8.0-8.9": 2,
+      "7.0-7.9": 47,
+      "6.0-6.9": 0
+    }
+  }
+}

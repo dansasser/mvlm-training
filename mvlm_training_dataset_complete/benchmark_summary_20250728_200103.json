@@ -1,0 +1,26 @@
+{
+  "server_status": "operational",
+  "total_tests": 7,
+  "successful_tests": 1,
+  "average_response_time": 0.48283934593200684,
+  "fastest_endpoint": [
+    "GET__api_jobs",
+    0.48283934593200684
+  ],
+  "slowest_endpoint": [
+    "GET__api_jobs",
+    0.48283934593200684
+  ],
+  "protocol_performance": {},
+  "concurrent_performance": {
+    "total_time": 30.039429187774658,
+    "num_requests": 5,
+    "successful_requests": 2,
+    "success_rate": 0.4,
+    "avg_response_time": 2.5526020526885986,
+    "min_response_time": 0.45352983474731445,
+    "max_response_time": 4.651674270629883,
+    "requests_per_second": 0.16644790314573896
+  },
+  "success_rate": 0.14285714285714285
+}
