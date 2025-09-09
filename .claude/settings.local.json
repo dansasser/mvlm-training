@@ -3,7 +3,11 @@
     "allow": [
       "Bash(python:*)",
       "Bash(find:*)",
-      "Bash(chmod:*)"
+      "Bash(chmod:*)",
+      "Bash(source:*)",
+      "Bash(timeout:*)",
+      "Bash(./setup_environment.sh:*)",
+      "Bash(./test_dependencies.sh:*)"
     ],
     "deny": [],
     "ask": []

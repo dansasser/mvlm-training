@@ -2,7 +2,7 @@
 
 ## Overview
 
-This repository contains the complete training pipeline for **SIM-ONE MVLM (Multimodal Vision Language Model)** components that serve as text generators within **The SIM-ONE Framework**. The training leverages high-quality, low-noise biblical text corpus to develop robust, general-purpose language models with superior reasoning capabilities and truth-leaning bias.
+This repository contains the complete training pipeline for **SIM-ONE MVLM (Minimum Viable Language Model)** components that serve as text generators within **The SIM-ONE Framework**. The training leverages high-quality, low-noise biblical text corpus to develop robust, general-purpose language models with superior reasoning capabilities and truth-leaning bias.
 
 **Purpose**: Train production-ready MVLMs for The SIM-ONE Framework ecosystem  
 **Architecture**: Dual-model training pipeline optimized for H200 GPU deployment  

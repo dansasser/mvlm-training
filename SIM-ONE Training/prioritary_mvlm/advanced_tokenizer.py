@@ -89,9 +89,9 @@ class BiblicalBPETokenizer:
             'Paul', 'John', 'James', 'Andrew', 'Philip', 'Thomas'
         }
         
-        # Regex patterns for preprocessing
+        # Regex patterns for preprocessing (using standard character classes instead of \p{})
         self.pre_tokenize_pattern = re.compile(
-            r"""'s|'t|'re|'ve|'m|'ll|'d| ?\p{L}+| ?\p{N}+| ?[^\s\p{L}\p{N}]+|\s+(?!\S)|\s+""",
+            r"""'s|'t|'re|'ve|'m|'ll|'d| ?[a-zA-Z]+| ?[0-9]+| ?[^\s\w]+|\s+(?!\S)|\s+""",
             re.IGNORECASE
         )
         

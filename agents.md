@@ -1,6 +1,6 @@
 # SIM-ONE Training Repository Agents Guide
 
-This repository contains specialized training pipelines for multi-purpose MVLM (Multimodal Vision Language Model) development, designed for automated deployment on H200 GPU instances. The training uses high-quality biblical text as a low-noise, truth-leaning foundation for general-purpose AI systems.
+This repository contains specialized training pipelines for multi-purpose MVLM (Minimum Viable Language Model) development, designed for automated deployment on H200 GPU instances. The training uses high-quality biblical text as a low-noise, truth-leaning foundation for general-purpose AI systems.
 
 ## Repository Overview
 
