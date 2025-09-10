@@ -1,11 +1,11 @@
 # SIM-ONE MVLM Training Repository
 
-**Mission:** Dual-model training pipeline leveraging a curated corpus of Christian-authored works (not a Bible-only dataset) to build energy-efficient MVLMs for the SIM-ONE framework.
+**Mission:** Deliver energy-efficient language models through a dual-model pipeline trained on a hand-curated, Christian-authored corpus—selected for internal consistency and a shared pursuit of non-subjective truth (not a Bible-only dataset).
 
 ## Table of Contents
 - [Overview](#overview)
 - [Repository Structure](#repository-structure)
-- [Dataset](#dataset)
+- [Dataset Overview](#dataset-overview)
 - [Models](#models)
 - [Training Pipeline](#training-pipeline)
 - [Validation & Monitoring](#validation--monitoring)
@@ -18,28 +18,36 @@ SIM-ONE trains two complementary language models on a carefully curated Christia
 
 ## Repository Structure
 - `/` – root utilities including [`train_all_models.py`](./train_all_models.py) and [`validate_models.py`](./validate_models.py)
-- `SIM-ONE Training/` – enhanced components such as [`enhanced_train.py`](./SIM-ONE%20Training/enhanced_train.py) and tokenizer/loss utilities
-  - `prioritary_mvlm/enhanced_trainer.py`
-  - `simone_transformer/enhanced_model.py`
+- `SIM-ONE Training/` – enhanced components such as [`enhanced_train.py`](./SIM-ONE%20Training/enhanced_train.py), tokenizer, and loss utilities
+  - [`prioritary_mvlm/enhanced_trainer.py`](./SIM-ONE%20Training/prioritary_mvlm/enhanced_trainer.py)
+  - [`simone_transformer/enhanced_model.py`](./SIM-ONE%20Training/simone_transformer/enhanced_model.py)
 - `mvlm_training_dataset_complete/` – dataset files and reports
 - `models/` – output directories for trained weights
 
-## Dataset
-Key metrics from [`mvlm_training_dataset_complete/MVLM_TRAINING_DATASET_FINAL_REPORT.md`](./mvlm_training_dataset_complete/MVLM_TRAINING_DATASET_FINAL_REPORT.md):
+## Dataset Overview
+Version 1.0 – July 29, 2025. See [full report](./mvlm_training_dataset_complete/MVLM_TRAINING_DATASET_FINAL_REPORT.md).
+
 - 158 documents
 - 17.55 M words
 - 9.9/10 average quality
 - 8.0/10 biblical alignment
 - 89 % training readiness
-- Content spans five categories with major contributors such as John MacArthur, Charles Stanley, C.S. Lewis, and G.K. Chesterton
 
-The dataset is curated from Christian authors with low internal contradiction and is explicitly not a Bible-only corpus.
+| Category | Docs | Percent | Impact |
+| --- | --- | --- | --- |
+| Biblical & Classical Literature | 88 | 55.7 % | Moral and philosophical backbone |
+| Technical Documentation | 28 | 17.7 % | Accurate technical communication |
+| Educational Content | 24 | 15.2 % | Pedagogical patterns and historical context |
+| Philosophical Works | 16 | 10.1 % | Logical reasoning grounded in truth |
+| Historical & Scientific | 2 | 1.3 % | Factual grounding and perspective |
+
+Broad coverage across technical, educational, philosophical, historical, and literary content supports general-purpose modeling. Because all authors pursue non-subjective truth, internal contradictions are minimal, yielding a low-noise corpus. The dataset is not a Bible AI; it is a high-coherence dataset suitable for wide-ranging tasks.
 
 ### Strategic Impact
-This corpus functions as a "truth filter" for energy-efficient AGI research. By grounding training data in consistent Christian authorship, SIM-ONE pursues cognitive governance while reducing computational overhead.
+This truth-aligned, low-noise corpus provides a foundation for energy-efficient AGI research and advances SIM-ONE’s cognitive governance goals.
 
 ## Models
-Both models share the same curated dataset.
+Both models share the curated dataset.
 
 ### MVLM-GPT2
 Baseline GPT-2 architecture trained via [`mvlm_trainer.py`](./mvlm_trainer.py). Output path: [`models/mvlm_gpt2/`](./models/mvlm_gpt2/).
@@ -72,7 +80,7 @@ Modern transformer with RoPE, SwiGLU, RMSNorm, and governance heads, trained via
    ```bash
    # MVLM-GPT2
    python3 mvlm_trainer.py --data mvlm_training_dataset_complete/
-   
+
    # Enhanced SIM-ONE
    cd "SIM-ONE Training" && python3 enhanced_train.py --data ../mvlm_training_dataset_complete/
    ```
@@ -86,7 +94,9 @@ tail -f logs/h200_training_*.log
 Logs are stored in [`logs/`](./logs/) and downloadable model archives appear in [`models_for_download/`](./models_for_download/).
 
 ## Contribution
-Please read [`agents.md`](./agents.md) and [`claude.md`](./claude.md) before contributing. Key practices:
+Please read [`agents.md`](./agents.md) and [`claude.md`](./claude.md) before contributing.
+
+Key practices:
 - Maintain the dual-model structure
 - Use the BPE tokenizer
 - Enable H200 optimizations (mixed precision, Flash Attention)
@@ -98,4 +108,3 @@ This project is licensed under the terms of the [MIT License](./LICENSE).
 - [MVLM_TRAINING_COMPLETE_GUIDE.md](./MVLM_TRAINING_COMPLETE_GUIDE.md)
 - [MVLM_DEPLOYMENT_CHECKLIST.md](./MVLM_DEPLOYMENT_CHECKLIST.md)
 - Additional SIM-ONE resources available through external documentation.
-
