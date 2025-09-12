@@ -1,3 +1,7 @@
+# Import models from sibling directory
+import sys
+from pathlib import Path
+sys.path.append(str(Path(__file__).parent.parent))
 from simone_transformer import SIMONEModel, EnhancedSIMONEModel
 from .advanced_tokenizer import BiblicalBPETokenizer, train_biblical_tokenizer
 from .enhanced_trainer import EnhancedPrioritaryTrainer
