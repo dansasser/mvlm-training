@@ -1,0 +1,14 @@
+{
+  "title": "The Count of Monte Cristo",
+  "author": "Alexandre Dumas",
+  "source": "Project Gutenberg",
+  "category": "biblical_classical",
+  "subcategory": "virtue_character",
+  "quality_score": 10.0,
+  "biblical_alignment": 7.0,
+  "word_count": 460974,
+  "url": "https://www.gutenberg.org/files/1184/1184-0.txt",
+  "hash": "a19e5f070c35938c3e3e2b0d360f8ab0",
+  "priority": "high",
+  "filepath": "mvlm_comprehensive_dataset/biblical_classical/virtue_character/The-Count-of-Monte-Cristo_a19e5f07.txt"
+}

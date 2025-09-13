@@ -1,0 +1,14 @@
+{
+  "title": "Story",
+  "author": "Robert McKee",
+  "source": "Project Gutenberg",
+  "category": "educational",
+  "subcategory": "language_communication",
+  "quality_score": 8.5,
+  "biblical_alignment": 6.5,
+  "word_count": 16970,
+  "url": "https://www.gutenberg.org/files/7421/7421-0.txt",
+  "hash": "782b5d25c248569f45ebd0351982dffb",
+  "priority": "medium",
+  "filepath": "mvlm_comprehensive_dataset/educational/language_communication/Story_782b5d25.txt"
+}

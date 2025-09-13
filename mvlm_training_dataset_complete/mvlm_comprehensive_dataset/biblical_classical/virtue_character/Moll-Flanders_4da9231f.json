@@ -1,0 +1,14 @@
+{
+  "title": "Moll Flanders",
+  "author": "Daniel Defoe",
+  "source": "Project Gutenberg",
+  "category": "biblical_classical",
+  "subcategory": "virtue_character",
+  "quality_score": 10.0,
+  "biblical_alignment": 7.0,
+  "word_count": 138319,
+  "url": "https://www.gutenberg.org/files/370/370-0.txt",
+  "hash": "4da9231fccf33377e5f7fe9e3535f714",
+  "priority": "medium",
+  "filepath": "mvlm_comprehensive_dataset/biblical_classical/virtue_character/Moll-Flanders_4da9231f.txt"
+}

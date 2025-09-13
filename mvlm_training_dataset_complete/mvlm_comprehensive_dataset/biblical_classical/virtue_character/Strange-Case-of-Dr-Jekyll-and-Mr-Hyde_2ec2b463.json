@@ -1,0 +1,14 @@
+{
+  "title": "Strange Case of Dr Jekyll and Mr Hyde",
+  "author": "Robert Louis Stevenson",
+  "source": "Project Gutenberg",
+  "category": "biblical_classical",
+  "subcategory": "virtue_character",
+  "quality_score": 10.0,
+  "biblical_alignment": 7.5,
+  "word_count": 25629,
+  "url": "https://www.gutenberg.org/files/43/43-0.txt",
+  "hash": "2ec2b463f484f9a725604a4d3709b460",
+  "priority": "high",
+  "filepath": "mvlm_comprehensive_dataset/biblical_classical/virtue_character/Strange-Case-of-Dr-Jekyll-and-Mr-Hyde_2ec2b463.txt"
+}

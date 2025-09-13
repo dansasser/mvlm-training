@@ -1,0 +1,14 @@
+{
+  "title": "Julius Caesar",
+  "author": "William Shakespeare",
+  "source": "Project Gutenberg",
+  "category": "biblical_classical",
+  "subcategory": "classical_literature",
+  "quality_score": 10.0,
+  "biblical_alignment": 7.5,
+  "word_count": 20450,
+  "url": "https://www.gutenberg.org/files/1120/1120-0.txt",
+  "hash": "d49fc5fe00afbd11d4e041b2769731e9",
+  "priority": "medium",
+  "filepath": "mvlm_comprehensive_dataset/biblical_classical/classical_literature/Julius-Caesar_d49fc5fe.txt"
+}

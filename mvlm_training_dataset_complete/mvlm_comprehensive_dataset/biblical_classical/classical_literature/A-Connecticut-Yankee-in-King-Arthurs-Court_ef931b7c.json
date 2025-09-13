@@ -1,0 +1,14 @@
+{
+  "title": "A Connecticut Yankee in King Arthurs Court",
+  "author": "Mark Twain",
+  "source": "Project Gutenberg",
+  "category": "biblical_classical",
+  "subcategory": "classical_literature",
+  "quality_score": 10.0,
+  "biblical_alignment": 7.0,
+  "word_count": 117810,
+  "url": "https://www.gutenberg.org/files/86/86-0.txt",
+  "hash": "ef931b7cc8754778c55c3b46dcff5ab4",
+  "priority": "medium",
+  "filepath": "mvlm_comprehensive_dataset/biblical_classical/classical_literature/A-Connecticut-Yankee-in-King-Arthurs-Court_ef931b7c.txt"
+}

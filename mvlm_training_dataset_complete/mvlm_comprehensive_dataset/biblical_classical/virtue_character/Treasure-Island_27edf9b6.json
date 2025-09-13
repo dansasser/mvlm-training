@@ -1,0 +1,14 @@
+{
+  "title": "Treasure Island",
+  "author": "Robert Louis Stevenson",
+  "source": "Project Gutenberg",
+  "category": "biblical_classical",
+  "subcategory": "virtue_character",
+  "quality_score": 10.0,
+  "biblical_alignment": 7.0,
+  "word_count": 68637,
+  "url": "https://www.gutenberg.org/files/120/120-0.txt",
+  "hash": "27edf9b624f0d24d893b9aa1e67aaf0a",
+  "priority": "high",
+  "filepath": "mvlm_comprehensive_dataset/biblical_classical/virtue_character/Treasure-Island_27edf9b6.txt"
+}

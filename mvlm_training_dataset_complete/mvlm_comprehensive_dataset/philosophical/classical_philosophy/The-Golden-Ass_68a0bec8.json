@@ -1,0 +1,14 @@
+{
+  "title": "The Golden Ass",
+  "author": "Apuleius",
+  "source": "Project Gutenberg",
+  "category": "philosophical",
+  "subcategory": "classical_philosophy",
+  "quality_score": 10.0,
+  "biblical_alignment": 7.5,
+  "word_count": 83702,
+  "url": "https://www.gutenberg.org/files/1666/1666-0.txt",
+  "hash": "68a0bec8098e81467d37d0d37c5f4424",
+  "priority": "medium",
+  "filepath": "mvlm_comprehensive_dataset/philosophical/classical_philosophy/The-Golden-Ass_68a0bec8.txt"
+}

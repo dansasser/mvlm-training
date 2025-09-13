@@ -1,0 +1,14 @@
+{
+  "title": "Little Women",
+  "author": "Louisa May Alcott",
+  "source": "Project Gutenberg",
+  "category": "biblical_classical",
+  "subcategory": "classical_literature",
+  "quality_score": 10.0,
+  "biblical_alignment": 7.0,
+  "word_count": 189017,
+  "url": "https://www.gutenberg.org/files/514/514-0.txt",
+  "hash": "a41f6a8de1590c5e9cd86c1d53a2be18",
+  "priority": "high",
+  "filepath": "mvlm_comprehensive_dataset/biblical_classical/classical_literature/Little-Women_a41f6a8d.txt"
+}

@@ -1,0 +1,14 @@
+{
+  "title": "David Copperfield",
+  "author": "Charles Dickens",
+  "source": "Project Gutenberg",
+  "category": "biblical_classical",
+  "subcategory": "classical_literature",
+  "quality_score": 10.0,
+  "biblical_alignment": 7.0,
+  "word_count": 354826,
+  "url": "https://www.gutenberg.org/files/766/766-0.txt",
+  "hash": "883517d6c1b69792ac0e8514dd6768fa",
+  "priority": "high",
+  "filepath": "mvlm_comprehensive_dataset/biblical_classical/classical_literature/David-Copperfield_883517d6.txt"
+}

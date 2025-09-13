@@ -1,0 +1,14 @@
+{
+  "title": "Persuasion",
+  "author": "Jane Austen",
+  "source": "Project Gutenberg",
+  "category": "biblical_classical",
+  "subcategory": "classical_literature",
+  "quality_score": 10.0,
+  "biblical_alignment": 7.0,
+  "word_count": 83335,
+  "url": "https://www.gutenberg.org/files/105/105-0.txt",
+  "hash": "709b4c49329b042449219712549914fe",
+  "priority": "medium",
+  "filepath": "mvlm_comprehensive_dataset/biblical_classical/classical_literature/Persuasion_709b4c49.txt"
+}

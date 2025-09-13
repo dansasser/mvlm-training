@@ -1,0 +1,14 @@
+{
+  "title": "The Picture of Dorian Gray",
+  "author": "Oscar Wilde",
+  "source": "Project Gutenberg",
+  "category": "biblical_classical",
+  "subcategory": "classical_literature",
+  "quality_score": 10.0,
+  "biblical_alignment": 7.0,
+  "word_count": 78979,
+  "url": "https://www.gutenberg.org/files/174/174-0.txt",
+  "hash": "5e9ff04cde94514d0c798b5d1f2f863e",
+  "priority": "medium",
+  "filepath": "mvlm_comprehensive_dataset/biblical_classical/classical_literature/The-Picture-of-Dorian-Gray_5e9ff04c.txt"
+}

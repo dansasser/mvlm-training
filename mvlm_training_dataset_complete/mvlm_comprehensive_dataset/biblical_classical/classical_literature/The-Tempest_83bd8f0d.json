@@ -1,0 +1,14 @@
+{
+  "title": "The Tempest",
+  "author": "William Shakespeare",
+  "source": "Project Gutenberg",
+  "category": "biblical_classical",
+  "subcategory": "classical_literature",
+  "quality_score": 10.0,
+  "biblical_alignment": 7.0,
+  "word_count": 40750,
+  "url": "https://www.gutenberg.org/files/23/23-0.txt",
+  "hash": "83bd8f0dc7975d54b729cc361f0a3786",
+  "priority": "medium",
+  "filepath": "mvlm_comprehensive_dataset/biblical_classical/classical_literature/The-Tempest_83bd8f0d.txt"
+}

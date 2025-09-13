@@ -1,0 +1,14 @@
+{
+  "title": "Twenty Years After",
+  "author": "Alexandre Dumas",
+  "source": "Project Gutenberg",
+  "category": "biblical_classical",
+  "subcategory": "virtue_character",
+  "quality_score": 10.0,
+  "biblical_alignment": 7.0,
+  "word_count": 242057,
+  "url": "https://www.gutenberg.org/files/1259/1259-0.txt",
+  "hash": "4e9736d75b596223240672c3052d4930",
+  "priority": "medium",
+  "filepath": "mvlm_comprehensive_dataset/biblical_classical/virtue_character/Twenty-Years-After_4e9736d7.txt"
+}

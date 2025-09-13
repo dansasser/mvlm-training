@@ -1,0 +1,14 @@
+{
+  "title": "The Wealth of Nations",
+  "author": "Adam Smith",
+  "source": "Project Gutenberg",
+  "category": "educational",
+  "subcategory": "history_social",
+  "quality_score": 9.0,
+  "biblical_alignment": 6.5,
+  "word_count": 381076,
+  "url": "https://www.gutenberg.org/files/3300/3300-0.txt",
+  "hash": "8fc4ca90f98a5b02c73e710132fffb3d",
+  "priority": "high",
+  "filepath": "mvlm_comprehensive_dataset/educational/history_social/The-Wealth-of-Nations_8fc4ca90.txt"
+}

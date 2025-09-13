@@ -1,0 +1,14 @@
+{
+  "title": "Phantastes",
+  "author": "George MacDonald",
+  "source": "Project Gutenberg",
+  "category": "biblical_classical",
+  "subcategory": "historical_biblical",
+  "quality_score": 10.0,
+  "biblical_alignment": 10.0,
+  "word_count": 72048,
+  "url": "https://www.gutenberg.org/files/325/325-0.txt",
+  "hash": "5969508316a8d2e21f2e5d6d0b8c759e",
+  "priority": "high",
+  "filepath": "mvlm_comprehensive_dataset/biblical_classical/historical_biblical/Phantastes_59695083.txt"
+}

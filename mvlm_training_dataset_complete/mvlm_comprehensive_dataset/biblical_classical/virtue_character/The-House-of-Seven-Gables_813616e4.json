@@ -1,0 +1,14 @@
+{
+  "title": "The House of Seven Gables",
+  "author": "Nathaniel Hawthorne",
+  "source": "Project Gutenberg",
+  "category": "biblical_classical",
+  "subcategory": "virtue_character",
+  "quality_score": 10.0,
+  "biblical_alignment": 7.0,
+  "word_count": 104875,
+  "url": "https://www.gutenberg.org/files/77/77-0.txt",
+  "hash": "813616e4e18da305d59f63b6f4e63850",
+  "priority": "medium",
+  "filepath": "mvlm_comprehensive_dataset/biblical_classical/virtue_character/The-House-of-Seven-Gables_813616e4.txt"
+}

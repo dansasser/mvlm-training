@@ -1,0 +1,14 @@
+{
+  "title": "The Social Contract",
+  "author": "Jean-Jacques Rousseau",
+  "source": "Project Gutenberg",
+  "category": "educational",
+  "subcategory": "philosophy_ethics",
+  "quality_score": 10.0,
+  "biblical_alignment": 6.5,
+  "word_count": 123505,
+  "url": "https://www.gutenberg.org/files/46333/46333-0.txt",
+  "hash": "bacf811e791267e1d34708d6eb2415f0",
+  "priority": "medium",
+  "filepath": "mvlm_comprehensive_dataset/educational/philosophy_ethics/The-Social-Contract_bacf811e.txt"
+}

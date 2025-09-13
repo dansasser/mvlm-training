@@ -1,0 +1,14 @@
+{
+  "title": "Summa Theologica Part I",
+  "author": "Thomas Aquinas",
+  "source": "Project Gutenberg",
+  "category": "philosophical",
+  "subcategory": "medieval_philosophy",
+  "quality_score": 10.0,
+  "biblical_alignment": 9.5,
+  "word_count": 504149,
+  "url": "https://www.gutenberg.org/files/17611/17611-0.txt",
+  "hash": "bba4854d03b26247312210794d5e0528",
+  "priority": "high",
+  "filepath": "mvlm_comprehensive_dataset/philosophical/medieval_philosophy/Summa-Theologica-Part-I_bba4854d.txt"
+}

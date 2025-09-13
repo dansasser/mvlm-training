@@ -1,0 +1,14 @@
+{
+  "title": "Billy Budd",
+  "author": "Herman Melville",
+  "source": "Project Gutenberg",
+  "category": "biblical_classical",
+  "subcategory": "virtue_character",
+  "quality_score": 10.0,
+  "biblical_alignment": 7.0,
+  "word_count": 139452,
+  "url": "https://www.gutenberg.org/files/10712/10712-0.txt",
+  "hash": "1aa7d85e85fc3ab34d5ff493feb516f9",
+  "priority": "medium",
+  "filepath": "mvlm_comprehensive_dataset/biblical_classical/virtue_character/Billy-Budd_1aa7d85e.txt"
+}

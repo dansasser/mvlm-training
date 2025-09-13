@@ -1,0 +1,14 @@
+{
+  "title": "Monologion",
+  "author": "Anselm of Canterbury",
+  "source": "Project Gutenberg",
+  "category": "philosophical",
+  "subcategory": "medieval_philosophy",
+  "quality_score": 10.0,
+  "biblical_alignment": 9.5,
+  "word_count": 105628,
+  "url": "https://www.gutenberg.org/files/7430/7430-0.txt",
+  "hash": "4b35821751980faf6937d2dee39cc98a",
+  "priority": "medium",
+  "filepath": "mvlm_comprehensive_dataset/philosophical/medieval_philosophy/Monologion_4b358217.txt"
+}

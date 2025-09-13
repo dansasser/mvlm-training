@@ -1,0 +1,14 @@
+{
+  "title": "The Innocents Abroad",
+  "author": "Mark Twain",
+  "source": "Project Gutenberg",
+  "category": "biblical_classical",
+  "subcategory": "classical_literature",
+  "quality_score": 10.0,
+  "biblical_alignment": 7.0,
+  "word_count": 196146,
+  "url": "https://www.gutenberg.org/files/3176/3176-0.txt",
+  "hash": "db8f175755661bc58af42df5323eef9c",
+  "priority": "medium",
+  "filepath": "mvlm_comprehensive_dataset/biblical_classical/classical_literature/The-Innocents-Abroad_db8f1757.txt"
+}

@@ -1,0 +1,14 @@
+{
+  "title": "Roughing It",
+  "author": "Mark Twain",
+  "source": "Project Gutenberg",
+  "category": "biblical_classical",
+  "subcategory": "classical_literature",
+  "quality_score": 10.0,
+  "biblical_alignment": 7.0,
+  "word_count": 167937,
+  "url": "https://www.gutenberg.org/files/3177/3177-0.txt",
+  "hash": "b30e95b825f0549834247ba65b5dbb40",
+  "priority": "medium",
+  "filepath": "mvlm_comprehensive_dataset/biblical_classical/classical_literature/Roughing-It_b30e95b8.txt"
+}

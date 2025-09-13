@@ -1,0 +1,14 @@
+{
+  "title": "Two Treatises of Government",
+  "author": "John Locke",
+  "source": "Project Gutenberg",
+  "category": "philosophical",
+  "subcategory": "modern_philosophy",
+  "quality_score": 10.0,
+  "biblical_alignment": 8.5,
+  "word_count": 59424,
+  "url": "https://www.gutenberg.org/files/7370/7370-0.txt",
+  "hash": "ec132abf75d828d98bf4cf817fadbd81",
+  "priority": "high",
+  "filepath": "mvlm_comprehensive_dataset/philosophical/modern_philosophy/Two-Treatises-of-Government_ec132abf.txt"
+}

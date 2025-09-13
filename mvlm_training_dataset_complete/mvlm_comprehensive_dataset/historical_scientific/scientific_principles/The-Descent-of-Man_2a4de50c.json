@@ -1,0 +1,14 @@
+{
+  "title": "The Descent of Man",
+  "author": "Charles Darwin",
+  "source": "Project Gutenberg",
+  "category": "historical_scientific",
+  "subcategory": "scientific_principles",
+  "quality_score": 10.0,
+  "biblical_alignment": 7.0,
+  "word_count": 310459,
+  "url": "https://www.gutenberg.org/files/2300/2300-0.txt",
+  "hash": "2a4de50c8a5a75e0a89e526bfb20064c",
+  "priority": "medium",
+  "filepath": "mvlm_comprehensive_dataset/historical_scientific/scientific_principles/The-Descent-of-Man_2a4de50c.txt"
+}

@@ -1,0 +1,14 @@
+{
+  "title": "The Wonderful Wizard of Oz",
+  "author": "L. Frank Baum",
+  "source": "Project Gutenberg",
+  "category": "biblical_classical",
+  "subcategory": "virtue_character",
+  "quality_score": 10.0,
+  "biblical_alignment": 7.0,
+  "word_count": 39649,
+  "url": "https://www.gutenberg.org/files/55/55-0.txt",
+  "hash": "6c8887147b34c836a93b410ce3b7eb27",
+  "priority": "medium",
+  "filepath": "mvlm_comprehensive_dataset/biblical_classical/virtue_character/The-Wonderful-Wizard-of-Oz_6c888714.txt"
+}

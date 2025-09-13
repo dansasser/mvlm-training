@@ -1,0 +1,14 @@
+{
+  "title": "The Laws",
+  "author": "Plato",
+  "source": "Project Gutenberg",
+  "category": "philosophical",
+  "subcategory": "classical_philosophy",
+  "quality_score": 10.0,
+  "biblical_alignment": 9.8,
+  "word_count": 195616,
+  "url": "https://www.gutenberg.org/files/1660/1660-0.txt",
+  "hash": "fb94d793696985f47207d012386071fb",
+  "priority": "high",
+  "filepath": "mvlm_comprehensive_dataset/philosophical/classical_philosophy/The-Laws_fb94d793.txt"
+}

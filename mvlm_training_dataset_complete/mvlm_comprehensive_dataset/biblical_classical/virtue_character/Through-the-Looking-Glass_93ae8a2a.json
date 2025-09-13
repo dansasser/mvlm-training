@@ -1,0 +1,14 @@
+{
+  "title": "Through the Looking-Glass",
+  "author": "Lewis Carroll",
+  "source": "Project Gutenberg",
+  "category": "biblical_classical",
+  "subcategory": "virtue_character",
+  "quality_score": 10.0,
+  "biblical_alignment": 10.0,
+  "word_count": 29752,
+  "url": "https://www.gutenberg.org/files/12/12-0.txt",
+  "hash": "93ae8a2aa68b5d902fab96ed80c41c65",
+  "priority": "high",
+  "filepath": "mvlm_comprehensive_dataset/biblical_classical/virtue_character/Through-the-Looking-Glass_93ae8a2a.txt"
+}

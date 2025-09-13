@@ -1,0 +1,14 @@
+{
+  "title": "Robinson Crusoe",
+  "author": "Daniel Defoe",
+  "source": "Project Gutenberg",
+  "category": "biblical_classical",
+  "subcategory": "virtue_character",
+  "quality_score": 10.0,
+  "biblical_alignment": 7.0,
+  "word_count": 120913,
+  "url": "https://www.gutenberg.org/files/521/521-0.txt",
+  "hash": "d3969b26ea6232555d4dfd1205a5db3f",
+  "priority": "high",
+  "filepath": "mvlm_comprehensive_dataset/biblical_classical/virtue_character/Robinson-Crusoe_d3969b26.txt"
+}

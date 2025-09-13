@@ -1,0 +1,14 @@
+{
+  "title": "Prior Analytics",
+  "author": "Aristotle",
+  "source": "Project Gutenberg",
+  "category": "philosophical",
+  "subcategory": "classical_philosophy",
+  "quality_score": 10.0,
+  "biblical_alignment": 9.0,
+  "word_count": 115663,
+  "url": "https://www.gutenberg.org/files/2413/2413-0.txt",
+  "hash": "40a40cf54d97ac250988f0236c058183",
+  "priority": "medium",
+  "filepath": "mvlm_comprehensive_dataset/philosophical/classical_philosophy/Prior-Analytics_40a40cf5.txt"
+}

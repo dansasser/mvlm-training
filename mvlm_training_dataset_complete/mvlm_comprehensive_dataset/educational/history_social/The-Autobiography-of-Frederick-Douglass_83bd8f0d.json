@@ -1,0 +1,14 @@
+{
+  "title": "The Autobiography of Frederick Douglass",
+  "author": "Frederick Douglass",
+  "source": "Project Gutenberg",
+  "category": "educational",
+  "subcategory": "history_social",
+  "quality_score": 10.0,
+  "biblical_alignment": 6.5,
+  "word_count": 40750,
+  "url": "https://www.gutenberg.org/files/23/23-0.txt",
+  "hash": "83bd8f0dc7975d54b729cc361f0a3786",
+  "priority": "high",
+  "filepath": "mvlm_comprehensive_dataset/educational/history_social/The-Autobiography-of-Frederick-Douglass_83bd8f0d.txt"
+}

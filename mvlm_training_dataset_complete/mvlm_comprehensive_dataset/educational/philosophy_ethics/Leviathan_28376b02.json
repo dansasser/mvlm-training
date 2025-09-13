@@ -1,0 +1,14 @@
+{
+  "title": "Leviathan",
+  "author": "Thomas Hobbes",
+  "source": "Project Gutenberg",
+  "category": "educational",
+  "subcategory": "philosophy_ethics",
+  "quality_score": 10.0,
+  "biblical_alignment": 6.5,
+  "word_count": 213346,
+  "url": "https://www.gutenberg.org/files/3207/3207-0.txt",
+  "hash": "28376b0263ac095ba307c9dc859285a8",
+  "priority": "medium",
+  "filepath": "mvlm_comprehensive_dataset/educational/philosophy_ethics/Leviathan_28376b02.txt"
+}

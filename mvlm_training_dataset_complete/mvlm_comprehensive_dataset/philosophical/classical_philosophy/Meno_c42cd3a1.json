@@ -1,0 +1,14 @@
+{
+  "title": "Meno",
+  "author": "Plato",
+  "source": "Project Gutenberg",
+  "category": "philosophical",
+  "subcategory": "classical_philosophy",
+  "quality_score": 10.0,
+  "biblical_alignment": 9.0,
+  "word_count": 30920,
+  "url": "https://www.gutenberg.org/files/1659/1659-0.txt",
+  "hash": "c42cd3a1cdb84b833850a2560cd09a70",
+  "priority": "high",
+  "filepath": "mvlm_comprehensive_dataset/philosophical/classical_philosophy/Meno_c42cd3a1.txt"
+}

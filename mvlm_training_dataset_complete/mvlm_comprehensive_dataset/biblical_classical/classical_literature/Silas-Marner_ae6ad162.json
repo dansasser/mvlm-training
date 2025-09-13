@@ -1,0 +1,14 @@
+{
+  "title": "Silas Marner",
+  "author": "George Eliot",
+  "source": "Project Gutenberg",
+  "category": "biblical_classical",
+  "subcategory": "classical_literature",
+  "quality_score": 10.0,
+  "biblical_alignment": 7.0,
+  "word_count": 70982,
+  "url": "https://www.gutenberg.org/files/550/550-0.txt",
+  "hash": "ae6ad1623cfe70a4be90364c6807ee25",
+  "priority": "high",
+  "filepath": "mvlm_comprehensive_dataset/biblical_classical/classical_literature/Silas-Marner_ae6ad162.txt"
+}

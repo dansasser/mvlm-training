@@ -1,0 +1,14 @@
+{
+  "title": "Walden",
+  "author": "Henry David Thoreau",
+  "source": "Project Gutenberg",
+  "category": "educational",
+  "subcategory": "history_social",
+  "quality_score": 10.0,
+  "biblical_alignment": 6.5,
+  "word_count": 115783,
+  "url": "https://www.gutenberg.org/files/205/205-0.txt",
+  "hash": "3d5b7d258870f12533ae9226733771b7",
+  "priority": "high",
+  "filepath": "mvlm_comprehensive_dataset/educational/history_social/Walden_3d5b7d25.txt"
+}

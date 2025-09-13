@@ -1,0 +1,214 @@
+{
+  "processing_performance": {
+    "text_sizes": [
+      "short_text",
+      "medium_text",
+      "long_text",
+      "emotional_text",
+      "technical_text"
+    ],
+    "processing_times": [
+      8.232545852661133,
+      8.758735656738281,
+      14.499664306640625,
+      10.551512241363525,
+      10.967159271240234
+    ],
+    "tags_extracted": [
+      5.2,
+      17.2,
+      55.5,
+      5.75,
+      8.6
+    ],
+    "memory_nodes_created": [
+      1,
+      1,
+      1,
+      1,
+      1
+    ],
+    "success_rates": [
+      100,
+      100,
+      100,
+      100,
+      100
+    ]
+  },
+  "memory_operations": {
+    "operation_types": [
+      "Storage",
+      "Retrieval",
+      "Search"
+    ],
+    "operation_times": [
+      12.302279472351074,
+      4.357337951660156,
+      4.71806526184082
+    ],
+    "success_rates": [
+      100.0,
+      100.0,
+      100.0
+    ],
+    "data_volumes": [
+      10,
+      10,
+      5
+    ]
+  },
+  "retrieval_performance": {
+    "strategies": [
+      "Semantic",
+      "Temporal",
+      "Importance",
+      "Emotional",
+      "Recency"
+    ],
+    "response_times": [
+      3.8588523864746094,
+      3.37066650390625,
+      3.646087646484375,
+      2.06146240234375,
+      1.979207992553711
+    ],
+    "result_counts": [
+      2,
+      5,
+      5,
+      0,
+      0
+    ],
+    "relevance_scores": [
+      0.8,
+      0.8,
+      0.8,
+      0.8,
+      0.8
+    ]
+  },
+  "tag_extraction": {
+    "content_types": [
+      "Emotional Text",
+      "Technical Text",
+      "Medium Text"
+    ],
+    "extraction_times": [
+      11.07606291770935,
+      13.000965118408203,
+      15.039396286010742
+    ],
+    "tag_counts": [
+      5.75,
+      8.6,
+      17.2
+    ],
+    "tag_confidence": [
+      0.5645833333333333,
+      0.5431428571428571,
+      0.5814870509607352
+    ],
+    "tag_diversity": [
+      2.625,
+      2,
+      3.4
+    ]
+  },
+  "emotional_integration": {
+    "integration_metrics": [
+      "Processing Time",
+      "Emotional Tags",
+      "Success Rate",
+      "Integration Quality"
+    ],
+    "processing_times": [
+      13.46394419670105,
+      0.75,
+      100,
+      85.0
+    ],
+    "emotional_tags": [
+      0,
+      0.75,
+      0,
+      0
+    ],
+    "integration_success": [
+      0,
+      0,
+      100,
+      0
+    ]
+  },
+  "concurrent_operations": {
+    "thread_counts": [
+      1,
+      2,
+      4,
+      8
+    ],
+    "throughput": [
+      68.69601677148847,
+      52.09668364178363,
+      52.26205139227652,
+      32.29412161004633
+    ],
+    "avg_response_time": [
+      14.129400253295898,
+      37.41002082824707,
+      51.79643630981445,
+      211.52734756469727
+    ],
+    "error_rates": [
+      0.0,
+      0.0,
+      0.0,
+      0.0
+    ]
+  },
+  "scalability": {
+    "data_volumes": [
+      10,
+      50,
+      100,
+      200
+    ],
+    "processing_times": [
+      17.058348655700684,
+      21.95453643798828,
+      28.232052326202393,
+      38.44922184944153
+    ],
+    "memory_usage": [
+      5.0,
+      25.0,
+      50.0,
+      100.0
+    ],
+    "success_rates": [
+      100.0,
+      100.0,
+      100.0,
+      100.0
+    ]
+  },
+  "metadata": {
+    "timestamp": "20250729_192454",
+    "test_date": "2025-07-29T19:25:12.579861",
+    "framework": "SIM-ONE Framework",
+    "protocol": "Memory Tagger Protocol (MTP)",
+    "version": "1.0",
+    "test_environment": "Development",
+    "total_tests": 25,
+    "benchmark_categories": [
+      "processing_performance",
+      "memory_operations",
+      "retrieval_performance",
+      "tag_extraction",
+      "emotional_integration",
+      "concurrent_operations",
+      "scalability"
+    ]
+  }
+}

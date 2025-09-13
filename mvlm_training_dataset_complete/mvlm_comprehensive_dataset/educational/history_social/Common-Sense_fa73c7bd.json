@@ -1,0 +1,14 @@
+{
+  "title": "Common Sense",
+  "author": "Thomas Paine",
+  "source": "Project Gutenberg",
+  "category": "educational",
+  "subcategory": "history_social",
+  "quality_score": 9.5,
+  "biblical_alignment": 6.5,
+  "word_count": 21997,
+  "url": "https://www.gutenberg.org/files/147/147-0.txt",
+  "hash": "fa73c7bd3988162a7cb5a15d9226a172",
+  "priority": "high",
+  "filepath": "mvlm_comprehensive_dataset/educational/history_social/Common-Sense_fa73c7bd.txt"
+}

@@ -1,0 +1,14 @@
+{
+  "title": "The Consolation of Philosophy",
+  "author": "Boethius",
+  "source": "Project Gutenberg",
+  "category": "philosophical",
+  "subcategory": "medieval_philosophy",
+  "quality_score": 10.0,
+  "biblical_alignment": 9.5,
+  "word_count": 42710,
+  "url": "https://www.gutenberg.org/files/14328/14328-0.txt",
+  "hash": "a9ba1bd1946673f5b84083404be014fa",
+  "priority": "high",
+  "filepath": "mvlm_comprehensive_dataset/philosophical/medieval_philosophy/The-Consolation-of-Philosophy_a9ba1bd1.txt"
+}

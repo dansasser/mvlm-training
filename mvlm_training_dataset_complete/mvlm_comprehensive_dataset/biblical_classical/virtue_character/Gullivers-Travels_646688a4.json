@@ -1,0 +1,14 @@
+{
+  "title": "Gullivers Travels",
+  "author": "Jonathan Swift",
+  "source": "Project Gutenberg",
+  "category": "biblical_classical",
+  "subcategory": "virtue_character",
+  "quality_score": 10.0,
+  "biblical_alignment": 7.0,
+  "word_count": 105079,
+  "url": "https://www.gutenberg.org/files/829/829-0.txt",
+  "hash": "646688a4624128ff9702d068f03691a4",
+  "priority": "high",
+  "filepath": "mvlm_comprehensive_dataset/biblical_classical/virtue_character/Gullivers-Travels_646688a4.txt"
+}

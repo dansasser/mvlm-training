@@ -1,0 +1,14 @@
+{
+  "title": "The Last of the Mohicans",
+  "author": "James Fenimore Cooper",
+  "source": "Project Gutenberg",
+  "category": "biblical_classical",
+  "subcategory": "virtue_character",
+  "quality_score": 10.0,
+  "biblical_alignment": 7.0,
+  "word_count": 140098,
+  "url": "https://www.gutenberg.org/files/27/27-0.txt",
+  "hash": "5b0bdedf2fab0e4f476a0c3346c27873",
+  "priority": "medium",
+  "filepath": "mvlm_comprehensive_dataset/biblical_classical/virtue_character/The-Last-of-the-Mohicans_5b0bdedf.txt"
+}

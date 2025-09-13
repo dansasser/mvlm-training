@@ -1,0 +1,14 @@
+{
+  "title": "A Letter Concerning Toleration",
+  "author": "John Locke",
+  "source": "Project Gutenberg",
+  "category": "philosophical",
+  "subcategory": "modern_philosophy",
+  "quality_score": 10.0,
+  "biblical_alignment": 8.5,
+  "word_count": 203443,
+  "url": "https://www.gutenberg.org/files/7435/7435-0.txt",
+  "hash": "e3064d96ee1b838dca855f991f102eb9",
+  "priority": "medium",
+  "filepath": "mvlm_comprehensive_dataset/philosophical/modern_philosophy/A-Letter-Concerning-Toleration_e3064d96.txt"
+}

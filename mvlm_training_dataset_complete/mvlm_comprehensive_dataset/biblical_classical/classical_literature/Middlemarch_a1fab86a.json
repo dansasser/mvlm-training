@@ -1,0 +1,14 @@
+{
+  "title": "Middlemarch",
+  "author": "George Eliot",
+  "source": "Project Gutenberg",
+  "category": "biblical_classical",
+  "subcategory": "classical_literature",
+  "quality_score": 10.0,
+  "biblical_alignment": 7.0,
+  "word_count": 316381,
+  "url": "https://www.gutenberg.org/files/145/145-0.txt",
+  "hash": "a1fab86aa9db9aad49778ec7936c485b",
+  "priority": "medium",
+  "filepath": "mvlm_comprehensive_dataset/biblical_classical/classical_literature/Middlemarch_a1fab86a.txt"
+}

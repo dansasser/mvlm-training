@@ -1,0 +1,14 @@
+{
+  "title": "The Confessions of St Augustine",
+  "author": "Saint Augustine",
+  "source": "Project Gutenberg",
+  "category": "biblical_classical",
+  "subcategory": "historical_biblical",
+  "quality_score": 10.0,
+  "biblical_alignment": 7.0,
+  "word_count": 114729,
+  "url": "https://www.gutenberg.org/files/3296/3296-0.txt",
+  "hash": "eac7ef8937158605a64faa3945baedf3",
+  "priority": "high",
+  "filepath": "mvlm_comprehensive_dataset/biblical_classical/historical_biblical/The-Confessions-of-St-Augustine_eac7ef89.txt"
+}

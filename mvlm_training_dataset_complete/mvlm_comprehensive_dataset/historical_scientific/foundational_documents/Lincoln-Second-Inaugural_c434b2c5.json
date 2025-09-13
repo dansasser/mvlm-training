@@ -1,0 +1,14 @@
+{
+  "title": "Lincoln Second Inaugural",
+  "author": "Abraham Lincoln",
+  "source": "Project Gutenberg",
+  "category": "historical_scientific",
+  "subcategory": "foundational_documents",
+  "quality_score": 10.0,
+  "biblical_alignment": 8.2,
+  "word_count": 66273,
+  "url": "https://www.gutenberg.org/files/10008/10008-0.txt",
+  "hash": "c434b2c5bd96beb25c61f52003e7361f",
+  "priority": "medium",
+  "filepath": "mvlm_comprehensive_dataset/historical_scientific/foundational_documents/Lincoln-Second-Inaugural_c434b2c5.txt"
+}
