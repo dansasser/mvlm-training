@@ -5,7 +5,7 @@ sys.path.append(str(Path(__file__).parent.parent))
 from simone_transformer import SIMONEModel, EnhancedSIMONEModel
 from .advanced_tokenizer import BiblicalBPETokenizer, train_biblical_tokenizer
 from .enhanced_trainer import EnhancedPrioritaryTrainer
-from .config import PrioritaryConfig
+from .config import PrioritaryConfig, PropheticSingularityState
 from .dataset import WeightedTextDataset
 from .advanced_losses import (
     BiblicalAlignmentLoss,
@@ -27,7 +27,8 @@ __all__ = [
     
     # Training components (Enhanced only)
     "EnhancedPrioritaryTrainer",
-    "PrioritaryConfig", 
+    "PrioritaryConfig",
+    "PropheticSingularityState",
     "WeightedTextDataset",
     
     # Advanced losses

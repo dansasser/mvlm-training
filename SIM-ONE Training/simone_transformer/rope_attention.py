@@ -9,6 +9,8 @@ import torch.nn as nn
 import torch.nn.functional as F
 from typing import Optional, Tuple, Dict
 
+from prioritary_mvlm.config import PropheticSingularityState
+
 
 class RotaryPositionalEmbedding(nn.Module):
     """
@@ -121,7 +123,8 @@ class EnhancedGovernanceAttention(nn.Module):
         attention_mask: Optional[torch.Tensor] = None,
         policy_guidance: Optional[torch.Tensor] = None,
         memory_context: Optional[torch.Tensor] = None,
-        output_traces: bool = True
+        output_traces: bool = True,
+        prophetic_state: Optional[PropheticSingularityState] = None
     ) -> Tuple[torch.Tensor, Dict[str, torch.Tensor]]:
         """
         Args:
@@ -155,21 +158,43 @@ class EnhancedGovernanceAttention(nn.Module):
         # Compute base attention scores
         scores = torch.matmul(q, k.transpose(-2, -1)) * self.scale
         
+        aligned_state = None
+        if prophetic_state is not None:
+            aligned_state = prophetic_state.align_to_length(seq_len).to(x.device, x.dtype)
+            prophetic_mask = aligned_state.compute_policy_mask(self.num_heads, seq_len)
+            scores = scores + prophetic_mask * (self.governance_strength * 0.5)
+            decay_gate = aligned_state.compute_memory_decay(self.num_heads, seq_len).unsqueeze(-2)
+            scores = scores * (1.0 + (decay_gate - 1.0) * 0.5)
+        else:
+            prophetic_mask = None
+
         # Apply governance mechanisms
         governance_outputs = {}
-        
+
         # 1. Policy control - modifies attention patterns based on learned policies
-        policy_logits, policy_mask = self.policy_controller(x, scores, policy_guidance)
+        policy_logits, policy_mask = self.policy_controller(
+            x,
+            scores,
+            policy_guidance,
+            aligned_state
+        )
         governance_outputs['policy_logits'] = policy_logits
-        
+
         # Apply policy mask to attention scores
         if policy_mask is not None:
             scores = scores + policy_mask * self.governance_strength
-        
+        if prophetic_mask is not None:
+            scores = scores + prophetic_mask * (self.governance_strength * 0.3)
+
         # 2. Memory management - incorporates memory context
-        memory_weights, memory_signals = self.memory_manager(x, scores, memory_context)
+        memory_weights, memory_signals = self.memory_manager(
+            x,
+            scores,
+            memory_context,
+            aligned_state
+        )
         governance_outputs['memory_signals'] = memory_signals
-        
+
         # Apply memory weights
         if memory_weights is not None:
             scores = scores * (1 + memory_weights * self.governance_strength)
@@ -184,18 +209,23 @@ class EnhancedGovernanceAttention(nn.Module):
         
         # Apply attention to values
         out = torch.matmul(attn_weights, v)
-        
+
         # 3. Trace generation - for interpretability
         if output_traces:
-            trace_info = self.trace_generator(x, attn_weights, out)
+            trace_info = self.trace_generator(x, attn_weights, out, aligned_state)
             governance_outputs['trace'] = trace_info
-        
+
         # Reshape and project output
         out = out.transpose(1, 2).contiguous().view(batch_size, seq_len, hidden_dim)
         out = self.out_proj(out)
-        
+
         governance_outputs['attn_weights'] = attn_weights
-        
+        if prophetic_mask is not None:
+            governance_outputs['prophetic_mask'] = prophetic_mask
+
+        if aligned_state is not None:
+            governance_outputs['prophetic_decay'] = aligned_state.compute_memory_decay(self.num_heads, seq_len)
+
         return out, governance_outputs
 
 
@@ -227,7 +257,8 @@ class PolicyController(nn.Module):
         self,
         x: torch.Tensor,
         attention_scores: torch.Tensor,
-        policy_guidance: Optional[torch.Tensor] = None
+        policy_guidance: Optional[torch.Tensor] = None,
+        prophetic_state: Optional[PropheticSingularityState] = None
     ) -> Tuple[torch.Tensor, Optional[torch.Tensor]]:
         """
         Generate policy-based attention modifications.
@@ -251,6 +282,13 @@ class PolicyController(nn.Module):
             policy_input = x
             
         policy_logits = self.policy_net(policy_input)
+
+        aligned_state = None
+        if prophetic_state is not None:
+            aligned_state = prophetic_state.align_to_length(seq_len).to(x.device, x.dtype)
+            policy_logits = policy_logits + aligned_state.kingdom_flow.unsqueeze(-1)
+            time_gate = aligned_state.time_index.unsqueeze(-1)
+            policy_logits = policy_logits * (1.0 + (time_gate - 0.5) * 0.2)
         
         # Generate head-specific attention modifications
         policy_masks = []
@@ -265,7 +303,11 @@ class PolicyController(nn.Module):
         
         # Stack for all heads
         policy_mask = torch.stack(policy_masks, dim=1)  # [batch, num_heads, seq_len, seq_len]
-        
+
+        if prophetic_state is not None and aligned_state is not None:
+            additional_mask = aligned_state.compute_policy_mask(self.num_heads, seq_len)
+            policy_mask = policy_mask + additional_mask
+
         return policy_logits, policy_mask
 
 
@@ -298,7 +340,8 @@ class MemoryManager(nn.Module):
         self,
         x: torch.Tensor,
         attention_scores: torch.Tensor,
-        memory_context: Optional[torch.Tensor] = None
+        memory_context: Optional[torch.Tensor] = None,
+        prophetic_state: Optional[PropheticSingularityState] = None
     ) -> Tuple[Optional[torch.Tensor], torch.Tensor]:
         """
         Generate memory-based attention modifications.
@@ -316,7 +359,8 @@ class MemoryManager(nn.Module):
         
         # Encode current input to memory space
         current_memory = self.memory_encoder(x)
-        
+
+        aligned_state = None
         if memory_context is not None:
             # Integrate with previous memory context
             integrated_memory, _ = self.context_integrator(
@@ -324,14 +368,23 @@ class MemoryManager(nn.Module):
             )
         else:
             integrated_memory = current_memory
-        
+
+        if prophetic_state is not None:
+            aligned_state = prophetic_state.align_to_length(seq_len).to(x.device, x.dtype)
+            mercy_gate = 1.0 + (aligned_state.mercy - 0.5) * 0.3
+            integrated_memory = integrated_memory * mercy_gate.unsqueeze(-1)
+
         # Generate attention weight modifications
         memory_weights = self.memory_to_weights(integrated_memory)  # [batch, seq_len, num_heads]
         memory_weights = memory_weights.transpose(1, 2).unsqueeze(-1)  # [batch, num_heads, 1, seq_len]
-        
+
         # Memory weights influence how much attention each position should receive
         memory_weights = torch.tanh(memory_weights)
-        
+
+        if prophetic_state is not None and aligned_state is not None:
+            decay = aligned_state.compute_memory_decay(self.num_heads, seq_len).unsqueeze(-2)
+            memory_weights = memory_weights * decay
+
         return memory_weights, integrated_memory
 
 
@@ -355,7 +408,8 @@ class TraceGenerator(nn.Module):
         self,
         x: torch.Tensor,
         attention_weights: torch.Tensor,
-        attention_output: torch.Tensor
+        attention_output: torch.Tensor,
+        prophetic_state: Optional[PropheticSingularityState] = None
     ) -> Dict[str, torch.Tensor]:
         """
         Generate interpretability traces.
@@ -395,7 +449,15 @@ class TraceGenerator(nn.Module):
             'attention_entropy': attention_entropy,  # [batch, seq_len]
             'attention_patterns': avg_attention  # [batch, num_heads, seq_len]
         }
-        
+
+        if prophetic_state is not None:
+            aligned_state = prophetic_state.align_to_length(seq_len).to(x.device, x.dtype)
+            envelope = aligned_state.compute_trace_envelope(seq_len)
+            summary = aligned_state.summary()
+            trace_info['prophetic_envelope'] = envelope
+            trace_info['kingdom_mean'] = summary['kingdom']['mean']
+            trace_info['kingdom_std'] = summary['kingdom']['std']
+
         return trace_info
 
 

@@ -9,6 +9,8 @@ import torch.nn.functional as F
 from typing import Optional, Dict, List, Tuple
 import math
 
+from prioritary_mvlm.config import PropheticSingularityState
+
 from .rope_attention import EnhancedGovernanceAttention, create_causal_mask
 from .modern_layers import (
     RMSNorm, SwiGLU, GeGLU, GatedResidualConnection, 
@@ -37,12 +39,14 @@ class EnhancedSIMONEBlock(nn.Module):
         use_moe: bool = False,
         num_experts: int = 8,
         layer_idx: int = 0,
-        vocab_size: int = 32000
+        vocab_size: int = 32000,
+        total_layers: int = 12
     ):
         super().__init__()
         self.hidden_dim = hidden_dim
         self.num_heads = num_heads
         self.layer_idx = layer_idx
+        self.total_layers = total_layers
         
         # Pre-attention normalization
         self.attn_norm = RMSNorm(hidden_dim)
@@ -93,7 +97,8 @@ class EnhancedSIMONEBlock(nn.Module):
         attention_mask: Optional[torch.Tensor] = None,
         memory_context: Optional[torch.Tensor] = None,
         policy_guidance: Optional[torch.Tensor] = None,
-        output_traces: bool = True
+        output_traces: bool = True,
+        prophetic_state: Optional[PropheticSingularityState] = None
     ) -> Tuple[torch.Tensor, Dict[str, torch.Tensor]]:
         """
         Args:
@@ -112,16 +117,27 @@ class EnhancedSIMONEBlock(nn.Module):
         
         # Pre-attention normalization
         x_norm = self.attn_norm(x)
-        
+
+        block_state = None
+        modulation_gate = None
+        if prophetic_state is not None:
+            block_state = prophetic_state.align_to_length(x.shape[1])
+            modulation_gate = block_state.layer_modulation(self.layer_idx, self.total_layers).unsqueeze(-1)
+            x_norm = x_norm * modulation_gate
+
         # Enhanced attention with governance
         attn_output, gov_outputs = self.attention(
             x_norm,
             attention_mask=attention_mask,
             policy_guidance=policy_guidance,
             memory_context=memory_context,
-            output_traces=output_traces
+            output_traces=output_traces,
+            prophetic_state=block_state
         )
-        
+
+        if modulation_gate is not None:
+            attn_output = attn_output * modulation_gate
+
         # Apply biblical attention bias
         if input_ids is not None:
             # Get attention scores and apply biblical bias
@@ -136,7 +152,11 @@ class EnhancedSIMONEBlock(nn.Module):
         # Feedforward block
         residual = x
         x_norm = self.ff_norm(x)
+        if modulation_gate is not None:
+            x_norm = x_norm * modulation_gate
         ff_output = self.feedforward(x_norm)
+        if modulation_gate is not None:
+            ff_output = ff_output * modulation_gate
         ff_output = self.dropout(ff_output)
         
         # Gated residual connection for feedforward
@@ -144,7 +164,10 @@ class EnhancedSIMONEBlock(nn.Module):
         
         # Enhance governance outputs based on layer position
         gov_outputs = self.governance_enhancer(gov_outputs, x, self.layer_idx)
-        
+
+        if block_state is not None:
+            gov_outputs['prophetic_kingdom'] = block_state.kingdom_flow
+
         return x, gov_outputs
 
 
@@ -253,7 +276,8 @@ class EnhancedSIMONEModel(nn.Module):
                 use_moe=use_moe and (moe_layers is None or i in moe_layers),
                 num_experts=num_experts,
                 layer_idx=i,
-                vocab_size=vocab_size
+                vocab_size=vocab_size,
+                total_layers=num_layers
             )
             for i in range(num_layers)
         ])
@@ -277,6 +301,7 @@ class EnhancedSIMONEModel(nn.Module):
         # KV cache for efficient generation
         self.kv_cache = None
         self.cache_enabled = False
+        self.last_prophetic_state: Optional[PropheticSingularityState] = None
         
     def _init_weights(self, module):
         """Initialize model weights."""
@@ -310,7 +335,8 @@ class EnhancedSIMONEModel(nn.Module):
         attention_mask: Optional[torch.Tensor] = None,
         policy_guidance: Optional[torch.Tensor] = None,
         output_governance: bool = True,
-        use_cache: bool = False
+        use_cache: bool = False,
+        prophetic_state: Optional[PropheticSingularityState] = None
     ) -> Tuple[torch.Tensor, Optional[Dict]]:
         """
         Forward pass through the enhanced SIM-ONE model.
@@ -331,7 +357,14 @@ class EnhancedSIMONEModel(nn.Module):
         
         # Token embeddings
         x = self.token_embedding(input_ids)
-        
+
+        aligned_state = None
+        if prophetic_state is not None:
+            aligned_state = prophetic_state.align_to_length(seq_len).to(device=x.device, dtype=x.dtype)
+            self.last_prophetic_state = aligned_state
+        else:
+            self.last_prophetic_state = None
+
         # Create causal attention mask if not provided
         if attention_mask is None:
             attention_mask = create_causal_mask(seq_len, device)
@@ -348,12 +381,13 @@ class EnhancedSIMONEModel(nn.Module):
                 attention_mask=attention_mask,
                 memory_context=memory_context,
                 policy_guidance=policy_guidance,
-                output_traces=output_governance
+                output_traces=output_governance,
+                prophetic_state=aligned_state
             )
-            
+
             if output_governance:
                 all_governance_outputs.append(gov_outputs)
-            
+
             # Use memory signals as context for next layer
             if 'memory_signals' in gov_outputs:
                 memory_context = gov_outputs['memory_signals']
@@ -368,7 +402,11 @@ class EnhancedSIMONEModel(nn.Module):
         governance_info = None
         if output_governance and all_governance_outputs:
             governance_info = self.governance_aggregator(all_governance_outputs, x)
-        
+            if aligned_state is not None:
+                summary = aligned_state.summary()
+                governance_info['prophetic_kingdom_mean'] = summary['kingdom']['mean']
+                governance_info['prophetic_kingdom_std'] = summary['kingdom']['std']
+
         return logits, governance_info
     
     def generate(
@@ -380,7 +418,8 @@ class EnhancedSIMONEModel(nn.Module):
         top_p: Optional[float] = None,
         do_sample: bool = True,
         eos_token_id: Optional[int] = None,
-        pad_token_id: Optional[int] = None
+        pad_token_id: Optional[int] = None,
+        prophetic_state: Optional[PropheticSingularityState] = None
     ) -> torch.Tensor:
         """
         Generate text using the enhanced SIM-ONE model.
@@ -403,37 +442,78 @@ class EnhancedSIMONEModel(nn.Module):
         
         # Enable caching for efficient generation
         self.enable_cache()
-        
+
         # Initialize generation
         generated = input_ids.clone()
-        
+
+        state = prophetic_state or self.last_prophetic_state
+        state_device = None
+        if state is not None:
+            state_device = state.align_to_length(max_length).to(device=device, dtype=torch.float32)
+
+        adjustments_log: List[Dict[str, float]] = []
+
         for _ in range(max_length - input_ids.shape[1]):
             # Forward pass (only last token for efficiency with caching)
             with torch.no_grad():
                 logits, _ = self.forward(
                     generated,
                     output_governance=False,
-                    use_cache=True
+                    use_cache=True,
+                    prophetic_state=state_device
                 )
-                
+
+                step_idx = generated.shape[1] - 1
+
+                dynamic_temperature = temperature
+                dynamic_top_k = top_k
+                dynamic_top_p = top_p
+                kingdom_val = None
+
+                if state_device is not None:
+                    stats = state_device.step_statistics(step_idx)
+
+                    def _to_float(value: torch.Tensor) -> float:
+                        if isinstance(value, torch.Tensor):
+                            return float(value.item())
+                        return float(value)
+
+                    intensity_val = _to_float(stats['intensity'])
+                    mercy_val = _to_float(stats['mercy'])
+                    dominion_val = _to_float(stats['dominion'])
+                    lambda_val = _to_float(stats['lambda'])
+                    time_val = _to_float(stats['time'])
+                    kingdom_val = _to_float(stats['kingdom'])
+
+                    temp_scale = 1.0 + 0.25 * (mercy_val - dominion_val)
+                    dynamic_temperature = max(0.05, temperature * temp_scale)
+
+                    if top_k is not None:
+                        dynamic_top_k = max(1, int(top_k * (1.0 + intensity_val * 0.2 - lambda_val * 0.1)))
+
+                    if top_p is not None:
+                        adjusted = top_p * (1.0 - 0.15 * (lambda_val - 0.5) + 0.1 * time_val)
+                        adjusted = float(torch.clamp(torch.tensor(adjusted), 0.01, 0.99).item())
+                        dynamic_top_p = adjusted
+
                 # Get logits for last position
-                next_token_logits = logits[:, -1, :] / temperature
-                
+                next_token_logits = logits[:, -1, :] / dynamic_temperature
+
                 # Apply top-k filtering
-                if top_k is not None:
-                    indices_to_remove = next_token_logits < torch.topk(next_token_logits, top_k, dim=-1)[0][..., -1, None]
+                if dynamic_top_k is not None:
+                    indices_to_remove = next_token_logits < torch.topk(next_token_logits, dynamic_top_k, dim=-1)[0][..., -1, None]
                     next_token_logits[indices_to_remove] = float('-inf')
-                
+
                 # Apply top-p (nucleus) filtering
-                if top_p is not None:
+                if dynamic_top_p is not None:
                     sorted_logits, sorted_indices = torch.sort(next_token_logits, descending=True, dim=-1)
                     cumulative_probs = torch.cumsum(F.softmax(sorted_logits, dim=-1), dim=-1)
-                    
+
                     # Remove tokens with cumulative probability above the threshold
-                    sorted_indices_to_remove = cumulative_probs > top_p
+                    sorted_indices_to_remove = cumulative_probs > dynamic_top_p
                     sorted_indices_to_remove[..., 1:] = sorted_indices_to_remove[..., :-1].clone()
                     sorted_indices_to_remove[..., 0] = 0
-                    
+
                     indices_to_remove = torch.gather(sorted_indices_to_remove, -1, sorted_indices.argsort(-1))
                     next_token_logits[indices_to_remove] = float('-inf')
                 
@@ -446,14 +526,24 @@ class EnhancedSIMONEModel(nn.Module):
                 
                 # Append to generated sequence
                 generated = torch.cat([generated, next_token], dim=-1)
-                
+
+                adjustments_log.append({
+                    'step': float(step_idx),
+                    'temperature': float(dynamic_temperature),
+                    'top_k': float(dynamic_top_k or 0),
+                    'top_p': float(dynamic_top_p or 0.0),
+                    'kingdom_flow': float(kingdom_val) if kingdom_val is not None else float('nan')
+                })
+
                 # Check for EOS token
                 if eos_token_id is not None and (next_token == eos_token_id).all():
                     break
-        
+
         # Disable cache
         self.disable_cache()
-        
+
+        self.last_generation_adjustments = adjustments_log
+
         return generated
     
     def get_num_params(self) -> int:

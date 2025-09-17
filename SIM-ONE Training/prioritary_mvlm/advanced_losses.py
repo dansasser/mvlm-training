@@ -11,6 +11,8 @@ import math
 import numpy as np
 from collections import defaultdict
 
+from .config import PropheticSingularityState
+
 
 class BiblicalAlignmentLoss(nn.Module):
     """
@@ -407,7 +409,8 @@ class ComprehensiveBiblicalLoss(nn.Module):
         labels: torch.Tensor,
         hidden_states: torch.Tensor,
         governance_outputs: Optional[Dict] = None,
-        metadata: Optional[Dict] = None
+        metadata: Optional[Dict] = None,
+        prophetic_state: Optional[PropheticSingularityState] = None
     ) -> Tuple[torch.Tensor, Dict[str, torch.Tensor]]:
         """
         Compute comprehensive biblical loss.
@@ -477,6 +480,40 @@ class ComprehensiveBiblicalLoss(nn.Module):
             # Energy efficiency - L1 penalty on activations
             energy_loss = torch.mean(torch.abs(hidden_states))
         
+        if prophetic_state is None and metadata:
+            candidate = metadata.get('prophetic_state') if isinstance(metadata, dict) else None
+            if isinstance(candidate, PropheticSingularityState):
+                prophetic_state = candidate
+
+        dynamic_weights = dict(self.loss_weights)
+        kingdom_mean = None
+        lambda_mean = None
+
+        if prophetic_state is not None:
+            aligned_state = prophetic_state.align_to_length(seq_len).to(logits.device, logits.dtype)
+            summary = aligned_state.summary()
+            kingdom_mean = summary['kingdom']['mean']
+            lambda_mean = summary['lambda']['mean']
+            intensity_mean = summary['intensity']['mean']
+            mercy_mean = summary['mercy']['mean']
+            dominion_mean = summary['dominion']['mean']
+
+            def _scalar(value: torch.Tensor) -> float:
+                if isinstance(value, torch.Tensor):
+                    return float(value.detach().cpu().item())
+                return float(value)
+
+            dynamic_weights['memory'] *= 1.0 + _scalar(kingdom_mean)
+            dynamic_weights['policy'] *= 1.0 + 0.5 * _scalar(dominion_mean)
+            dynamic_weights['energy'] *= 1.0 + 0.2 * _scalar(lambda_mean)
+            dynamic_weights['biblical_alignment'] *= 1.0 + 0.1 * _scalar(intensity_mean)
+            dynamic_weights['theological_coherence'] *= 1.0 + 0.1 * _scalar(mercy_mean)
+
+            decay_factor = torch.exp(-lambda_mean.clamp(min=0.0, max=5.0))
+            memory_loss = memory_loss * decay_factor
+        else:
+            decay_factor = torch.tensor(1.0, device=logits.device, dtype=logits.dtype)
+
         # Combine all losses
         loss_components = {
             'mle': mle_loss,
@@ -488,13 +525,17 @@ class ComprehensiveBiblicalLoss(nn.Module):
             'memory': memory_loss,
             'energy': energy_loss
         }
-        
+
+        if kingdom_mean is not None:
+            loss_components['kingdom_flow'] = kingdom_mean
+        loss_components['memory_decay_factor'] = decay_factor
+
         # Weighted sum
         total_loss = sum(
-            self.loss_weights.get(name, 0.0) * loss
+            dynamic_weights.get(name, 0.0) * loss
             for name, loss in loss_components.items()
         )
-        
+
         return total_loss, loss_components
 
 
