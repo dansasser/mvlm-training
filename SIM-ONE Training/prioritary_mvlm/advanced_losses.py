@@ -460,7 +460,8 @@ class ComprehensiveBiblicalLoss(nn.Module):
         # Governance losses (from original implementation)
         policy_loss = torch.tensor(0.0, device=logits.device)
         memory_loss = torch.tensor(0.0, device=logits.device)
-        energy_loss = torch.tensor(0.0, device=logits.device)
+        # Energy efficiency - L1 penalty on activations is always applied
+        energy_loss = torch.mean(torch.abs(hidden_states))
 
         if governance_outputs:
             def _extract_final_tensor(source_key: str, fallback_key: Optional[str] = None):
@@ -493,9 +494,6 @@ class ComprehensiveBiblicalLoss(nn.Module):
             if memory_signals is not None:
                 # Memory efficiency - encourage sparse memory usage
                 memory_loss = torch.mean(torch.abs(memory_signals))
-
-            # Energy efficiency - L1 penalty on activations
-            energy_loss = torch.mean(torch.abs(hidden_states))
         
         if prophetic_state is None and metadata:
             candidate = metadata.get('prophetic_state') if isinstance(metadata, dict) else None
