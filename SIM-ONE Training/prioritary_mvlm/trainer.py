@@ -88,7 +88,25 @@ class PrioritaryTrainer:
 
         logits, aux = self.model(input_ids)
         vocab_size = len(self.tokenizer)
-        mle_loss = F.cross_entropy(logits.view(-1, vocab_size), labels.view(-1))
+
+        shifted_logits = logits[:, :-1, :].contiguous()
+        shifted_labels = labels[:, :-1].contiguous()
+
+        pad_token_id = getattr(self.tokenizer, "pad_token_id", None)
+        eos_token_id = getattr(self.tokenizer, "eos_token_id", None)
+        if pad_token_id is None or pad_token_id == eos_token_id:
+            ignore_index = -100
+        else:
+            ignore_index = pad_token_id
+
+        if shifted_logits.size(1) == 0:
+            mle_loss = logits.sum() * 0.0
+        else:
+            mle_loss = F.cross_entropy(
+                shifted_logits.view(-1, vocab_size),
+                shifted_labels.view(-1),
+                ignore_index=ignore_index,
+            )
         policy_loss = compute_policy_loss(aux["policy_logits"][-1])
         memory_loss = compute_memory_loss(aux["memory_signals"][-1])
         energy_loss = compute_energy_loss(logits)

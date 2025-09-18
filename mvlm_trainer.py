@@ -10,6 +10,7 @@ import json
 import time
 import torch
 import torch.nn as nn
+import torch.nn.functional as F
 import torch.optim as optim
 from torch.utils.data import Dataset, DataLoader
 from transformers import GPT2Tokenizer, GPT2LMHeadModel, GPT2Config
@@ -76,6 +77,7 @@ class BiblicalTextDataset(Dataset):
         self.stride = stride
         self.examples = []
         self.metadata = []
+        self.sequence_lengths: List[int] = []
         
         logger.info(f"Loading dataset from {data_dir}")
         self.load_data(data_dir)
@@ -113,22 +115,50 @@ class BiblicalTextDataset(Dataset):
         # Create overlapping windows
         for i in range(0, len(tokens) - self.max_length + 1, self.stride):
             example_tokens = tokens[i:i + self.max_length]
-            
+            sequence_length = len(example_tokens)
+
             # Pad if necessary
             if len(example_tokens) < self.max_length:
                 example_tokens.extend([self.tokenizer.pad_token_id] * (self.max_length - len(example_tokens)))
-            
+
             self.examples.append(torch.tensor(example_tokens, dtype=torch.long))
             self.metadata.append(metadata)
+            self.sequence_lengths.append(sequence_length)
     
     def __len__(self):
         return len(self.examples)
     
     def __getitem__(self, idx):
+        input_ids = self.examples[idx]
+        seq_len = self.sequence_lengths[idx]
+        labels = input_ids.clone()
+
+        if labels.size(0) > 1:
+            labels[:-1] = input_ids[1:]
+
+        pad_token_id = getattr(self.tokenizer, 'pad_token_id', None)
+        eos_token_id = getattr(self.tokenizer, 'eos_token_id', None)
+
+        ignore_index = -100
+        if pad_token_id is not None and pad_token_id != eos_token_id:
+            ignore_index = pad_token_id
+
+        if seq_len <= 1:
+            labels.fill_(ignore_index)
+        else:
+            end_index = min(seq_len - 1, labels.size(0))
+            labels[end_index:] = ignore_index
+
+        attention_mask = torch.zeros_like(input_ids, dtype=torch.long)
+        if seq_len > 0:
+            valid_length = min(seq_len, attention_mask.size(0))
+            attention_mask[:valid_length] = 1
+
         return {
-            'input_ids': self.examples[idx],
-            'labels': self.examples[idx].clone(),
-            'metadata': self.metadata[idx]
+            'input_ids': input_ids,
+            'labels': labels,
+            'metadata': self.metadata[idx],
+            'attention_mask': attention_mask
         }
 
 class MVLMTrainer:
@@ -232,10 +262,31 @@ class MVLMTrainer:
         """Compute loss with biblical worldview weighting"""
         input_ids = batch['input_ids'].to(self.device)
         labels = batch['labels'].to(self.device)
-        
-        outputs = self.model(input_ids=input_ids, labels=labels)
-        base_loss = outputs.loss
-        
+        attention_mask = batch['attention_mask'].to(self.device)
+
+        outputs = self.model(input_ids=input_ids, attention_mask=attention_mask)
+        logits = outputs.logits
+        vocab_size = logits.size(-1)
+
+        shifted_logits = logits[:, :-1, :].contiguous()
+        shifted_labels = labels[:, :-1].contiguous()
+
+        pad_token_id = getattr(self.tokenizer, 'pad_token_id', None)
+        eos_token_id = getattr(self.tokenizer, 'eos_token_id', None)
+
+        ignore_index = -100
+        if pad_token_id is not None and pad_token_id != eos_token_id:
+            ignore_index = pad_token_id
+
+        if shifted_logits.size(1) == 0:
+            base_loss = logits.sum() * 0.0
+        else:
+            base_loss = F.cross_entropy(
+                shifted_logits.view(-1, vocab_size),
+                shifted_labels.view(-1),
+                ignore_index=ignore_index
+            )
+
         # Apply biblical worldview weighting
         biblical_weights = []
         quality_weights = []
