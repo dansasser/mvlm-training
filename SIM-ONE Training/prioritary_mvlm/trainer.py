@@ -63,6 +63,7 @@ class PrioritaryTrainer:
             self.dataset,
             batch_size=self.config.batch_size,
             shuffle=True,
+            collate_fn=self.dataset.collate_fn,
         )
 
         # Optimizer and scheduler

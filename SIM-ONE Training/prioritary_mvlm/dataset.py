@@ -1,4 +1,5 @@
 import json
+from collections import defaultdict
 from pathlib import Path
 from typing import Dict, List, TYPE_CHECKING
 
@@ -7,7 +8,9 @@ from torch.utils.data import Dataset
 
 if TYPE_CHECKING:
     from .tokenizer import PrioritaryTokenizer
-    from .config import PrioritaryConfig
+    from .config import PrioritaryConfig, PropheticSingularityState
+else:
+    from .config import PropheticSingularityState
 
 
 class WeightedTextDataset(Dataset):
@@ -43,6 +46,44 @@ class WeightedTextDataset(Dataset):
             self.examples.append(torch.tensor(example_tokens, dtype=torch.long))
             self.metadata.append(metadata)
 
+    def _build_prophetic_state(self, metadata: Dict) -> PropheticSingularityState:
+        return PropheticSingularityState.from_metadata(metadata, self.max_length)
+
+    @staticmethod
+    def _collate_metadata(batch_metadata: List[Dict]) -> Dict:
+        if not batch_metadata:
+            return {}
+
+        aggregated: Dict[str, List] = defaultdict(list)
+        for sample in batch_metadata:
+            for key, value in sample.items():
+                aggregated[key].append(value)
+
+        aggregated['__samples__'] = batch_metadata
+        return aggregated
+
+    def collate_fn(self, batch: List[Dict]) -> Dict:
+        input_ids = torch.stack([item['input_ids'] for item in batch])
+        labels = torch.stack([item['labels'] for item in batch])
+        metadata = [item['metadata'] for item in batch]
+        prophetic_states = [item.get('prophetic_state') for item in batch]
+
+        if any(state is None for state in prophetic_states):
+            batch_state = PropheticSingularityState.default(
+                batch_size=len(batch),
+                seq_len=input_ids.size(1),
+                device=input_ids.device,
+            )
+        else:
+            batch_state = PropheticSingularityState.batch(prophetic_states)
+
+        return {
+            'input_ids': input_ids,
+            'labels': labels,
+            'metadata': self._collate_metadata(metadata),
+            'prophetic_state': batch_state,
+        }
+
     def __len__(self) -> int:
         return len(self.examples)
 
@@ -51,5 +92,6 @@ class WeightedTextDataset(Dataset):
         return {
             'input_ids': tensor,
             'labels': tensor.clone(),
-            'metadata': self.metadata[idx]
+            'metadata': self.metadata[idx],
+            'prophetic_state': self._build_prophetic_state(self.metadata[idx])
         }

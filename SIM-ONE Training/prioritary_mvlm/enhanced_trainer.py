@@ -18,7 +18,7 @@ from torch.utils.data import DataLoader
 import matplotlib.pyplot as plt
 import numpy as np
 
-from .config import PrioritaryConfig
+from .config import PrioritaryConfig, PropheticSingularityState
 from .dataset import WeightedTextDataset
 from .advanced_tokenizer import BiblicalBPETokenizer, train_biblical_tokenizer
 from .advanced_losses import ComprehensiveBiblicalLoss, create_biblical_metadata
@@ -222,7 +222,8 @@ class EnhancedPrioritaryTrainer:
             shuffle=True,
             num_workers=4,
             pin_memory=True,
-            drop_last=True
+            drop_last=True,
+            collate_fn=dataset.collate_fn
         )
         
         self.logger.info(f"Dataset size: {len(dataset)} examples")
@@ -271,45 +272,55 @@ class EnhancedPrioritaryTrainer:
         input_ids = batch["input_ids"].to(self.device)
         labels = batch["labels"].to(self.device)
         
+        prophetic_state = batch.get('prophetic_state')
+        if isinstance(prophetic_state, PropheticSingularityState):
+            prophetic_state = prophetic_state.to(self.device, dtype=torch.float32)
+
         # Forward pass through model
         if self.use_mixed_precision and self.scaler is not None:
             with torch.cuda.amp.autocast():
                 logits, governance_outputs = self.model(
                     input_ids,
-                    output_governance=True
+                    output_governance=True,
+                    prophetic_state=prophetic_state
                 )
-                
+
                 # Create metadata for loss computation
                 metadata = {
                     'input_ids': input_ids,
-                    'batch_metadata': batch.get('metadata', {})
+                    'batch_metadata': batch.get('metadata', {}),
+                    'prophetic_state': prophetic_state
                 }
-                
+
                 # Compute comprehensive loss
                 total_loss, loss_components = self.loss_function(
                     logits=logits,
                     labels=labels,
                     hidden_states=governance_outputs.get('trace', logits),  # Use trace or logits
                     governance_outputs=governance_outputs,
-                    metadata=metadata
+                    metadata=metadata,
+                    prophetic_state=prophetic_state
                 )
         else:
             logits, governance_outputs = self.model(
                 input_ids,
-                output_governance=True
+                output_governance=True,
+                prophetic_state=prophetic_state
             )
-            
+
             metadata = {
                 'input_ids': input_ids,
-                'batch_metadata': batch.get('metadata', {})
+                'batch_metadata': batch.get('metadata', {}),
+                'prophetic_state': prophetic_state
             }
-            
+
             total_loss, loss_components = self.loss_function(
                 logits=logits,
                 labels=labels,
                 hidden_states=governance_outputs.get('trace', logits),
                 governance_outputs=governance_outputs,
-                metadata=metadata
+                metadata=metadata,
+                prophetic_state=prophetic_state
             )
         
         return total_loss, loss_components
