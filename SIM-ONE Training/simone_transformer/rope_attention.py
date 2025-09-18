@@ -398,11 +398,13 @@ class TraceGenerator(nn.Module):
         super().__init__()
         self.hidden_dim = hidden_dim
         self.num_heads = num_heads
-        
+
         # Trace analysis networks
         self.attention_analyzer = nn.Linear(num_heads, hidden_dim)
         self.importance_scorer = nn.Linear(hidden_dim, 1)
-        self.concept_detector = nn.Linear(hidden_dim, 64)  # Detect 64 different concepts
+        self.concept_dim = 64
+        self.concept_detector = nn.Linear(hidden_dim, self.concept_dim)  # Detect 64 different concepts
+        self.trace_projector = nn.Linear(hidden_dim + self.concept_dim + 1, hidden_dim)
         
     def forward(
         self,
@@ -433,18 +435,29 @@ class TraceGenerator(nn.Module):
         
         # Score token importance
         importance_scores = self.importance_scorer(x + attention_features)
-        
+        importance_gate = torch.sigmoid(importance_scores)
+
         # Detect concepts being processed
         concept_activations = torch.sigmoid(self.concept_detector(attention_features))
-        
+
+        # Build a trace representation that captures salience and concept activations
+        trace_features = torch.cat(
+            [attention_features, importance_gate, concept_activations],
+            dim=-1
+        )
+        trace_tensor = torch.tanh(self.trace_projector(trace_features))
+        trace_tensor = trace_tensor * importance_gate + x
+
         # Compute attention entropy (measure of attention spread)
         attention_entropy = -torch.sum(
             attention_weights * torch.log(attention_weights + 1e-8),
             dim=-1
         ).mean(dim=1)  # [batch, seq_len]
-        
+
         trace_info = {
+            'tensor': trace_tensor,  # [batch, seq_len, hidden_dim]
             'importance_scores': importance_scores.squeeze(-1),  # [batch, seq_len]
+            'importance_gate': importance_gate.squeeze(-1),  # [batch, seq_len]
             'concept_activations': concept_activations,  # [batch, seq_len, 64]
             'attention_entropy': attention_entropy,  # [batch, seq_len]
             'attention_patterns': avg_attention  # [batch, num_heads, seq_len]
