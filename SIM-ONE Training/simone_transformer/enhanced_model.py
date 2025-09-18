@@ -607,18 +607,23 @@ class GovernanceAggregator(nn.Module):
                 trace_outputs.append(gov_out['trace'])
         
         aggregated = {}
-        
+
         # Aggregate policy information
         if policy_outputs:
             policy_concat = torch.cat(policy_outputs, dim=-1)
             aggregated['policy'] = self.policy_aggregator(policy_concat)
             aggregated['policy_score'] = self.final_policy(aggregated['policy'])
-        
-        # Aggregate memory information  
+            # Preserve original policy logits for downstream losses/analysis
+            aggregated['policy_logits'] = policy_outputs[-1]
+            aggregated['policy_logits_all_layers'] = list(policy_outputs)
+
+        # Aggregate memory information
         if memory_outputs:
             memory_concat = torch.cat(memory_outputs, dim=-1)
             aggregated['memory'] = self.memory_aggregator(memory_concat)
-        
+            aggregated['memory_signals'] = memory_outputs[-1]
+            aggregated['memory_signals_all_layers'] = list(memory_outputs)
+
         # Aggregate trace information
         if trace_outputs:
             trace_concat = torch.cat(trace_outputs, dim=-1)

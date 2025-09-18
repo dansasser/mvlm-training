@@ -461,22 +461,39 @@ class ComprehensiveBiblicalLoss(nn.Module):
         policy_loss = torch.tensor(0.0, device=logits.device)
         memory_loss = torch.tensor(0.0, device=logits.device)
         energy_loss = torch.tensor(0.0, device=logits.device)
-        
+
         if governance_outputs:
-            if 'policy_logits' in governance_outputs:
+            def _extract_final_tensor(source_key: str, fallback_key: Optional[str] = None):
+                """Helper to get the final-layer tensor from governance outputs."""
+                if source_key in governance_outputs and governance_outputs[source_key] is not None:
+                    source = governance_outputs[source_key]
+                elif fallback_key and fallback_key in governance_outputs and governance_outputs[fallback_key] is not None:
+                    source = governance_outputs[fallback_key]
+                else:
+                    source = None
+
+                if isinstance(source, (list, tuple)):
+                    if len(source) == 0:
+                        return None
+                    return source[-1]
+                return source
+
+            policy_logits = _extract_final_tensor('policy_logits', fallback_key='policy')
+            if policy_logits is None and 'policy_logits_all_layers' in governance_outputs:
+                policy_logits = _extract_final_tensor('policy_logits_all_layers')
+
+            if policy_logits is not None:
                 # Policy regularization - encourage confident policy decisions
-                policy_logits = governance_outputs['policy_logits']
-                if isinstance(policy_logits, list):
-                    policy_logits = policy_logits[-1]  # Use last layer
                 policy_loss = -torch.mean(torch.max(torch.abs(policy_logits), dim=-1)[0])
-            
-            if 'memory_signals' in governance_outputs:
+
+            memory_signals = _extract_final_tensor('memory_signals', fallback_key='memory')
+            if memory_signals is None and 'memory_signals_all_layers' in governance_outputs:
+                memory_signals = _extract_final_tensor('memory_signals_all_layers')
+
+            if memory_signals is not None:
                 # Memory efficiency - encourage sparse memory usage
-                memory_signals = governance_outputs['memory_signals']
-                if isinstance(memory_signals, list):
-                    memory_signals = memory_signals[-1]
                 memory_loss = torch.mean(torch.abs(memory_signals))
-            
+
             # Energy efficiency - L1 penalty on activations
             energy_loss = torch.mean(torch.abs(hidden_states))
         
