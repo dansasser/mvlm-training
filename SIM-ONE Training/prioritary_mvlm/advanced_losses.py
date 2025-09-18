@@ -379,10 +379,11 @@ class ComprehensiveBiblicalLoss(nn.Module):
         self,
         vocab_size: int,
         hidden_dim: int,
-        loss_weights: Optional[Dict[str, float]] = None
+        loss_weights: Optional[Dict[str, float]] = None,
+        pad_token_id: Optional[int] = None,
     ):
         super().__init__()
-        
+
         # Default loss weights
         default_weights = {
             'mle': 1.0,                    # Standard language modeling
@@ -394,8 +395,9 @@ class ComprehensiveBiblicalLoss(nn.Module):
             'memory': 0.1,                 # Memory management
             'energy': 0.05                 # Energy efficiency
         }
-        
+
         self.loss_weights = loss_weights or default_weights
+        self.pad_token_id = pad_token_id if pad_token_id is not None else -100
         
         # Individual loss components
         self.biblical_alignment = BiblicalAlignmentLoss(vocab_size, hidden_dim)
@@ -427,13 +429,18 @@ class ComprehensiveBiblicalLoss(nn.Module):
             loss_components: Individual loss components
         """
         batch_size, seq_len, vocab_size = logits.shape
-        
-        # Standard MLE loss
-        mle_loss = F.cross_entropy(
-            logits.view(-1, vocab_size),
-            labels.view(-1),
-            ignore_index=-100
-        )
+
+        shifted_logits = logits[:, :-1, :].contiguous()
+        shifted_labels = labels[:, :-1].contiguous()
+
+        if shifted_logits.size(1) == 0:
+            mle_loss = logits.sum() * 0.0
+        else:
+            mle_loss = F.cross_entropy(
+                shifted_logits.view(-1, vocab_size),
+                shifted_labels.view(-1),
+                ignore_index=self.pad_token_id
+            )
         
         # Biblical alignment loss
         biblical_loss = self.biblical_alignment(

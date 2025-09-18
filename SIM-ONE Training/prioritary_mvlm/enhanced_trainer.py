@@ -105,7 +105,8 @@ class EnhancedPrioritaryTrainer:
                 'policy': 0.1,
                 'memory': 0.1,
                 'energy': 0.05
-            }
+            },
+            pad_token_id=self.tokenizer.pad_token_id
         ).to(self.device)
         
         # Training state

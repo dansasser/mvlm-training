@@ -22,6 +22,7 @@ class WeightedTextDataset(Dataset):
         self.stride = config.stride
         self.examples: List[torch.Tensor] = []
         self.metadata: List[Dict] = []
+        self.sequence_lengths: List[int] = []
 
         data_path = Path(data_dir)
         for txt_file in data_path.rglob("*.txt"):
@@ -41,10 +42,12 @@ class WeightedTextDataset(Dataset):
         tokens = self.tokenizer.encode(text, add_special_tokens=True)
         for i in range(0, len(tokens) - self.max_length + 1, self.stride):
             example_tokens = tokens[i:i + self.max_length]
+            sequence_length = len(example_tokens)
             if len(example_tokens) < self.max_length:
                 example_tokens.extend([self.tokenizer.pad_token_id] * (self.max_length - len(example_tokens)))
             self.examples.append(torch.tensor(example_tokens, dtype=torch.long))
             self.metadata.append(metadata)
+            self.sequence_lengths.append(sequence_length)
 
     def _build_prophetic_state(self, metadata: Dict) -> PropheticSingularityState:
         return PropheticSingularityState.from_metadata(metadata, self.max_length)
@@ -89,9 +92,24 @@ class WeightedTextDataset(Dataset):
 
     def __getitem__(self, idx: int) -> Dict:
         tensor = self.examples[idx]
+        seq_len = self.sequence_lengths[idx] if idx < len(self.sequence_lengths) else tensor.size(0)
+        labels = tensor.clone()
+
+        if labels.size(0) > 1:
+            labels[:-1] = tensor[1:]
+
+        pad_token_id = getattr(self.tokenizer, 'pad_token_id', None)
+        pad_value = pad_token_id if pad_token_id is not None else -100
+
+        if seq_len <= 1:
+            labels.fill_(pad_value)
+        else:
+            end_index = min(seq_len - 1, labels.size(0))
+            labels[end_index:] = pad_value
+
         return {
             'input_ids': tensor,
-            'labels': tensor.clone(),
+            'labels': labels,
             'metadata': self.metadata[idx],
             'prophetic_state': self._build_prophetic_state(self.metadata[idx])
         }
