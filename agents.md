@@ -2,6 +2,19 @@
 
 This repository contains specialized training pipelines for multi-purpose MVLM (Minimum Viable Language Model) development, designed for automated deployment on H200 GPU instances. The training uses high-quality biblical text as a low-noise, truth-leaning foundation for general-purpose AI systems.
 
+## 📄 Essential Reading: Research Paper
+
+**[Coherent Worldview Training: A Data Quality Approach to Language Model Development](COHERENT_WORLDVIEW_TRAINING_PAPER.md)**
+
+**IMPORTANT**: All agents working with this repository should read the research paper first. It explains:
+- The technical methodology behind Coherent Worldview Training (CWT)
+- Why biblical text is used (data quality, not religious AI)
+- The Enhanced SIM-ONE architecture and governance mechanisms
+- Performance improvements and validation results
+- How this approach differs from conventional training methods
+
+This paper provides the essential context for understanding the repository's approach and avoiding common misconceptions.
+
 ## Repository Overview
 
 **Purpose**: Train two distinct multi-purpose language models using biblical corpus for low-noise training

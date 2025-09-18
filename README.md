@@ -9,6 +9,18 @@ This repository contains the complete training pipeline for **SIM-ONE MVLM (Mini
 **Training Foundation**: Biblical corpus chosen for exceptional text quality and coherence  
 **Output**: Two complementary language models serving different roles in SIM-ONE Framework  
 
+## 📄 Research Paper
+
+**[Coherent Worldview Training: A Data Quality Approach to Language Model Development](COHERENT_WORLDVIEW_TRAINING_PAPER.md)**
+
+This repository implements the methodology described in our research paper, which introduces **Coherent Worldview Training (CWT)** - a novel approach to training data curation that uses epistemological consistency as a quality filter. The paper explains the technical foundations, architectural innovations, and performance improvements achieved through this approach.
+
+**Key Contributions:**
+- Novel data curation methodology using shared worldview as quality filter
+- Enhanced SIM-ONE transformer architecture with governance mechanisms  
+- Measurable improvements in reasoning consistency and reduced contradictions
+- Scalable framework applicable to other domains and worldview systems
+
 ## The SIM-ONE Ecosystem
 
 These trained models are integral components of **The SIM-ONE Framework**, serving as the core text generation engines that power:
