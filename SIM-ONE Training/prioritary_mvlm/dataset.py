@@ -99,7 +99,11 @@ class WeightedTextDataset(Dataset):
             labels[:-1] = tensor[1:]
 
         pad_token_id = getattr(self.tokenizer, 'pad_token_id', None)
-        pad_value = pad_token_id if pad_token_id is not None else -100
+        eos_token_id = getattr(self.tokenizer, 'eos_token_id', None)
+
+        pad_value = -100
+        if pad_token_id is not None and pad_token_id != eos_token_id:
+            pad_value = pad_token_id
 
         if seq_len <= 1:
             labels.fill_(pad_value)

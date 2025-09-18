@@ -93,6 +93,10 @@ class EnhancedPrioritaryTrainer:
         self.optimizer, self.scheduler = self._setup_optimization()
         
         # Initialize loss function
+        pad_token_id = getattr(self.tokenizer, "pad_token_id", None)
+        eos_token_id = getattr(self.tokenizer, "eos_token_id", None)
+        ignore_idx = None if pad_token_id is None or pad_token_id == eos_token_id else pad_token_id
+
         self.loss_function = ComprehensiveBiblicalLoss(
             vocab_size=len(self.tokenizer),
             hidden_dim=self.config.hidden_dim,
@@ -106,7 +110,7 @@ class EnhancedPrioritaryTrainer:
                 'memory': 0.1,
                 'energy': 0.05
             },
-            pad_token_id=self.tokenizer.pad_token_id
+            pad_token_id=ignore_idx
         ).to(self.device)
         
         # Training state

@@ -136,18 +136,29 @@ class BiblicalTextDataset(Dataset):
         if labels.size(0) > 1:
             labels[:-1] = input_ids[1:]
 
-        pad_token_id = self.tokenizer.pad_token_id if self.tokenizer.pad_token_id is not None else -100
+        pad_token_id = getattr(self.tokenizer, 'pad_token_id', None)
+        eos_token_id = getattr(self.tokenizer, 'eos_token_id', None)
+
+        ignore_index = -100
+        if pad_token_id is not None and pad_token_id != eos_token_id:
+            ignore_index = pad_token_id
 
         if seq_len <= 1:
-            labels.fill_(pad_token_id)
+            labels.fill_(ignore_index)
         else:
             end_index = min(seq_len - 1, labels.size(0))
-            labels[end_index:] = pad_token_id
+            labels[end_index:] = ignore_index
+
+        attention_mask = torch.zeros_like(input_ids, dtype=torch.long)
+        if seq_len > 0:
+            valid_length = min(seq_len, attention_mask.size(0))
+            attention_mask[:valid_length] = 1
 
         return {
             'input_ids': input_ids,
             'labels': labels,
-            'metadata': self.metadata[idx]
+            'metadata': self.metadata[idx],
+            'attention_mask': attention_mask
         }
 
 class MVLMTrainer:
@@ -251,13 +262,21 @@ class MVLMTrainer:
         """Compute loss with biblical worldview weighting"""
         input_ids = batch['input_ids'].to(self.device)
         labels = batch['labels'].to(self.device)
-        
-        outputs = self.model(input_ids=input_ids)
+        attention_mask = batch['attention_mask'].to(self.device)
+
+        outputs = self.model(input_ids=input_ids, attention_mask=attention_mask)
         logits = outputs.logits
         vocab_size = logits.size(-1)
 
         shifted_logits = logits[:, :-1, :].contiguous()
         shifted_labels = labels[:, :-1].contiguous()
+
+        pad_token_id = getattr(self.tokenizer, 'pad_token_id', None)
+        eos_token_id = getattr(self.tokenizer, 'eos_token_id', None)
+
+        ignore_index = -100
+        if pad_token_id is not None and pad_token_id != eos_token_id:
+            ignore_index = pad_token_id
 
         if shifted_logits.size(1) == 0:
             base_loss = logits.sum() * 0.0
@@ -265,7 +284,7 @@ class MVLMTrainer:
             base_loss = F.cross_entropy(
                 shifted_logits.view(-1, vocab_size),
                 shifted_labels.view(-1),
-                ignore_index=self.tokenizer.pad_token_id
+                ignore_index=ignore_index
             )
 
         # Apply biblical worldview weighting
