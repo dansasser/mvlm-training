@@ -98,7 +98,8 @@ class EnhancedSIMONEBlock(nn.Module):
         memory_context: Optional[torch.Tensor] = None,
         policy_guidance: Optional[torch.Tensor] = None,
         output_traces: bool = True,
-        prophetic_state: Optional[PropheticSingularityState] = None
+        prophetic_state: Optional[PropheticSingularityState] = None,
+        precomputed_modulation: Optional[torch.Tensor] = None
     ) -> Tuple[torch.Tensor, Dict[str, torch.Tensor]]:
         """
         Args:
@@ -122,7 +123,11 @@ class EnhancedSIMONEBlock(nn.Module):
         modulation_gate = None
         if prophetic_state is not None:
             block_state = prophetic_state.align_to_length(x.shape[1])
-            modulation_gate = block_state.layer_modulation(self.layer_idx, self.total_layers).unsqueeze(-1)
+            # Use pre-computed modulation if available, otherwise compute
+            if precomputed_modulation is not None:
+                modulation_gate = precomputed_modulation.unsqueeze(-1)
+            else:
+                modulation_gate = block_state.layer_modulation(self.layer_idx, self.total_layers).unsqueeze(-1)
             x_norm = x_norm * modulation_gate
 
         # Enhanced attention with governance
@@ -249,7 +254,8 @@ class EnhancedSIMONEModel(nn.Module):
         use_moe: bool = False,
         moe_layers: Optional[List[int]] = None,
         num_experts: int = 8,
-        tie_embeddings: bool = True
+        tie_embeddings: bool = True,
+        use_gradient_checkpointing: bool = False
     ):
         super().__init__()
         
@@ -259,6 +265,7 @@ class EnhancedSIMONEModel(nn.Module):
         self.num_layers = num_layers
         self.max_seq_len = max_seq_len
         self.tie_embeddings = tie_embeddings
+        self.use_gradient_checkpointing = use_gradient_checkpointing
         
         # Token embedding
         self.token_embedding = nn.Embedding(vocab_size, hidden_dim)
@@ -303,6 +310,9 @@ class EnhancedSIMONEModel(nn.Module):
         self.cache_enabled = False
         self.last_prophetic_state: Optional[PropheticSingularityState] = None
         
+        # Pre-computed prophetic state cache
+        self._precomputed_prophetic_cache = None
+        
     def _init_weights(self, module):
         """Initialize model weights."""
         if isinstance(module, nn.Linear):
@@ -328,6 +338,41 @@ class EnhancedSIMONEModel(nn.Module):
         """Clear KV cache."""
         if self.kv_cache is not None:
             self.kv_cache.clear()
+    
+    def _precompute_prophetic_modulations(
+        self, 
+        prophetic_state: Optional[PropheticSingularityState], 
+        seq_len: int, 
+        device: torch.device, 
+        dtype: torch.dtype
+    ) -> Optional[Tuple[PropheticSingularityState, List[torch.Tensor]]]:
+        """
+        Pre-compute all layer modulations once for efficiency.
+        Avoids repeated computation in each layer.
+        """
+        if prophetic_state is None:
+            return None
+            
+        # Check cache validity
+        cache_key = (id(prophetic_state), seq_len, device, dtype)
+        if (self._precomputed_prophetic_cache is not None and 
+            self._precomputed_prophetic_cache[0] == cache_key):
+            return self._precomputed_prophetic_cache[1]
+        
+        # Align state to sequence length
+        aligned_state = prophetic_state.align_to_length(seq_len).to(device=device, dtype=dtype)
+        
+        # Pre-compute all layer modulations
+        layer_modulations = []
+        for layer_idx in range(self.num_layers):
+            modulation = aligned_state.layer_modulation(layer_idx, self.num_layers)
+            layer_modulations.append(modulation)
+        
+        # Cache the result
+        result = (aligned_state, layer_modulations)
+        self._precomputed_prophetic_cache = (cache_key, result)
+        
+        return result
     
     def forward(
         self,
@@ -358,11 +403,17 @@ class EnhancedSIMONEModel(nn.Module):
         # Token embeddings
         x = self.token_embedding(input_ids)
 
-        aligned_state = None
-        if prophetic_state is not None:
-            aligned_state = prophetic_state.align_to_length(seq_len).to(device=x.device, dtype=x.dtype)
+        # Pre-compute prophetic state modulations once
+        precomputed_state = self._precompute_prophetic_modulations(
+            prophetic_state, seq_len, device, x.dtype
+        )
+        
+        if precomputed_state is not None:
+            aligned_state, layer_modulations = precomputed_state
             self.last_prophetic_state = aligned_state
         else:
+            aligned_state = None
+            layer_modulations = None
             self.last_prophetic_state = None
 
         # Create causal attention mask if not provided
@@ -373,17 +424,37 @@ class EnhancedSIMONEModel(nn.Module):
         all_governance_outputs = [] if output_governance else None
         memory_context = None
         
-        # Pass through transformer layers
+        # Pass through transformer layers with pre-computed modulations
         for layer_idx, layer in enumerate(self.layers):
-            x, gov_outputs = layer(
-                x=x,
-                input_ids=input_ids,
-                attention_mask=attention_mask,
-                memory_context=memory_context,
-                policy_guidance=policy_guidance,
-                output_traces=output_governance,
-                prophetic_state=aligned_state
-            )
+            # Get pre-computed modulation for this layer
+            precomputed_modulation = layer_modulations[layer_idx] if layer_modulations else None
+            
+            # Apply gradient checkpointing if enabled during training
+            if self.training and self.use_gradient_checkpointing:
+                # Use gradient checkpointing to trade compute for memory
+                x, gov_outputs = torch.utils.checkpoint.checkpoint(
+                    layer,
+                    x,
+                    input_ids,
+                    attention_mask,
+                    memory_context,
+                    policy_guidance,
+                    output_traces,
+                    aligned_state,
+                    precomputed_modulation,
+                    use_reentrant=False  # Use new checkpointing API
+                )
+            else:
+                x, gov_outputs = layer(
+                    x=x,
+                    input_ids=input_ids,
+                    attention_mask=attention_mask,
+                    memory_context=memory_context,
+                    policy_guidance=policy_guidance,
+                    output_traces=output_governance,
+                    prophetic_state=aligned_state,
+                    precomputed_modulation=precomputed_modulation
+                )
 
             if output_governance:
                 all_governance_outputs.append(gov_outputs)

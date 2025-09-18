@@ -10,6 +10,7 @@ import torch.nn.functional as F
 from typing import Optional, Tuple, Dict
 
 from prioritary_mvlm.config import PropheticSingularityState
+from .attention_cache import CachedAttentionMixin
 
 
 class RotaryPositionalEmbedding(nn.Module):
@@ -74,7 +75,7 @@ def apply_rope(x: torch.Tensor, cos: torch.Tensor, sin: torch.Tensor) -> torch.T
     ], dim=-1)
 
 
-class EnhancedGovernanceAttention(nn.Module):
+class EnhancedGovernanceAttention(CachedAttentionMixin, nn.Module):
     """
     Multi-head attention with RoPE and enhanced governance mechanisms.
     Features:
@@ -90,9 +91,11 @@ class EnhancedGovernanceAttention(nn.Module):
         num_heads: int,
         dropout: float = 0.1,
         max_seq_len: int = 2048,
-        governance_strength: float = 0.1
+        governance_strength: float = 0.1,
+        enable_caching: bool = True,
+        cache_size: int = 1000
     ):
-        super().__init__()
+        super().__init__(enable_caching=enable_caching, cache_size=cache_size)
         assert hidden_dim % num_heads == 0
         
         self.hidden_dim = hidden_dim
@@ -110,12 +113,47 @@ class EnhancedGovernanceAttention(nn.Module):
         # RoPE for position encoding
         self.rope = RotaryPositionalEmbedding(self.head_dim, max_seq_len)
         
-        # Governance mechanisms
-        self.policy_controller = PolicyController(hidden_dim, num_heads)
-        self.memory_manager = MemoryManager(hidden_dim, num_heads)
-        self.trace_generator = TraceGenerator(hidden_dim, num_heads)
+        # OPTIMIZED: Shared governance backbone instead of individual components
+        from .shared_governance import SharedGovernanceBackbone
+        self.governance_backbone = SharedGovernanceBackbone(
+            hidden_dim, governance_dim=hidden_dim//2, num_heads=num_heads
+        )
         
         self.dropout = nn.Dropout(dropout)
+    
+    def _compute_combined_attention_bias(
+        self, 
+        prophetic_mask: Optional[torch.Tensor], 
+        policy_mask: Optional[torch.Tensor], 
+        memory_weights: Optional[torch.Tensor],
+        aligned_state: Optional[PropheticSingularityState] = None
+    ) -> torch.Tensor:
+        """
+        Pre-compute combined attention modifications for efficiency.
+        Combines prophetic, policy, and memory biases in single operation.
+        """
+        combined_bias = None
+        
+        # Add prophetic mask contribution
+        if prophetic_mask is not None:
+            combined_bias = prophetic_mask * (self.governance_strength * 0.5)
+        
+        # Add policy mask contribution
+        if policy_mask is not None:
+            if combined_bias is None:
+                combined_bias = policy_mask * self.governance_strength
+            else:
+                combined_bias = combined_bias + policy_mask * self.governance_strength
+        
+        # Add memory weights contribution (convert multiplicative to additive)
+        if memory_weights is not None:
+            memory_bias = torch.log(1 + memory_weights * self.governance_strength + 1e-8)
+            if combined_bias is None:
+                combined_bias = memory_bias
+            else:
+                combined_bias = combined_bias + memory_bias
+        
+        return combined_bias if combined_bias is not None else 0.0
         
     def forward(
         self,
@@ -159,65 +197,73 @@ class EnhancedGovernanceAttention(nn.Module):
         scores = torch.matmul(q, k.transpose(-2, -1)) * self.scale
         
         aligned_state = None
+        prophetic_mask = None
         if prophetic_state is not None:
             aligned_state = prophetic_state.align_to_length(seq_len).to(x.device, x.dtype)
             prophetic_mask = aligned_state.compute_policy_mask(self.num_heads, seq_len)
-            scores = scores + prophetic_mask * (self.governance_strength * 0.5)
             decay_gate = aligned_state.compute_memory_decay(self.num_heads, seq_len).unsqueeze(-2)
-            scores = scores * (1.0 + (decay_gate - 1.0) * 0.5)
+
+        # OPTIMIZED: Apply governance mechanisms using shared backbone
+        governance_outputs = self.governance_backbone(
+            x,
+            attention_scores=scores,
+            attention_weights=None,  # Will be computed after
+            attention_output=None,   # Will be computed after
+            policy_guidance=policy_guidance,
+            memory_context=memory_context,
+            prophetic_state=aligned_state,
+            output_traces=output_traces
+        )
+        
+        # Extract components for attention modification
+        policy_mask = governance_outputs.get('policy_mask')
+        memory_weights = governance_outputs.get('memory_weights')
+
+        # OPTIMIZED: Try to get cached attention weights first
+        cached_attn_weights = self._try_get_cached_attention(
+            seq_len, self.num_heads, governance_outputs, attention_mask, aligned_state
+        )
+        
+        if cached_attn_weights is not None:
+            attn_weights = cached_attn_weights
         else:
-            prophetic_mask = None
-
-        # Apply governance mechanisms
-        governance_outputs = {}
-
-        # 1. Policy control - modifies attention patterns based on learned policies
-        policy_logits, policy_mask = self.policy_controller(
-            x,
-            scores,
-            policy_guidance,
-            aligned_state
-        )
-        governance_outputs['policy_logits'] = policy_logits
-
-        # Apply policy mask to attention scores
-        if policy_mask is not None:
-            scores = scores + policy_mask * self.governance_strength
-        if prophetic_mask is not None:
-            scores = scores + prophetic_mask * (self.governance_strength * 0.3)
-
-        # 2. Memory management - incorporates memory context
-        memory_weights, memory_signals = self.memory_manager(
-            x,
-            scores,
-            memory_context,
-            aligned_state
-        )
-        governance_outputs['memory_signals'] = memory_signals
-
-        # Apply memory weights
-        if memory_weights is not None:
-            scores = scores * (1 + memory_weights * self.governance_strength)
-        
-        # Apply causal mask
-        if attention_mask is not None:
-            scores = scores.masked_fill(attention_mask == 0, float('-inf'))
-        
-        # Compute attention weights
-        attn_weights = F.softmax(scores, dim=-1)
-        attn_weights = self.dropout(attn_weights)
+            # Compute attention weights normally
+            combined_bias = self._compute_combined_attention_bias(
+                prophetic_mask, policy_mask, memory_weights, aligned_state
+            )
+            scores = scores + combined_bias
+            
+            # Apply causal mask
+            if attention_mask is not None:
+                scores = scores.masked_fill(attention_mask == 0, float('-inf'))
+            
+            # Compute attention weights
+            attn_weights = F.softmax(scores, dim=-1)
+            attn_weights = self.dropout(attn_weights)
+            
+            # Cache the computed attention weights
+            self._cache_attention_pattern(
+                attn_weights, seq_len, self.num_heads, governance_outputs, 
+                attention_mask, aligned_state
+            )
         
         # Apply attention to values
         out = torch.matmul(attn_weights, v)
 
-        # 3. Trace generation - for interpretability
-        if output_traces:
-            trace_info = self.trace_generator(x, attn_weights, out, aligned_state)
-            governance_outputs['trace'] = trace_info
-
         # Reshape and project output
         out = out.transpose(1, 2).contiguous().view(batch_size, seq_len, hidden_dim)
         out = self.out_proj(out)
+        
+        # Update trace generation with final attention weights and output (if traces requested)
+        if output_traces and 'trace' in governance_outputs:
+            # Update the trace with final attention information
+            updated_trace = self.governance_backbone.trace_head(
+                governance_outputs['shared_governance_features'],
+                attention_weights=attn_weights,
+                attention_output=out,
+                prophetic_state=aligned_state
+            )
+            governance_outputs.update(updated_trace)
 
         governance_outputs['attn_weights'] = attn_weights
         if prophetic_mask is not None:

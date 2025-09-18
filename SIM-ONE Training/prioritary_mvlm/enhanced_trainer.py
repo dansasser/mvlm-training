@@ -237,7 +237,7 @@ class EnhancedPrioritaryTrainer:
         return dataset, dataloader
 
     def _setup_optimization(self) -> Tuple[AdamW, torch.optim.lr_scheduler.LRScheduler]:
-        """Setup optimizer and learning rate scheduler."""
+        """Setup optimizer and learning rate scheduler with safety guards."""
         # AdamW optimizer with weight decay
         optimizer = AdamW(
             self.model.parameters(),
@@ -247,30 +247,65 @@ class EnhancedPrioritaryTrainer:
             eps=1e-8
         )
         
-        # Combined scheduler: Linear warmup + Cosine annealing
+        # Calculate total steps with safety checks
         total_steps = len(self.dataloader) * self.config.num_epochs
-        warmup_scheduler = LinearLR(
-            optimizer,
-            start_factor=0.1,
-            total_iters=self.config.warmup_steps
-        )
+        warmup_steps = self.config.warmup_steps
         
-        cosine_scheduler = CosineAnnealingLR(
-            optimizer,
-            T_max=total_steps - self.config.warmup_steps,
-            eta_min=self.config.learning_rate * 0.1
-        )
-        
-        scheduler = SequentialLR(
-            optimizer,
-            schedulers=[warmup_scheduler, cosine_scheduler],
-            milestones=[self.config.warmup_steps]
-        )
+        # Guard against edge cases
+        if total_steps < 10:
+            # Very short training, use constant LR
+            self.logger.warning(f"Very short training ({total_steps} steps), using constant LR")
+            scheduler = torch.optim.lr_scheduler.ConstantLR(optimizer, factor=1.0)
+        elif warmup_steps >= total_steps:
+            # Warmup longer than training, adjust
+            warmup_steps = max(1, total_steps // 10)  # Use 10% for warmup
+            self.logger.warning(f"Warmup steps ({self.config.warmup_steps}) >= total steps ({total_steps}), "
+                              f"adjusting warmup to {warmup_steps}")
+            scheduler = self._create_guarded_cosine_schedule(optimizer, warmup_steps, total_steps)
+        elif warmup_steps <= 0:
+            # No warmup, direct cosine annealing
+            self.logger.info("No warmup steps, using direct cosine annealing")
+            scheduler = CosineAnnealingLR(
+                optimizer,
+                T_max=total_steps,
+                eta_min=self.config.learning_rate * 0.1
+            )
+        else:
+            # Normal case with warmup
+            scheduler = self._create_guarded_cosine_schedule(optimizer, warmup_steps, total_steps)
         
         self.logger.info(f"Total training steps: {total_steps}")
-        self.logger.info(f"Warmup steps: {self.config.warmup_steps}")
+        self.logger.info(f"Warmup steps: {warmup_steps}")
         
         return optimizer, scheduler
+    
+    def _create_guarded_cosine_schedule(self, optimizer, warmup_steps: int, total_steps: int, min_lr_ratio: float = 0.1):
+        """Create cosine schedule with guards against edge cases."""
+        def lr_lambda(current_step):
+            # Guard against negative or zero steps
+            current_step = max(0, current_step)
+            
+            # Warmup phase
+            if current_step < warmup_steps:
+                if warmup_steps <= 0:
+                    return 1.0  # No warmup
+                return float(current_step) / float(warmup_steps)
+            
+            # Guard against invalid training step configuration
+            if total_steps <= warmup_steps:
+                # If total steps <= warmup steps, just return 1.0 after warmup
+                return 1.0
+            
+            # Cosine decay phase
+            decay_steps = total_steps - warmup_steps
+            progress = float(current_step - warmup_steps) / float(decay_steps)
+            progress = min(1.0, progress)  # Clamp to [0, 1]
+            
+            # Cosine decay with minimum learning rate
+            cosine_decay = 0.5 * (1.0 + math.cos(math.pi * progress))
+            return max(min_lr_ratio, cosine_decay)
+        
+        return torch.optim.lr_scheduler.LambdaLR(optimizer, lr_lambda)
 
     def compute_enhanced_loss(self, batch: Dict) -> Tuple[torch.Tensor, Dict[str, torch.Tensor]]:
         """Compute loss using the comprehensive biblical loss function."""
