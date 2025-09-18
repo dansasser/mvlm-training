@@ -597,15 +597,23 @@ class GovernanceAggregator(nn.Module):
         policy_outputs = []
         memory_outputs = []
         trace_outputs = []
-        
+        trace_metadata: List[Dict[str, torch.Tensor]] = []
+
         for gov_out in all_governance_outputs:
             if 'policy_logits' in gov_out:
                 policy_outputs.append(gov_out['policy_logits'])
             if 'memory_signals' in gov_out:
                 memory_outputs.append(gov_out['memory_signals'])
-            if 'trace' in gov_out and isinstance(gov_out['trace'], torch.Tensor):
-                trace_outputs.append(gov_out['trace'])
-        
+            trace_entry = gov_out.get('trace')
+            if isinstance(trace_entry, dict):
+                trace_tensor = trace_entry.get('tensor')
+                if isinstance(trace_tensor, torch.Tensor):
+                    trace_outputs.append(trace_tensor)
+                    meta = {k: v for k, v in trace_entry.items() if k != 'tensor'}
+                    trace_metadata.append(meta)
+            elif isinstance(trace_entry, torch.Tensor):
+                trace_outputs.append(trace_entry)
+
         aggregated = {}
 
         # Aggregate policy information
@@ -627,8 +635,25 @@ class GovernanceAggregator(nn.Module):
         # Aggregate trace information
         if trace_outputs:
             trace_concat = torch.cat(trace_outputs, dim=-1)
-            aggregated['trace'] = self.trace_aggregator(trace_concat)
-        
+            expected_dim = self.hidden_dim * self.num_layers
+            if trace_concat.size(-1) != expected_dim:
+                if trace_concat.size(-1) < expected_dim:
+                    pad_size = expected_dim - trace_concat.size(-1)
+                    pad_tensor = trace_concat.new_zeros(
+                        trace_concat.size(0), trace_concat.size(1), pad_size
+                    )
+                    trace_concat = torch.cat([trace_concat, pad_tensor], dim=-1)
+                else:
+                    trace_concat = trace_concat[..., :expected_dim]
+            aggregated_trace = self.trace_aggregator(trace_concat)
+            aggregated['trace'] = aggregated_trace
+            aggregated['trace_all_layers'] = list(trace_outputs)
+            if trace_metadata:
+                aggregated['trace_metadata'] = trace_metadata
+        else:
+            aggregated['trace'] = final_hidden_states
+            aggregated['trace_all_layers'] = [final_hidden_states]
+
         return aggregated
 
 

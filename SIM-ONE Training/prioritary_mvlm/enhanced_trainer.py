@@ -291,12 +291,22 @@ class EnhancedPrioritaryTrainer:
                     'batch_metadata': batch.get('metadata', {}),
                     'prophetic_state': prophetic_state
                 }
+                if isinstance(governance_outputs, dict) and 'trace_metadata' in governance_outputs:
+                    metadata['trace_metadata'] = governance_outputs['trace_metadata']
+
+                trace_tensor = None
+                if isinstance(governance_outputs, dict):
+                    trace_tensor = governance_outputs.get('trace')
+                if not isinstance(trace_tensor, torch.Tensor):
+                    raise ValueError(
+                        "Governance outputs must include a trace tensor for enhanced loss computation."
+                    )
 
                 # Compute comprehensive loss
                 total_loss, loss_components = self.loss_function(
                     logits=logits,
                     labels=labels,
-                    hidden_states=governance_outputs.get('trace', logits),  # Use trace or logits
+                    hidden_states=trace_tensor,
                     governance_outputs=governance_outputs,
                     metadata=metadata,
                     prophetic_state=prophetic_state
@@ -313,11 +323,21 @@ class EnhancedPrioritaryTrainer:
                 'batch_metadata': batch.get('metadata', {}),
                 'prophetic_state': prophetic_state
             }
+            if isinstance(governance_outputs, dict) and 'trace_metadata' in governance_outputs:
+                metadata['trace_metadata'] = governance_outputs['trace_metadata']
+
+            trace_tensor = None
+            if isinstance(governance_outputs, dict):
+                trace_tensor = governance_outputs.get('trace')
+            if not isinstance(trace_tensor, torch.Tensor):
+                raise ValueError(
+                    "Governance outputs must include a trace tensor for enhanced loss computation."
+                )
 
             total_loss, loss_components = self.loss_function(
                 logits=logits,
                 labels=labels,
-                hidden_states=governance_outputs.get('trace', logits),
+                hidden_states=trace_tensor,
                 governance_outputs=governance_outputs,
                 metadata=metadata,
                 prophetic_state=prophetic_state
