@@ -222,8 +222,8 @@ def test_enhanced_model_with_phase2():
     
     # Test forward pass
     model.eval()  # Enable caching
-    logits, governance = model(
-        input_ids, 
+    logits, governance, _ = model(
+        input_ids,
         prophetic_state=prophetic_state,
         output_governance=True
     )

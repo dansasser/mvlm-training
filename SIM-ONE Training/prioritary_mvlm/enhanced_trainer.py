@@ -319,7 +319,7 @@ class EnhancedPrioritaryTrainer:
         # Forward pass through model
         if self.use_mixed_precision and self.scaler is not None:
             with torch.cuda.amp.autocast():
-                logits, governance_outputs = self.model(
+                logits, governance_outputs, _ = self.model(
                     input_ids,
                     output_governance=True,
                     prophetic_state=prophetic_state
@@ -352,7 +352,7 @@ class EnhancedPrioritaryTrainer:
                     prophetic_state=prophetic_state
                 )
         else:
-            logits, governance_outputs = self.model(
+            logits, governance_outputs, _ = self.model(
                 input_ids,
                 output_governance=True,
                 prophetic_state=prophetic_state

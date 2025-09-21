@@ -162,8 +162,10 @@ class EnhancedGovernanceAttention(CachedAttentionMixin, nn.Module):
         policy_guidance: Optional[torch.Tensor] = None,
         memory_context: Optional[torch.Tensor] = None,
         output_traces: bool = True,
-        prophetic_state: Optional[PropheticSingularityState] = None
-    ) -> Tuple[torch.Tensor, Dict[str, torch.Tensor]]:
+        prophetic_state: Optional[PropheticSingularityState] = None,
+        past_key_value: Optional[Tuple[torch.Tensor, torch.Tensor]] = None,
+        use_cache: bool = False
+    ) -> Tuple[torch.Tensor, Dict[str, torch.Tensor], Optional[Tuple[torch.Tensor, torch.Tensor]]]:
         """
         Args:
             x: Input tensor [batch, seq_len, hidden_dim]
@@ -178,7 +180,7 @@ class EnhancedGovernanceAttention(CachedAttentionMixin, nn.Module):
         """
         batch_size, seq_len, hidden_dim = x.shape
         
-        # Generate Q, K, V
+        # Generate Q, K, V for current tokens
         q = self.q_proj(x).view(batch_size, seq_len, self.num_heads, self.head_dim)
         k = self.k_proj(x).view(batch_size, seq_len, self.num_heads, self.head_dim)
         v = self.v_proj(x).view(batch_size, seq_len, self.num_heads, self.head_dim)
@@ -192,6 +194,14 @@ class EnhancedGovernanceAttention(CachedAttentionMixin, nn.Module):
         q = q.transpose(1, 2)  # [batch, num_heads, seq_len, head_dim]
         k = k.transpose(1, 2)
         v = v.transpose(1, 2)
+
+        if past_key_value is not None:
+            past_k, past_v = past_key_value
+            if past_k is not None and past_v is not None:
+                k = torch.cat([past_k, k], dim=-2)
+                v = torch.cat([past_v, v], dim=-2)
+
+        present_key_value = (k, v) if use_cache else None
         
         # Compute base attention scores
         scores = torch.matmul(q, k.transpose(-2, -1)) * self.scale
@@ -272,7 +282,7 @@ class EnhancedGovernanceAttention(CachedAttentionMixin, nn.Module):
         if aligned_state is not None:
             governance_outputs['prophetic_decay'] = aligned_state.compute_memory_decay(self.num_heads, seq_len)
 
-        return out, governance_outputs
+        return out, governance_outputs, present_key_value
 
 
 class PolicyController(nn.Module):

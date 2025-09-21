@@ -104,8 +104,8 @@ class PerformanceBenchmark:
             start_time = time.time()
             
             with torch.no_grad():
-                logits, governance = model(
-                    input_ids, 
+                logits, governance, _ = model(
+                    input_ids,
                     prophetic_state=prophetic_state,
                     output_governance=True
                 )
@@ -193,7 +193,7 @@ class PerformanceBenchmark:
         # Warmup
         for _ in range(2):
             optimizer.zero_grad()
-            logits, _ = model(input_ids, prophetic_state=prophetic_state)
+            logits, _, _ = model(input_ids, prophetic_state=prophetic_state)
             loss = torch.nn.functional.cross_entropy(
                 logits.view(-1, logits.size(-1)), labels.view(-1)
             )
@@ -211,7 +211,9 @@ class PerformanceBenchmark:
         start_time = time.time()
         
         optimizer.zero_grad()
-        logits, governance = model(input_ids, prophetic_state=prophetic_state, output_governance=True)
+        logits, governance, _ = model(
+            input_ids, prophetic_state=prophetic_state, output_governance=True
+        )
         loss = torch.nn.functional.cross_entropy(
             logits.view(-1, logits.size(-1)), labels.view(-1)
         )

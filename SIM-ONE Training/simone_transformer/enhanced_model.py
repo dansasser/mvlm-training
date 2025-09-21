@@ -99,8 +99,10 @@ class EnhancedSIMONEBlock(nn.Module):
         policy_guidance: Optional[torch.Tensor] = None,
         output_traces: bool = True,
         prophetic_state: Optional[PropheticSingularityState] = None,
-        precomputed_modulation: Optional[torch.Tensor] = None
-    ) -> Tuple[torch.Tensor, Dict[str, torch.Tensor]]:
+        precomputed_modulation: Optional[torch.Tensor] = None,
+        past_key_value: Optional[Tuple[torch.Tensor, torch.Tensor]] = None,
+        use_cache: bool = False
+    ) -> Tuple[torch.Tensor, Dict[str, torch.Tensor], Optional[Tuple[torch.Tensor, torch.Tensor]]]:
         """
         Args:
             x: Input tensor [batch, seq_len, hidden_dim]
@@ -131,13 +133,15 @@ class EnhancedSIMONEBlock(nn.Module):
             x_norm = x_norm * modulation_gate
 
         # Enhanced attention with governance
-        attn_output, gov_outputs = self.attention(
+        attn_output, gov_outputs, present_key_value = self.attention(
             x_norm,
             attention_mask=attention_mask,
             policy_guidance=policy_guidance,
             memory_context=memory_context,
             output_traces=output_traces,
-            prophetic_state=block_state
+            prophetic_state=block_state,
+            past_key_value=past_key_value,
+            use_cache=use_cache
         )
 
         if modulation_gate is not None:
@@ -173,7 +177,7 @@ class EnhancedSIMONEBlock(nn.Module):
         if block_state is not None:
             gov_outputs['prophetic_kingdom'] = block_state.kingdom_flow
 
-        return x, gov_outputs
+        return x, gov_outputs, present_key_value
 
 
 class GovernanceEnhancer(nn.Module):
@@ -340,12 +344,19 @@ class EnhancedSIMONEModel(nn.Module):
             self.kv_cache.clear()
     
     def _precompute_prophetic_modulations(
-        self, 
-        prophetic_state: Optional[PropheticSingularityState], 
-        seq_len: int, 
-        device: torch.device, 
-        dtype: torch.dtype
-    ) -> Optional[Tuple[PropheticSingularityState, List[torch.Tensor]]]:
+        self,
+        prophetic_state: Optional[PropheticSingularityState],
+        seq_len: int,
+        device: torch.device,
+        dtype: torch.dtype,
+        past_length: int = 0
+    ) -> Optional[
+        Tuple[
+            PropheticSingularityState,
+            List[torch.Tensor],
+            PropheticSingularityState
+        ]
+    ]:
         """
         Pre-compute all layer modulations once for efficiency.
         Avoids repeated computation in each layer.
@@ -354,24 +365,50 @@ class EnhancedSIMONEModel(nn.Module):
             return None
             
         # Check cache validity
-        cache_key = (id(prophetic_state), seq_len, device, dtype)
-        if (self._precomputed_prophetic_cache is not None and 
+        total_len = seq_len + past_length
+        cache_key = (id(prophetic_state), total_len, past_length, device, dtype)
+        if (self._precomputed_prophetic_cache is not None and
             self._precomputed_prophetic_cache[0] == cache_key):
             return self._precomputed_prophetic_cache[1]
-        
-        # Align state to sequence length
-        aligned_state = prophetic_state.align_to_length(seq_len).to(device=device, dtype=dtype)
-        
+
+        # Align state to total sequence length (past + current tokens)
+        aligned_total = prophetic_state.align_to_length(total_len).to(
+            device=device,
+            dtype=dtype
+        )
+
+        start_idx = max(total_len - seq_len, 0)
+
+        # Slice helper to preserve normalization metadata
+        def _slice_state(
+            state: PropheticSingularityState,
+            start: int
+        ) -> PropheticSingularityState:
+            if start == 0 and seq_len == total_len:
+                return state
+
+            return PropheticSingularityState(
+                intensity=state.intensity[..., start:],
+                anointing=state.anointing[..., start:],
+                dominion=state.dominion[..., start:],
+                mercy=state.mercy[..., start:],
+                lambda_field=state.lambda_field[..., start:],
+                time_index=state.time_index[..., start:],
+                normalization=state.normalization,
+            )
+
+        aligned_state = _slice_state(aligned_total, start_idx)
+
         # Pre-compute all layer modulations
         layer_modulations = []
         for layer_idx in range(self.num_layers):
-            modulation = aligned_state.layer_modulation(layer_idx, self.num_layers)
-            layer_modulations.append(modulation)
-        
+            modulation = aligned_total.layer_modulation(layer_idx, self.num_layers)
+            layer_modulations.append(modulation[..., start_idx:])
+
         # Cache the result
-        result = (aligned_state, layer_modulations)
+        result = (aligned_state, layer_modulations, aligned_total)
         self._precomputed_prophetic_cache = (cache_key, result)
-        
+
         return result
     
     def forward(
@@ -381,8 +418,9 @@ class EnhancedSIMONEModel(nn.Module):
         policy_guidance: Optional[torch.Tensor] = None,
         output_governance: bool = True,
         use_cache: bool = False,
+        past_key_values: Optional[List[Tuple[torch.Tensor, torch.Tensor]]] = None,
         prophetic_state: Optional[PropheticSingularityState] = None
-    ) -> Tuple[torch.Tensor, Optional[Dict]]:
+    ) -> Tuple[torch.Tensor, Optional[Dict], Optional[List[Tuple[torch.Tensor, torch.Tensor]]]]:
         """
         Forward pass through the enhanced SIM-ONE model.
         
@@ -396,21 +434,36 @@ class EnhancedSIMONEModel(nn.Module):
         Returns:
             logits: Language modeling logits [batch, seq_len, vocab_size]
             governance_info: Aggregated governance information (if output_governance=True)
+            present_key_values: Cached key/value tensors for each layer when ``use_cache`` is True
         """
         batch_size, seq_len = input_ids.shape
         device = input_ids.device
-        
-        # Token embeddings
+
+        if past_key_values is None:
+            past_key_values = [None] * self.num_layers
+        elif len(past_key_values) != self.num_layers:
+            raise ValueError(
+                f"Expected past_key_values to have {self.num_layers} entries, "
+                f"got {len(past_key_values)}"
+            )
+
+        past_length = 0
+        if use_cache and past_key_values[0] is not None:
+            past_length = past_key_values[0][0].size(-2)
+
+        # Token embeddings for current step
         x = self.token_embedding(input_ids)
 
         # Pre-compute prophetic state modulations once
         precomputed_state = self._precompute_prophetic_modulations(
-            prophetic_state, seq_len, device, x.dtype
+            prophetic_state, seq_len, device, x.dtype, past_length=past_length
         )
-        
+
+        summary_state = None
         if precomputed_state is not None:
-            aligned_state, layer_modulations = precomputed_state
-            self.last_prophetic_state = aligned_state
+            aligned_state, layer_modulations, aligned_total_state = precomputed_state
+            summary_state = aligned_total_state
+            self.last_prophetic_state = aligned_total_state
         else:
             aligned_state = None
             layer_modulations = None
@@ -419,33 +472,37 @@ class EnhancedSIMONEModel(nn.Module):
         # Create causal attention mask if not provided
         if attention_mask is None:
             attention_mask = create_causal_mask(seq_len, device)
-        
+
         # Store governance outputs from all layers
         all_governance_outputs = [] if output_governance else None
         memory_context = None
-        
+        next_past_key_values: Optional[List[Tuple[torch.Tensor, torch.Tensor]]] = [] if use_cache else None
+
         # Pass through transformer layers with pre-computed modulations
         for layer_idx, layer in enumerate(self.layers):
             # Get pre-computed modulation for this layer
             precomputed_modulation = layer_modulations[layer_idx] if layer_modulations else None
-            
+            layer_past = past_key_values[layer_idx] if past_key_values else None
+
             # Apply gradient checkpointing if enabled during training
             if self.training and self.use_gradient_checkpointing:
                 # Use gradient checkpointing to trade compute for memory
-                x, gov_outputs = torch.utils.checkpoint.checkpoint(
+                x, gov_outputs, _ = torch.utils.checkpoint.checkpoint(
                     layer,
                     x,
                     input_ids,
                     attention_mask,
                     memory_context,
                     policy_guidance,
-                    output_traces,
+                    output_governance,
                     aligned_state,
                     precomputed_modulation,
+                    None,
+                    False,
                     use_reentrant=False  # Use new checkpointing API
                 )
             else:
-                x, gov_outputs = layer(
+                x, gov_outputs, present_key_value = layer(
                     x=x,
                     input_ids=input_ids,
                     attention_mask=attention_mask,
@@ -453,14 +510,18 @@ class EnhancedSIMONEModel(nn.Module):
                     policy_guidance=policy_guidance,
                     output_traces=output_governance,
                     prophetic_state=aligned_state,
-                    precomputed_modulation=precomputed_modulation
+                    precomputed_modulation=precomputed_modulation,
+                    past_key_value=layer_past,
+                    use_cache=use_cache
                 )
+                if use_cache and next_past_key_values is not None:
+                    next_past_key_values.append(present_key_value)
 
             if output_governance:
                 all_governance_outputs.append(gov_outputs)
 
             # Use memory signals as context for next layer
-            if 'memory_signals' in gov_outputs:
+            if isinstance(gov_outputs, dict) and 'memory_signals' in gov_outputs:
                 memory_context = gov_outputs['memory_signals']
         
         # Final normalization
@@ -473,12 +534,12 @@ class EnhancedSIMONEModel(nn.Module):
         governance_info = None
         if output_governance and all_governance_outputs:
             governance_info = self.governance_aggregator(all_governance_outputs, x)
-            if aligned_state is not None:
-                summary = aligned_state.summary()
+            if summary_state is not None:
+                summary = summary_state.summary()
                 governance_info['prophetic_kingdom_mean'] = summary['kingdom']['mean']
                 governance_info['prophetic_kingdom_std'] = summary['kingdom']['std']
 
-        return logits, governance_info
+        return logits, governance_info, next_past_key_values if use_cache else None
     
     def generate(
         self,
@@ -510,7 +571,7 @@ class EnhancedSIMONEModel(nn.Module):
         """
         batch_size = input_ids.shape[0]
         device = input_ids.device
-        
+
         # Enable caching for efficient generation
         self.enable_cache()
 
@@ -524,91 +585,101 @@ class EnhancedSIMONEModel(nn.Module):
 
         adjustments_log: List[Dict[str, float]] = []
 
-        for _ in range(max_length - input_ids.shape[1]):
-            # Forward pass (only last token for efficiency with caching)
+        past_key_values: Optional[List[Tuple[torch.Tensor, torch.Tensor]]] = None
+        current_input = input_ids
+        max_new_tokens = max(0, max_length - input_ids.shape[1])
+
+        for _ in range(max_new_tokens):
+            seq_len = current_input.shape[1]
+            attention_mask = create_causal_mask(seq_len, device)
+
             with torch.no_grad():
-                logits, _ = self.forward(
-                    generated,
+                logits, _, past_key_values = self.forward(
+                    current_input,
+                    attention_mask=attention_mask,
                     output_governance=False,
                     use_cache=True,
+                    past_key_values=past_key_values,
                     prophetic_state=state_device
                 )
 
-                step_idx = generated.shape[1] - 1
+            step_idx = generated.shape[1] - 1
 
-                dynamic_temperature = temperature
-                dynamic_top_k = top_k
-                dynamic_top_p = top_p
-                kingdom_val = None
+            dynamic_temperature = temperature
+            dynamic_top_k = top_k
+            dynamic_top_p = top_p
+            kingdom_val = None
 
-                if state_device is not None:
-                    stats = state_device.step_statistics(step_idx)
+            if state_device is not None:
+                stats = state_device.step_statistics(step_idx)
 
-                    def _to_float(value: torch.Tensor) -> float:
-                        if isinstance(value, torch.Tensor):
-                            return float(value.item())
-                        return float(value)
+                def _to_float(value: torch.Tensor) -> float:
+                    if isinstance(value, torch.Tensor):
+                        return float(value.item())
+                    return float(value)
 
-                    intensity_val = _to_float(stats['intensity'])
-                    mercy_val = _to_float(stats['mercy'])
-                    dominion_val = _to_float(stats['dominion'])
-                    lambda_val = _to_float(stats['lambda'])
-                    time_val = _to_float(stats['time'])
-                    kingdom_val = _to_float(stats['kingdom'])
+                intensity_val = _to_float(stats['intensity'])
+                mercy_val = _to_float(stats['mercy'])
+                dominion_val = _to_float(stats['dominion'])
+                lambda_val = _to_float(stats['lambda'])
+                time_val = _to_float(stats['time'])
+                kingdom_val = _to_float(stats['kingdom'])
 
-                    temp_scale = 1.0 + 0.25 * (mercy_val - dominion_val)
-                    dynamic_temperature = max(0.05, temperature * temp_scale)
+                temp_scale = 1.0 + 0.25 * (mercy_val - dominion_val)
+                dynamic_temperature = max(0.05, temperature * temp_scale)
 
-                    if top_k is not None:
-                        dynamic_top_k = max(1, int(top_k * (1.0 + intensity_val * 0.2 - lambda_val * 0.1)))
+                if top_k is not None:
+                    dynamic_top_k = max(1, int(top_k * (1.0 + intensity_val * 0.2 - lambda_val * 0.1)))
 
-                    if top_p is not None:
-                        adjusted = top_p * (1.0 - 0.15 * (lambda_val - 0.5) + 0.1 * time_val)
-                        adjusted = float(torch.clamp(torch.tensor(adjusted), 0.01, 0.99).item())
-                        dynamic_top_p = adjusted
+                if top_p is not None:
+                    adjusted = top_p * (1.0 - 0.15 * (lambda_val - 0.5) + 0.1 * time_val)
+                    adjusted = float(torch.clamp(torch.tensor(adjusted), 0.01, 0.99).item())
+                    dynamic_top_p = adjusted
 
-                # Get logits for last position
-                next_token_logits = logits[:, -1, :] / dynamic_temperature
+            # Get logits for last position (current step)
+            next_token_logits = logits[:, -1, :] / dynamic_temperature
 
-                # Apply top-k filtering
-                if dynamic_top_k is not None:
-                    indices_to_remove = next_token_logits < torch.topk(next_token_logits, dynamic_top_k, dim=-1)[0][..., -1, None]
-                    next_token_logits[indices_to_remove] = float('-inf')
+            # Apply top-k filtering
+            if dynamic_top_k is not None:
+                topk = torch.topk(next_token_logits, dynamic_top_k, dim=-1)[0][..., -1, None]
+                indices_to_remove = next_token_logits < topk
+                next_token_logits[indices_to_remove] = float('-inf')
 
-                # Apply top-p (nucleus) filtering
-                if dynamic_top_p is not None:
-                    sorted_logits, sorted_indices = torch.sort(next_token_logits, descending=True, dim=-1)
-                    cumulative_probs = torch.cumsum(F.softmax(sorted_logits, dim=-1), dim=-1)
+            # Apply top-p (nucleus) filtering
+            if dynamic_top_p is not None:
+                sorted_logits, sorted_indices = torch.sort(next_token_logits, descending=True, dim=-1)
+                cumulative_probs = torch.cumsum(F.softmax(sorted_logits, dim=-1), dim=-1)
 
-                    # Remove tokens with cumulative probability above the threshold
-                    sorted_indices_to_remove = cumulative_probs > dynamic_top_p
-                    sorted_indices_to_remove[..., 1:] = sorted_indices_to_remove[..., :-1].clone()
-                    sorted_indices_to_remove[..., 0] = 0
+                # Remove tokens with cumulative probability above the threshold
+                sorted_indices_to_remove = cumulative_probs > dynamic_top_p
+                sorted_indices_to_remove[..., 1:] = sorted_indices_to_remove[..., :-1].clone()
+                sorted_indices_to_remove[..., 0] = 0
 
-                    indices_to_remove = torch.gather(sorted_indices_to_remove, -1, sorted_indices.argsort(-1))
-                    next_token_logits[indices_to_remove] = float('-inf')
-                
-                # Sample or take greedy choice
-                if do_sample:
-                    probs = F.softmax(next_token_logits, dim=-1)
-                    next_token = torch.multinomial(probs, num_samples=1)
-                else:
-                    next_token = torch.argmax(next_token_logits, dim=-1, keepdim=True)
-                
-                # Append to generated sequence
-                generated = torch.cat([generated, next_token], dim=-1)
+                indices_to_remove = torch.gather(sorted_indices_to_remove, -1, sorted_indices.argsort(-1))
+                next_token_logits[indices_to_remove] = float('-inf')
 
-                adjustments_log.append({
-                    'step': float(step_idx),
-                    'temperature': float(dynamic_temperature),
-                    'top_k': float(dynamic_top_k or 0),
-                    'top_p': float(dynamic_top_p or 0.0),
-                    'kingdom_flow': float(kingdom_val) if kingdom_val is not None else float('nan')
-                })
+            # Sample or take greedy choice
+            if do_sample:
+                probs = F.softmax(next_token_logits, dim=-1)
+                next_token = torch.multinomial(probs, num_samples=1)
+            else:
+                next_token = torch.argmax(next_token_logits, dim=-1, keepdim=True)
 
-                # Check for EOS token
-                if eos_token_id is not None and (next_token == eos_token_id).all():
-                    break
+            # Append to generated sequence and prepare next step
+            generated = torch.cat([generated, next_token], dim=-1)
+            current_input = next_token
+
+            adjustments_log.append({
+                'step': float(step_idx),
+                'temperature': float(dynamic_temperature),
+                'top_k': float(dynamic_top_k or 0),
+                'top_p': float(dynamic_top_p or 0.0),
+                'kingdom_flow': float(kingdom_val) if kingdom_val is not None else float('nan')
+            })
+
+            # Check for EOS token
+            if eos_token_id is not None and (next_token == eos_token_id).all():
+                break
 
         # Disable cache
         self.disable_cache()
@@ -754,7 +825,7 @@ if __name__ == "__main__":
     print(f"Memory usage: {model.get_memory_usage()}")
     
     # Forward pass
-    logits, governance = model(input_ids, output_governance=True)
+    logits, governance, _ = model(input_ids, output_governance=True)
     
     print(f"Input shape: {input_ids.shape}")
     print(f"Output logits shape: {logits.shape}")

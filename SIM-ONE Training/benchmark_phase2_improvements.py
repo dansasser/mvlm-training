@@ -310,8 +310,8 @@ class Phase2PerformanceBenchmark:
             start_time = time.time()
             
             with torch.no_grad():
-                logits, governance = model(
-                    input_ids, 
+                logits, governance, _ = model(
+                    input_ids,
                     prophetic_state=prophetic_state,
                     output_governance=True
                 )
