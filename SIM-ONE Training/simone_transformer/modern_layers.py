@@ -83,111 +83,159 @@ class GeGLU(nn.Module):
 
 
 class MoELayer(nn.Module):
-    """
-    Optimized Mixture of Experts layer with batched expert processing.
-    
-    Key optimizations:
-    - Batched processing by expert (instead of token-by-token)
-    - Reduced memory allocations
-    - Better parallelization
-    - Load balancing improvements
-    
-    Expected improvement: 25-40% faster MoE computation
-    """
-    
+    """Mixture of Experts layer with vectorized token dispatch and load balancing."""
+
     def __init__(
         self,
         dim: int,
         num_experts: int = 8,
         num_experts_per_token: int = 2,
         expert_hidden_dim: Optional[int] = None,
-        load_balancing_weight: float = 0.01
+        load_balancing_weight: float = 0.01,
+        capacity_factor: Optional[float] = 1.25,
+        ensure_assignment: bool = True,
     ):
         super().__init__()
+        if num_experts < 1:
+            raise ValueError("MoELayer requires at least one expert")
+
         self.num_experts = num_experts
         self.num_experts_per_token = num_experts_per_token
         self.load_balancing_weight = load_balancing_weight
+        self.capacity_factor = capacity_factor
+        self.ensure_assignment = ensure_assignment
         expert_hidden_dim = expert_hidden_dim or dim * 4
-        
-        # Router network with load balancing
+
+        # Router network that produces expert logits for each token
         self.router = nn.Linear(dim, num_experts, bias=False)
-        
+
         # Expert networks (using optimized SwiGLU)
         self.experts = nn.ModuleList([
             SwiGLU(dim, expert_hidden_dim) for _ in range(num_experts)
         ])
-        
-        # Load balancing tracking
-        self.register_buffer('expert_usage', torch.zeros(num_experts))
-        self.register_buffer('total_tokens', torch.tensor(0.0))
-        
+
+        # Load-balancing bookkeeping (updated every forward pass)
+        self._load_balancing_loss: Optional[torch.Tensor] = None
+        self._last_expert_load: Optional[torch.Tensor] = None
+        self._last_assignment_counts: Optional[torch.Tensor] = None
+
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         batch_size, seq_len, dim = x.shape
         x_flat = x.view(-1, dim)  # [batch_size * seq_len, dim]
         num_tokens = x_flat.size(0)
-        
-        # Router logits with load balancing
+
+        if num_tokens == 0:
+            self._load_balancing_loss = self.router.weight.new_zeros(())
+            self._last_expert_load = None
+            self._last_assignment_counts = None
+            return x_flat.view(batch_size, seq_len, dim)
+
         router_logits = self.router(x_flat)  # [num_tokens, num_experts]
-        
-        # Apply load balancing penalty during training
-        if self.training and self.load_balancing_weight > 0:
-            # Encourage balanced expert usage
-            expert_probs = F.softmax(router_logits, dim=-1)
-            expert_usage_batch = expert_probs.mean(dim=0)
-            
-            # Update running statistics
-            self.expert_usage = 0.9 * self.expert_usage + 0.1 * expert_usage_batch
-            self.total_tokens += num_tokens
-            
-            # Add load balancing loss (encourages uniform distribution)
-            target_usage = 1.0 / self.num_experts
-            load_balance_loss = ((self.expert_usage - target_usage) ** 2).sum()
-            router_logits = router_logits - self.load_balancing_weight * load_balance_loss
-        
-        # Get top-k experts for each token
-        top_k_logits, top_k_indices = torch.topk(
-            router_logits, self.num_experts_per_token, dim=-1
-        )
-        
-        # Softmax over selected experts
-        top_k_weights = F.softmax(top_k_logits, dim=-1)
-        
-        # OPTIMIZED: Vectorized expert processing
-        output = torch.zeros_like(x_flat)
-        
-        # Create routing tensors for efficient batching
-        for expert_idx in range(self.num_experts):
-            # Find all tokens and positions where this expert is selected
-            expert_positions = (top_k_indices == expert_idx)
-            
-            if expert_positions.any():
-                # Get token indices and k-positions for this expert
-                token_indices, k_positions = expert_positions.nonzero(as_tuple=True)
-                
-                if len(token_indices) > 0:
-                    # Batch process all tokens for this expert
-                    expert_tokens = x_flat[token_indices]
-                    expert_output = self.experts[expert_idx](expert_tokens)
-                    
-                    # Get corresponding weights
-                    expert_weights = top_k_weights[token_indices, k_positions].unsqueeze(-1)
-                    
-                    # Accumulate weighted outputs
-                    output.index_add_(0, token_indices, expert_weights * expert_output)
-        
-        return output.view(batch_size, seq_len, dim)
-    
+        router_probs = F.softmax(router_logits, dim=-1)
+
+        k = max(1, min(self.num_experts_per_token, self.num_experts))
+        topk_logits, topk_indices = torch.topk(router_logits, k, dim=-1)
+        topk_weights = F.softmax(topk_logits, dim=-1)
+
+        # Flatten routing information once for vectorized dispatch
+        token_indices = torch.arange(num_tokens, device=x_flat.device)
+        expanded_tokens = token_indices.unsqueeze(-1).expand(-1, k).reshape(-1)
+        expanded_experts = topk_indices.reshape(-1)
+        expanded_weights = topk_weights.reshape(-1)
+
+        # Capacity-aware routing (Drop lowest scores when an expert is overloaded)
+        if self.capacity_factor is not None and self.capacity_factor > 0:
+            capacity = max(1, int(math.ceil(self.capacity_factor * num_tokens / self.num_experts)))
+            scores = expanded_weights
+            sorted_order = torch.argsort(scores, descending=True)
+            sorted_experts = expanded_experts[sorted_order]
+            sorted_cumsum = F.one_hot(sorted_experts, num_classes=self.num_experts).cumsum(dim=0)
+            expert_position = sorted_cumsum[torch.arange(sorted_cumsum.size(0), device=x_flat.device), sorted_experts] - 1
+            keep_sorted = expert_position < capacity
+            keep_mask = torch.zeros_like(expanded_weights, dtype=torch.bool)
+            keep_mask[sorted_order] = keep_sorted
+        else:
+            capacity = None
+            keep_mask = torch.ones_like(expanded_weights, dtype=torch.bool)
+
+        kept_tokens = expanded_tokens[keep_mask]
+        kept_experts = expanded_experts[keep_mask]
+        kept_weights = expanded_weights[keep_mask]
+
+        if self.ensure_assignment:
+            token_has_assignment = torch.zeros(num_tokens, dtype=torch.bool, device=x_flat.device)
+            if kept_tokens.numel() > 0:
+                token_has_assignment.index_fill_(0, kept_tokens, True)
+            if (~token_has_assignment).any():
+                missing_tokens = torch.nonzero(~token_has_assignment, as_tuple=False).squeeze(-1)
+                fallback_indices = missing_tokens * k
+                keep_mask[fallback_indices] = True
+                kept_tokens = expanded_tokens[keep_mask]
+                kept_experts = expanded_experts[keep_mask]
+                kept_weights = expanded_weights[keep_mask]
+
+        if kept_tokens.numel() == 0:
+            kept_tokens = expanded_tokens
+            kept_experts = expanded_experts
+            kept_weights = expanded_weights
+
+        # Renormalize gating weights so each token sums to 1
+        token_weight_sums = torch.zeros(num_tokens, device=x_flat.device, dtype=x_flat.dtype)
+        token_weight_sums.index_add_(0, kept_tokens, kept_weights)
+        normalizer = token_weight_sums[kept_tokens] + 1e-9
+        normalized_weights = kept_weights / normalizer
+
+        # Group tokens by expert for batched processing
+        sorted_experts, sort_order = torch.sort(kept_experts)
+        sorted_tokens = kept_tokens[sort_order]
+        sorted_weights = normalized_weights[sort_order]
+        expert_inputs = x_flat.index_select(0, sorted_tokens)
+
+        output_flat = torch.zeros_like(x_flat)
+
+        if sorted_tokens.numel() > 0:
+            unique_experts, counts = torch.unique_consecutive(sorted_experts, return_counts=True)
+            start = 0
+            for expert_id, count in zip(unique_experts.tolist(), counts.tolist()):
+                end = start + count
+                expert_output = self.experts[expert_id](expert_inputs[start:end])
+                weighted_output = expert_output * sorted_weights[start:end].unsqueeze(-1)
+                output_flat.index_add_(0, sorted_tokens[start:end], weighted_output)
+                start = end
+
+        # Load-balancing auxiliary loss with gradient flow to router
+        if self.load_balancing_weight > 0:
+            importance = router_probs.mean(dim=0)
+            load = torch.zeros(self.num_experts, device=x_flat.device, dtype=x_flat.dtype)
+            load.scatter_add_(0, kept_experts, normalized_weights)
+            load = load / max(1, num_tokens)
+            self._load_balancing_loss = self.load_balancing_weight * (importance * load).sum() * self.num_experts
+            self._last_expert_load = load.detach()
+        else:
+            self._load_balancing_loss = self.router.weight.new_zeros(())
+            self._last_expert_load = None
+
+        with torch.no_grad():
+            if kept_experts.numel() > 0:
+                self._last_assignment_counts = torch.bincount(kept_experts, minlength=self.num_experts).to(x_flat.device)
+            else:
+                self._last_assignment_counts = torch.zeros(self.num_experts, device=x_flat.device)
+
+        return output_flat.view(batch_size, seq_len, dim)
+
     def get_load_balancing_loss(self) -> torch.Tensor:
-        """Get the current load balancing loss for regularization."""
-        if self.total_tokens > 0:
-            target_usage = 1.0 / self.num_experts
-            return ((self.expert_usage - target_usage) ** 2).sum()
-        return torch.tensor(0.0, device=self.expert_usage.device)
-    
+        if self._load_balancing_loss is None:
+            return self.router.weight.new_zeros(())
+        return self._load_balancing_loss
+
+    def get_last_assignment_counts(self) -> Optional[torch.Tensor]:
+        """Return the most recent per-expert token counts if available."""
+        return self._last_assignment_counts
+
     def reset_load_balancing_stats(self):
-        """Reset load balancing statistics."""
-        self.expert_usage.zero_()
-        self.total_tokens.zero_()
+        self._load_balancing_loss = None
+        self._last_expert_load = None
+        self._last_assignment_counts = None
 
 
 class AdaptiveLayerNorm(nn.Module):
