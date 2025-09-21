@@ -44,7 +44,9 @@ def create_enhanced_config(args) -> PrioritaryConfig:
     config.gradient_accumulation_steps = args.gradient_accumulation_steps
     config.log_interval = 10
     config.eval_interval = 100
-    
+    config.validation_split = args.validation_split
+    config.validation_dir = args.validation_dir
+
     return config
 
 
@@ -56,14 +58,25 @@ def main():
     
     # Data and output
     parser.add_argument(
-        "--data_dir", 
-        type=str, 
+        "--data_dir",
+        type=str,
         default="../mvlm_training_dataset_complete",
         help="Directory containing training data"
     )
     parser.add_argument(
-        "--output_dir", 
-        type=str, 
+        "--validation_dir",
+        type=str,
+        help="Optional directory containing validation data (overrides validation_split)"
+    )
+    parser.add_argument(
+        "--validation_split",
+        type=float,
+        default=0.1,
+        help="Fraction of training data used for validation when no validation_dir is provided"
+    )
+    parser.add_argument(
+        "--output_dir",
+        type=str,
         default="enhanced_checkpoints",
         help="Directory to save trained model"
     )
@@ -111,6 +124,10 @@ def main():
     print("Enhanced SIM-ONE Transformer Training")
     print("=" * 50)
     print(f"Data directory: {args.data_dir}")
+    if args.validation_dir:
+        print(f"Validation directory: {args.validation_dir}")
+    else:
+        print(f"Validation split: {config.validation_split:.2f}")
     print(f"Output directory: {args.output_dir}")
     print(f"Vocabulary size: {config.vocab_size:,}")
     print(f"Model size: {config.num_layers}L-{config.hidden_dim}H-{config.num_heads}A")

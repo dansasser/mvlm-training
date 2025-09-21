@@ -65,14 +65,17 @@ SIM-ONE Training/
 ## 🚀 Quick Start
 
 ### Basic Training
+The enhanced trainer will automatically reserve 10% of the dataset for
+validation when `--validation_dir` is not provided.
 ```bash
-python enhanced_train.py --data_dir ../mvlm_training_dataset_complete
+python enhanced_train.py --data_dir ../mvlm_training_dataset_complete --validation_split 0.1
 ```
 
 ### Advanced Training
 ```bash
 python enhanced_train.py \
-    --data_dir ../mvlm_training_dataset_complete \
+    --data_dir ../mvlm_training_dataset_complete/train \
+    --validation_dir ../mvlm_training_dataset_complete/val \
     --output_dir enhanced_checkpoints \
     --vocab_size 32000 \
     --hidden_dim 768 \
@@ -87,7 +90,8 @@ python enhanced_train.py \
 ```bash
 python enhanced_train.py \
     --resume_from checkpoint_step_5000 \
-    --data_dir ../mvlm_training_dataset_complete
+    --data_dir ../mvlm_training_dataset_complete/train \
+    --validation_dir ../mvlm_training_dataset_complete/val
 ```
 
 ## ⚙️ Configuration Options
@@ -106,6 +110,10 @@ python enhanced_train.py \
 - `--learning_rate`: Peak learning rate (default: 3e-4)
 - `--num_epochs`: Training epochs (default: 3)
 - `--warmup_steps`: Warmup steps (default: 2,000)
+- `--validation_split`: Fraction of data reserved for validation when no validation directory is provided (default: 0.1)
+
+### Data Management
+- `--validation_dir`: Path to a dedicated validation dataset. When set, overrides the holdout split.
 
 ### Advanced Features
 - `--no_mixed_precision`: Disable mixed precision
