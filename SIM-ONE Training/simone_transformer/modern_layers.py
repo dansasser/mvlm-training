@@ -149,8 +149,16 @@ class MoELayer(nn.Module):
             scores = expanded_weights
             sorted_order = torch.argsort(scores, descending=True)
             sorted_experts = expanded_experts[sorted_order]
-            sorted_cumsum = F.one_hot(sorted_experts, num_classes=self.num_experts).cumsum(dim=0)
-            expert_position = sorted_cumsum[torch.arange(sorted_cumsum.size(0), device=x_flat.device), sorted_experts] - 1
+            positions = torch.arange(sorted_experts.size(0), device=sorted_experts.device)
+            change = torch.ones_like(sorted_experts, dtype=torch.bool)
+            change[1:] = sorted_experts[1:] != sorted_experts[:-1]
+            group_starts = torch.nonzero(change, as_tuple=False).squeeze(-1)
+            group_boundaries = torch.cat(
+                [group_starts, group_starts.new_tensor([sorted_experts.numel()])]
+            )
+            run_lengths = group_boundaries[1:] - group_boundaries[:-1]
+            start_idx_expanded = group_starts.repeat_interleave(run_lengths)
+            expert_position = positions - start_idx_expanded
             keep_sorted = expert_position < capacity
             keep_mask = torch.zeros_like(expanded_weights, dtype=torch.bool)
             keep_mask[sorted_order] = keep_sorted
