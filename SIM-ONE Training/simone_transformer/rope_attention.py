@@ -93,16 +93,18 @@ class EnhancedGovernanceAttention(CachedAttentionMixin, nn.Module):
         max_seq_len: int = 2048,
         governance_strength: float = 0.1,
         enable_caching: bool = True,
-        cache_size: int = 1000
+        cache_size: int = 1000,
+        use_fused_attention: bool = True
     ):
         super().__init__(enable_caching=enable_caching, cache_size=cache_size)
         assert hidden_dim % num_heads == 0
-        
+
         self.hidden_dim = hidden_dim
         self.num_heads = num_heads
         self.head_dim = hidden_dim // num_heads
         self.scale = self.head_dim ** -0.5
         self.governance_strength = governance_strength
+        self.use_fused_attention = use_fused_attention and hasattr(F, "scaled_dot_product_attention")
         
         # Query, Key, Value projections
         self.q_proj = nn.Linear(hidden_dim, hidden_dim, bias=False)
@@ -223,32 +225,93 @@ class EnhancedGovernanceAttention(CachedAttentionMixin, nn.Module):
         cached_attn_weights = self._try_get_cached_attention(
             seq_len, self.num_heads, governance_outputs, attention_mask, aligned_state
         )
-        
+
         if cached_attn_weights is not None:
             attn_weights = cached_attn_weights
+            out = torch.matmul(attn_weights, v)
         else:
-            # Compute attention weights normally
             combined_bias = self._compute_combined_attention_bias(
                 prophetic_mask, policy_mask, memory_weights, aligned_state
             )
-            scores = scores + combined_bias
-            
-            # Apply causal mask
+            combined_bias_tensor: Optional[torch.Tensor] = None
+            if isinstance(combined_bias, torch.Tensor):
+                combined_bias_tensor = combined_bias.to(scores.device, scores.dtype)
+            elif isinstance(combined_bias, (int, float)) and combined_bias != 0.0:
+                combined_bias_tensor = torch.as_tensor(
+                    combined_bias, device=scores.device, dtype=scores.dtype
+                )
+
+            attn_mask_bool: Optional[torch.Tensor] = None
             if attention_mask is not None:
-                scores = scores.masked_fill(attention_mask == 0, float('-inf'))
-            
-            # Compute attention weights
-            attn_weights = F.softmax(scores, dim=-1)
-            attn_weights = self.dropout(attn_weights)
-            
-            # Cache the computed attention weights
+                if attention_mask.dtype == torch.bool:
+                    attn_mask_bool = attention_mask
+                else:
+                    attn_mask_bool = attention_mask == 0
+
+                if attn_mask_bool.dim() == 2:
+                    attn_mask_bool = attn_mask_bool.unsqueeze(0).unsqueeze(0)
+                elif attn_mask_bool.dim() == 3:
+                    attn_mask_bool = attn_mask_bool.unsqueeze(1)
+                elif attn_mask_bool.dim() != 4:
+                    raise ValueError(
+                        "attention_mask must have shape [seq, seq], [batch, seq, seq], "
+                        "or [batch, num_heads, seq, seq]"
+                    )
+
+                attn_mask_bool = attn_mask_bool.to(device=scores.device)
+
+                if attn_mask_bool.size(0) == 1 and batch_size > 1:
+                    attn_mask_bool = attn_mask_bool.expand(batch_size, *attn_mask_bool.shape[1:])
+                if attn_mask_bool.size(1) == 1 and self.num_heads > 1:
+                    attn_mask_bool = attn_mask_bool.expand(
+                        attn_mask_bool.size(0), self.num_heads, seq_len, seq_len
+                    )
+
+            mask_fill_value = torch.finfo(scores.dtype).min
+
+            biased_scores = scores
+            if combined_bias_tensor is not None:
+                biased_scores = biased_scores + combined_bias_tensor
+            if attn_mask_bool is not None:
+                biased_scores = biased_scores.masked_fill(attn_mask_bool, mask_fill_value)
+
+            attn_weights_pre = F.softmax(biased_scores, dim=-1)
+
+            if self.training and self.dropout.p > 0 and not self.use_fused_attention:
+                attn_weights = self.dropout(attn_weights_pre)
+            else:
+                attn_weights = attn_weights_pre
+
+            if self.use_fused_attention:
+                attn_bias = None
+                if combined_bias_tensor is not None:
+                    attn_bias = combined_bias_tensor.clone()
+
+                if attn_mask_bool is not None:
+                    mask_bias = scores.new_zeros(scores.shape)
+                    mask_bias = mask_bias.masked_fill(attn_mask_bool, mask_fill_value)
+                    attn_bias = mask_bias if attn_bias is None else attn_bias + mask_bias
+
+                dropout_p = self.dropout.p if self.training else 0.0
+                out = F.scaled_dot_product_attention(
+                    q,
+                    k,
+                    v,
+                    attn_mask=attn_bias,
+                    dropout_p=dropout_p,
+                    is_causal=False
+                )
+            else:
+                out = torch.matmul(attn_weights, v)
+
             self._cache_attention_pattern(
-                attn_weights, seq_len, self.num_heads, governance_outputs, 
-                attention_mask, aligned_state
+                attn_weights,
+                seq_len,
+                self.num_heads,
+                governance_outputs,
+                attention_mask,
+                aligned_state
             )
-        
-        # Apply attention to values
-        out = torch.matmul(attn_weights, v)
 
         # Reshape and project output
         out = out.transpose(1, 2).contiguous().view(batch_size, seq_len, hidden_dim)
