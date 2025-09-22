@@ -436,20 +436,21 @@ class EnhancedSIMONEModel(nn.Module):
             governance_info: Aggregated governance information (if output_governance=True)
             present_key_values: Cached key/value tensors for each layer when ``use_cache`` is True
         """
-        batch_size, seq_len = input_ids.shape
+        _, seq_len = input_ids.shape
         device = input_ids.device
 
         if past_key_values is None:
             past_key_values = [None] * self.num_layers
         elif len(past_key_values) != self.num_layers:
             raise ValueError(
-                f"Expected past_key_values to have {self.num_layers} entries, "
-                f"got {len(past_key_values)}"
+                f"past_key_values must have {self.num_layers} entries (got {len(past_key_values)})"
             )
 
         past_length = 0
         if use_cache and past_key_values[0] is not None:
             past_length = past_key_values[0][0].size(-2)
+
+        kv_len = seq_len + past_length if use_cache else seq_len
 
         # Token embeddings for current step
         x = self.token_embedding(input_ids)
@@ -469,9 +470,33 @@ class EnhancedSIMONEModel(nn.Module):
             layer_modulations = None
             self.last_prophetic_state = None
 
-        # Create causal attention mask if not provided
+        # Create causal attention mask if not provided and align with KV cache
         if attention_mask is None:
-            attention_mask = create_causal_mask(seq_len, device)
+            attention_mask = create_causal_mask(seq_len, device, kv_len=kv_len, dtype=x.dtype)
+        else:
+            attention_mask = attention_mask.to(device=device)
+            if attention_mask.dim() == 2:
+                attention_mask = attention_mask[:, None, None, :]
+            elif attention_mask.dim() == 3:
+                attention_mask = attention_mask.unsqueeze(1)
+
+            if attention_mask.shape[-2] != seq_len:
+                if attention_mask.shape[-2] == 1:
+                    attention_mask = attention_mask.expand(-1, -1, seq_len, -1)
+                else:
+                    attention_mask = attention_mask[..., -seq_len:, :]
+
+            if attention_mask.shape[-1] != kv_len:
+                if attention_mask.shape[-1] < kv_len:
+                    pad = attention_mask.new_ones(
+                        attention_mask.shape[0],
+                        attention_mask.shape[1],
+                        attention_mask.shape[2],
+                        kv_len - attention_mask.shape[-1]
+                    )
+                    attention_mask = torch.cat([pad, attention_mask], dim=-1)
+                else:
+                    attention_mask = attention_mask[..., -kv_len:]
 
         # Store governance outputs from all layers
         all_governance_outputs = [] if output_governance else None
@@ -590,13 +615,9 @@ class EnhancedSIMONEModel(nn.Module):
         max_new_tokens = max(0, max_length - input_ids.shape[1])
 
         for _ in range(max_new_tokens):
-            seq_len = current_input.shape[1]
-            attention_mask = create_causal_mask(seq_len, device)
-
             with torch.no_grad():
                 logits, _, past_key_values = self.forward(
                     current_input,
-                    attention_mask=attention_mask,
                     output_governance=False,
                     use_cache=True,
                     past_key_values=past_key_values,

@@ -33,32 +33,38 @@ class RotaryPositionalEmbedding(nn.Module):
         self._cached_embeddings = None
         self._cached_seq_len = 0
     
-    def forward(self, x: torch.Tensor, seq_len: int) -> Tuple[torch.Tensor, torch.Tensor]:
+    def forward(self, x: torch.Tensor, seq_len: int, offset: int = 0) -> Tuple[torch.Tensor, torch.Tensor]:
         """
         Args:
             x: Input tensor [batch, seq_len, dim]
             seq_len: Sequence length
-            
+
         Returns:
             cos, sin tensors for rotary embedding
         """
-        if seq_len > self._cached_seq_len or self._cached_embeddings is None:
-            self._compute_embeddings(seq_len, x.device, x.dtype)
-        
+        total_len = seq_len + offset
+        if (
+            self._cached_embeddings is None
+            or total_len > self._cached_seq_len
+            or self._cached_embeddings['cos'].device != x.device
+            or self._cached_embeddings['cos'].dtype != x.dtype
+        ):
+            self._compute_embeddings(total_len, x.device, x.dtype)
+
         return (
-            self._cached_embeddings['cos'][:seq_len],
-            self._cached_embeddings['sin'][:seq_len]
+            self._cached_embeddings['cos'][offset:offset + seq_len],
+            self._cached_embeddings['sin'][offset:offset + seq_len]
         )
-    
+
     def _compute_embeddings(self, seq_len: int, device: torch.device, dtype: torch.dtype):
         """Precompute embeddings for efficiency."""
         t = torch.arange(seq_len, device=device, dtype=dtype)
         freqs = torch.outer(t, self.inv_freq)
-        
+
         # Create rotation matrices
-        cos = freqs.cos()
-        sin = freqs.sin()
-        
+        cos = freqs.cos().to(dtype)
+        sin = freqs.sin().to(dtype)
+
         self._cached_embeddings = {'cos': cos, 'sin': sin}
         self._cached_seq_len = seq_len
 
@@ -101,6 +107,7 @@ class EnhancedGovernanceAttention(CachedAttentionMixin, nn.Module):
         self.hidden_dim = hidden_dim
         self.num_heads = num_heads
         self.head_dim = hidden_dim // num_heads
+        assert self.head_dim % 2 == 0, "head_dim must be even for RoPE (hidden_dim/num_heads)."
         self.scale = self.head_dim ** -0.5
         self.governance_strength = governance_strength
         
@@ -185,8 +192,16 @@ class EnhancedGovernanceAttention(CachedAttentionMixin, nn.Module):
         k = self.k_proj(x).view(batch_size, seq_len, self.num_heads, self.head_dim)
         v = self.v_proj(x).view(batch_size, seq_len, self.num_heads, self.head_dim)
         
+        past_k = None
+        past_v = None
+        past_length = 0
+        if past_key_value is not None:
+            past_k, past_v = past_key_value
+            if past_k is not None and past_v is not None:
+                past_length = past_k.size(-2)
+
         # Apply RoPE to Q and K
-        cos, sin = self.rope(x, seq_len)
+        cos, sin = self.rope(x, seq_len, offset=past_length)
         q = apply_rope(q, cos.unsqueeze(0).unsqueeze(2), sin.unsqueeze(0).unsqueeze(2))
         k = apply_rope(k, cos.unsqueeze(0).unsqueeze(2), sin.unsqueeze(0).unsqueeze(2))
         
@@ -195,17 +210,46 @@ class EnhancedGovernanceAttention(CachedAttentionMixin, nn.Module):
         k = k.transpose(1, 2)
         v = v.transpose(1, 2)
 
-        if past_key_value is not None:
-            past_k, past_v = past_key_value
-            if past_k is not None and past_v is not None:
-                k = torch.cat([past_k, k], dim=-2)
-                v = torch.cat([past_v, v], dim=-2)
+        if past_k is not None and past_v is not None:
+            k = torch.cat([past_k, k], dim=-2)
+            v = torch.cat([past_v, v], dim=-2)
 
         present_key_value = (k, v) if use_cache else None
-        
+
+        q_len = q.size(-2)
+        kv_len = k.size(-2)
+        past_len = max(kv_len - q_len, 0)
+
+        if attention_mask is None:
+            attention_mask = create_causal_mask(q_len, q.device, kv_len=kv_len, dtype=q.dtype)
+        else:
+            attention_mask = attention_mask.to(device=q.device)
+            if attention_mask.dim() == 2:
+                attention_mask = attention_mask[:, None, None, :]
+            elif attention_mask.dim() == 3:
+                attention_mask = attention_mask.unsqueeze(1)
+
+            if attention_mask.shape[-2] != q_len:
+                if attention_mask.shape[-2] == 1:
+                    attention_mask = attention_mask.expand(-1, -1, q_len, -1)
+                else:
+                    attention_mask = attention_mask[..., -q_len:, :]
+
+            if attention_mask.shape[-1] != kv_len:
+                if attention_mask.shape[-1] < kv_len:
+                    pad = attention_mask.new_ones(
+                        attention_mask.shape[0],
+                        attention_mask.shape[1],
+                        attention_mask.shape[2],
+                        kv_len - attention_mask.shape[-1]
+                    )
+                    attention_mask = torch.cat([pad, attention_mask], dim=-1)
+                else:
+                    attention_mask = attention_mask[..., -kv_len:]
+
         # Compute base attention scores
         scores = torch.matmul(q, k.transpose(-2, -1)) * self.scale
-        
+
         aligned_state = None
         prophetic_mask = None
         if prophetic_state is not None:
@@ -228,6 +272,21 @@ class EnhancedGovernanceAttention(CachedAttentionMixin, nn.Module):
         # Extract components for attention modification
         policy_mask = governance_outputs.get('policy_mask')
         memory_weights = governance_outputs.get('memory_weights')
+
+        if past_len > 0:
+            if prophetic_mask is not None and prophetic_mask.shape[-1] != kv_len:
+                pad = prophetic_mask.new_zeros(*prophetic_mask.shape[:-1], past_len)
+                prophetic_mask = torch.cat([pad, prophetic_mask], dim=-1)
+
+            if policy_mask is not None and policy_mask.shape[-1] != kv_len:
+                pad = policy_mask.new_zeros(*policy_mask.shape[:-1], past_len)
+                policy_mask = torch.cat([pad, policy_mask], dim=-1)
+                governance_outputs['policy_mask'] = policy_mask
+
+            if memory_weights is not None and memory_weights.shape[-1] != kv_len:
+                pad = memory_weights.new_zeros(*memory_weights.shape[:-1], past_len)
+                memory_weights = torch.cat([pad, memory_weights], dim=-1)
+                governance_outputs['memory_weights'] = memory_weights
 
         # OPTIMIZED: Try to get cached attention weights first
         cached_attn_weights = self._try_get_cached_attention(
@@ -530,10 +589,24 @@ class TraceGenerator(nn.Module):
         return trace_info
 
 
-def create_causal_mask(seq_len: int, device: torch.device) -> torch.Tensor:
-    """Create causal attention mask."""
-    mask = torch.tril(torch.ones(seq_len, seq_len, device=device))
-    return mask.unsqueeze(0).unsqueeze(0)  # [1, 1, seq_len, seq_len]
+def create_causal_mask(
+    seq_len: int,
+    device: torch.device,
+    kv_len: Optional[int] = None,
+    dtype: Optional[torch.dtype] = None
+) -> torch.Tensor:
+    """Create causal attention mask supporting cached KV (q_len x kv_len)."""
+    kv_len = kv_len or seq_len
+    dtype = dtype or torch.float32
+
+    if kv_len == seq_len:
+        mask = torch.tril(torch.ones(seq_len, seq_len, device=device, dtype=dtype))
+    else:
+        past = torch.ones(seq_len, kv_len - seq_len, device=device, dtype=dtype)
+        curr = torch.tril(torch.ones(seq_len, seq_len, device=device, dtype=dtype))
+        mask = torch.cat([past, curr], dim=-1)
+
+    return mask.unsqueeze(0).unsqueeze(0)  # [1, 1, seq_len, kv_len]
 
 
 if __name__ == "__main__":
