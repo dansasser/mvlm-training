@@ -70,7 +70,7 @@ class MVLMAdapter(nn.Module):
         """
         try:
             # Forward pass through Enhanced SIM-ONE
-            logits, governance_outputs = self.enhanced_model(
+            logits, governance_outputs, _ = self.enhanced_model(
                 input_ids=input_ids,
                 attention_mask=attention_mask,
                 output_governance=output_governance or (labels is not None),
