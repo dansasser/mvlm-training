@@ -390,7 +390,7 @@ class PrioritaryConfig:
     max_length: int = 512
     stride: int = 128
     learning_rate: float = 5e-5
-    num_epochs: int = 3
+    num_epochs: int = 7
     warmup_steps: int = 100
     max_grad_norm: float = 1.0
     weight_decay: float = 0.01
@@ -404,3 +404,7 @@ class PrioritaryConfig:
     lambda_policy: float = 1.0
     lambda_memory: float = 1.0
     lambda_energy: float = 1.0
+
+    # Early stopping configuration
+    patience: int = 2
+    min_epochs: int = 6

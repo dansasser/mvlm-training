@@ -125,6 +125,10 @@ class EnhancedPrioritaryTrainer:
         self.epoch = 0
         self.best_loss = float('inf')
         self.training_history = []
+
+        # Early stopping state
+        self.patience_counter = 0
+        self.best_epoch = 0
         
         # Log model info
         num_params = self.model.get_num_params()
@@ -828,7 +832,30 @@ class EnhancedPrioritaryTrainer:
                 **epoch_metrics
             }
             self.training_history.append(epoch_record)
-            
+
+            # Check for improvement and early stopping
+            current_loss = epoch_metrics.get('val_loss', epoch_metrics.get('train_loss', float('inf')))
+
+            if current_loss < self.best_loss:
+                self.best_loss = current_loss
+                self.best_epoch = epoch_idx + 1
+                self.patience_counter = 0
+
+                # Save best model
+                self.save_checkpoint("best_model.pt")
+                self.logger.info(f"💾 New best model saved! Loss: {current_loss:.4f}")
+            else:
+                self.patience_counter += 1
+                self.logger.info(f"⏳ No improvement for {self.patience_counter} epoch(s). Best: {self.best_loss:.4f} at epoch {self.best_epoch}")
+
+            # Early stopping check (only after minimum epochs)
+            if (epoch_idx + 1) >= self.config.min_epochs and self.patience_counter >= self.config.patience:
+                self.logger.info(f"🛑 Early stopping triggered!")
+                self.logger.info(f"   Best loss: {self.best_loss:.4f} at epoch {self.best_epoch}")
+                self.logger.info(f"   No improvement for {self.patience_counter} epochs")
+                self.logger.info(f"   Stopping at epoch {epoch_idx + 1}/{epochs}")
+                break
+
             # Generate sample
             sample = self.generate_sample()
             self.logger.info(f"Sample generation: {sample[:200]}...")
@@ -840,8 +867,11 @@ class EnhancedPrioritaryTrainer:
         self.logger.info("ENHANCED SIM-ONE TRAINING COMPLETED")
         self.logger.info("="*60)
         self.logger.info(f"Training time: {training_time:.2f}s ({training_time/60:.2f}m)")
+        self.logger.info(f"Total epochs: {self.epoch + 1}/{epochs}")
         self.logger.info(f"Total steps: {self.global_step}")
-        self.logger.info(f"Best loss: {self.best_loss:.4f}")
+        self.logger.info(f"Best loss: {self.best_loss:.4f} (epoch {self.best_epoch})")
+        if self.patience_counter > 0:
+            self.logger.info(f"Early stopping: triggered after {self.patience_counter} epochs without improvement")
         
         # Save final model
         final_model_path = self.save_final_model()
