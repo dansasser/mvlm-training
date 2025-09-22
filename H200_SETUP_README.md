@@ -122,10 +122,15 @@ python3 mvlm_trainer.py \
 ```
 
 ### SIM-ONE Enhanced
+The enhanced SIM-ONE trainer now supports dedicated validation data. Point
+`--data_dir` at your training split and either specify `--validation_dir` for a
+separate validation folder or rely on the default `--validation_split` (10%
+holdout) when a dedicated directory is unavailable.
 ```bash
 cd "SIM-ONE Training"
 python3 enhanced_train.py \
-    --data_dir ../mvlm_training_dataset_complete \
+    --data_dir ../mvlm_training_dataset_complete/train \
+    --validation_dir ../mvlm_training_dataset_complete/val \
     --output_dir ../models/mvlm_simone_enhanced \
     --vocab_size 32000 \
     --batch_size 12 \

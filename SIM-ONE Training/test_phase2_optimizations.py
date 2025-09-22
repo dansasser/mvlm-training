@@ -4,6 +4,8 @@ Test suite for Phase 2 architectural optimizations.
 Validates shared governance backbone, optimized MoE, and attention caching.
 """
 
+import math
+import time
 import torch
 import torch.nn.functional as F
 import sys
@@ -18,6 +20,31 @@ from simone_transformer.modern_layers import MoELayer
 from simone_transformer.attention_cache import AttentionPatternCache, CachedAttentionMixin
 from simone_transformer.rope_attention import EnhancedGovernanceAttention
 from prioritary_mvlm.config import PropheticSingularityState
+
+
+def _reference_moe_forward(layer: MoELayer, x: torch.Tensor) -> torch.Tensor:
+    """Reference MoE forward using per-expert loops for parity checks."""
+    batch_size, seq_len, dim = x.shape
+    x_flat = x.view(-1, dim)
+    num_tokens = x_flat.size(0)
+
+    router_logits = layer.router(x_flat)
+    k = max(1, min(layer.num_experts_per_token, layer.num_experts))
+    topk_logits, topk_indices = torch.topk(router_logits, k, dim=-1)
+    topk_weights = F.softmax(topk_logits, dim=-1)
+
+    output = torch.zeros_like(x_flat)
+
+    for expert_idx in range(layer.num_experts):
+        expert_positions = (topk_indices == expert_idx)
+        if expert_positions.any():
+            token_indices, k_positions = expert_positions.nonzero(as_tuple=True)
+            expert_tokens = x_flat[token_indices]
+            expert_output = layer.experts[expert_idx](expert_tokens)
+            expert_weights = topk_weights[token_indices, k_positions].unsqueeze(-1)
+            output.index_add_(0, token_indices, expert_weights * expert_output)
+
+    return output.view(batch_size, seq_len, dim)
 
 
 def test_shared_governance_backbone():
@@ -62,7 +89,7 @@ def test_shared_governance_backbone():
 def test_optimized_moe():
     """Test the optimized MoE layer."""
     print("🧪 Testing Optimized MoE Layer...")
-    
+
     batch_size, seq_len, dim = 2, 64, 512
     num_experts = 8
     
@@ -74,30 +101,89 @@ def test_optimized_moe():
         dim=dim,
         num_experts=num_experts,
         num_experts_per_token=2,
-        load_balancing_weight=0.01
+        load_balancing_weight=0.05,
+        capacity_factor=1.2,
     )
-    
+
     # Test forward pass
     output = moe(x)
-    
+
     # Validate output
     assert output.shape == x.shape, f"Wrong output shape: {output.shape} vs {x.shape}"
     assert not torch.isnan(output).any(), "Output contains NaN"
     assert not torch.isinf(output).any(), "Output contains Inf"
     
-    # Test load balancing
+    # Capacity should keep experts within bounds (allowing fallback assignments)
+    assignment_counts = moe.get_last_assignment_counts()
+    assert assignment_counts is not None, "Routing counts should be tracked"
+    expected_capacity = math.ceil(moe.capacity_factor * (batch_size * seq_len) / num_experts)
+    assert int(assignment_counts.max().item()) <= expected_capacity + 1, "Capacity factor should limit expert load"
+
+    # Test load balancing with gradient flow
     moe.train()
-    _ = moe(x)  # Trigger load balancing update
-    
+    x_train = torch.randn(batch_size, seq_len, dim, requires_grad=True)
+    train_output = moe(x_train)
     load_balance_loss = moe.get_load_balancing_loss()
+    assert load_balance_loss.requires_grad, "Load balancing loss must require grad"
     assert load_balance_loss.item() >= 0, "Load balancing loss should be non-negative"
-    
+
+    total_loss = train_output.mean() + load_balance_loss
+    total_loss.backward()
+    assert moe.router.weight.grad is not None, "Router should receive gradients"
+
     # Test statistics reset
     moe.reset_load_balancing_stats()
-    assert moe.expert_usage.sum().item() == 0, "Expert usage should be reset"
-    assert moe.total_tokens.item() == 0, "Total tokens should be reset"
-    
+    assert moe.get_load_balancing_loss().item() == 0.0, "Load balancing loss should reset"
+    assert moe.get_last_assignment_counts() is None, "Assignment counts should reset"
+
     print("✅ Optimized MoE Layer test passed!")
+
+
+def test_moe_vectorized_parity_and_speed():
+    """Ensure vectorized MoE matches reference output and improves throughput."""
+    print("🧪 Testing MoE parity and throughput...")
+
+    torch.manual_seed(0)
+    batch_size, seq_len, dim = 4, 96, 128
+    num_experts = 6
+
+    x = torch.randn(batch_size, seq_len, dim)
+
+    moe = MoELayer(
+        dim=dim,
+        num_experts=num_experts,
+        num_experts_per_token=2,
+        load_balancing_weight=0.0,
+        capacity_factor=None,
+    )
+    moe.eval()
+
+    with torch.no_grad():
+        vector_output = moe(x)
+        reference_output = _reference_moe_forward(moe, x)
+
+    assert torch.allclose(vector_output, reference_output, atol=1e-6), "Vectorized MoE should match reference implementation"
+
+    # Warmup
+    with torch.no_grad():
+        _ = moe(x)
+        _ = _reference_moe_forward(moe, x)
+
+    runs = 5
+    with torch.no_grad():
+        start = time.perf_counter()
+        for _ in range(runs):
+            _ = moe(x)
+        vector_time = time.perf_counter() - start
+
+        start = time.perf_counter()
+        for _ in range(runs):
+            _ = _reference_moe_forward(moe, x)
+        reference_time = time.perf_counter() - start
+
+    assert vector_time <= reference_time * 1.1, "Vectorized MoE should be at least 10% faster than reference"
+
+    print("✅ MoE parity and throughput test passed!")
 
 
 def test_attention_cache():

@@ -162,7 +162,9 @@ python3 mvlm_trainer.py \
 # Train Enhanced SIM-ONE only
 cd "SIM-ONE Training"
 python3 enhanced_train.py \
-    --data_dir ../mvlm_training_dataset_complete \
+    # Provide --validation_dir when you have a dedicated validation set
+    --data_dir ../mvlm_training_dataset_complete/train \
+    --validation_dir ../mvlm_training_dataset_complete/val \
     --output_dir ../models/simone_enhanced \
     --vocab_size 32000 \
     --batch_size 12 \
@@ -302,7 +304,10 @@ export PYTORCH_CUDA_ALLOC_CONF=max_split_size_mb:256
 
 # Training Interrupted - Resume from checkpoint
 cd "SIM-ONE Training"
-python3 enhanced_train.py --resume_from best_model
+python3 enhanced_train.py \
+    --resume_from best_model \
+    --data_dir ../mvlm_training_dataset_complete/train \
+    --validation_dir ../mvlm_training_dataset_complete/val
 
 # Import/Path Issues
 # Ensure Python path includes repository root
