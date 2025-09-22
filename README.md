@@ -7,7 +7,7 @@ This repository contains the complete training pipeline for **SIM-ONE MVLM (Mini
 **Purpose**: Train production-ready MVLMs for The SIM-ONE Framework ecosystem  
 **Architecture**: Dual-model training pipeline optimized for H200 GPU deployment  
 **Training Foundation**: Biblical corpus chosen for exceptional text quality and coherence  
-**Output**: Two complementary language models serving different roles in SIM-ONE Framework  
+**Output**: Enhanced SIM-ONE model for SIM-ONE Framework (MVLM-GPT2 is now legacy and no longer used)  
 
 ## 📄 Research Paper
 
@@ -32,28 +32,9 @@ These trained models are integral components of **The SIM-ONE Framework**, servi
 
 The models trained here provide the foundational text generation capabilities that The SIM-ONE Framework builds upon for its advanced AI functionalities.
 
-## Two-Model Architecture
+## Model Architecture
 
-### Model 1: MVLM-GPT2 (Baseline Foundation)
-**Location**: Root directory (`mvlm_trainer.py`)  
-**Architecture**: Enhanced GPT-2 with high-quality training optimization  
-**Role in SIM-ONE**: Stable, proven text generation for baseline operations  
-**Features**: 
-- Traditional transformer architecture with proven stability
-- Optimized for consistent, reliable text generation
-- Fast inference suitable for real-time applications
-- Compatible with existing GPT-2 ecosystem tools
-
-**Training Specifications:**
-```
-Training Time: 2-3 hours on H200
-GPU Memory: ~20-30GB
-Performance: ~1000 tokens/sec
-Output Size: ~2-3GB model
-Architecture: Standard GPT-2 with quality enhancements
-```
-
-### Model 2: Enhanced SIM-ONE (Advanced Foundation)
+### Enhanced SIM-ONE (Primary Foundation)
 **Location**: `SIM-ONE Training/` directory (`enhanced_train.py`)  
 **Architecture**: State-of-the-art transformer with modern enhancements  
 **Role in SIM-ONE**: Advanced text generation with reasoning capabilities  
@@ -130,7 +111,7 @@ export MKL_NUM_THREADS=8
 - Internet connection for initial setup
 
 ### Automated Training (Recommended)
-```bash
+```
 # 1. Clone repository
 git clone <repository-url>
 cd <repository-directory>
@@ -147,19 +128,12 @@ python3 validate_models.py
 
 # 5. Download compressed models
 ls models_for_download/
-# Download: mvlm_gpt2_model.tar.gz, simone_enhanced_model.tar.gz
+# Download: simone_enhanced_model.tar.gz
 ```
 
-### Individual Model Training
-```bash
-# Train MVLM-GPT2 only
-python3 mvlm_trainer.py \
-    --data_dir mvlm_training_dataset_complete \
-    --output_dir models/mvlm_gpt2 \
-    --batch_size 16 \
-    --num_epochs 3
-
-# Train Enhanced SIM-ONE only
+### Individual Training
+```
+# Train Enhanced SIM-ONE
 cd "SIM-ONE Training"
 python3 enhanced_train.py \
     # Provide --validation_dir when you have a dedicated validation set
@@ -182,27 +156,23 @@ SIM-ONE-MVLM-Training/
 ├── requirements.txt                  # Python dependencies
 ├── setup_environment.sh              # H200 environment setup
 │
-├── mvlm_trainer.py                   # MVLM-GPT2 training script
-├── train_all_models.py               # Automated sequential training
-├── validate_models.py                # Model validation suite
+├── train_all_models.py               # Enhanced training orchestrator
+├── validate_models.py                # Enhanced model validation
 │
 ├── mvlm_training_dataset_complete/   # High-quality training corpus
 │   ├── processed_texts/              # Preprocessed training data
 │   └── metadata/                     # Dataset information
 │
 ├── models/                           # Training outputs
-│   ├── mvlm_gpt2/                   # MVLM-GPT2 model files
 │   └── simone_enhanced/             # Enhanced SIM-ONE model files
 │
 ├── models_for_download/              # Compressed models for deployment
-│   ├── mvlm_gpt2_model.tar.gz       # Ready-to-deploy MVLM-GPT2
 │   ├── simone_enhanced_model.tar.gz # Ready-to-deploy Enhanced SIM-ONE
 │   └── training_summary.json        # Training statistics and metadata
 │
 ├── logs/                             # Training logs and monitoring
 │   ├── h200_training_*.log          # Main training logs
-│   ├── mvlm_gpt2_training.log       # MVLM-GPT2 specific logs
-│   └── simone_enhanced_training.log  # Enhanced SIM-ONE specific logs
+│   └── simone_enhanced_training.log  # Enhanced SIM-ONE logs
 │
 └── SIM-ONE Training/                 # Enhanced SIM-ONE components
     ├── train.py                     # Simple training entry point
@@ -241,14 +211,10 @@ The training corpus (`mvlm_training_dataset_complete/`) consists of high-quality
 - **Reasoning Development**: Complex theological and philosophical concepts
 - **Ethical Foundation**: Built-in moral reasoning patterns
 
-## Performance Specifications
+### Performance Specifications
 
 ### Expected Training Performance (H200 GPU)
-| Model | Training Time | GPU Memory | Tokens/sec | Final Size | 
-|-------|---------------|------------|------------|------------|
-| MVLM-GPT2 | 2-3 hours | 20-30GB | ~1000 | 2-3GB |
-| Enhanced SIM-ONE | 3-4 hours | 30-40GB | ~600 | 3-4GB |
-| **Total Pipeline** | **5-7 hours** | **40GB peak** | **Variable** | **5-7GB** |
+- Enhanced SIM-ONE: 3-4 hours, 30-40GB GPU memory, ~600 tokens/sec, final size ~3-4GB
 
 ### Model Capabilities
 - **Text Generation**: High-quality, coherent text output

@@ -260,8 +260,10 @@ echo ""
 echo "🚀 To start training, run:"
 echo "   python3 train_all_models.py"
 echo ""
-echo "💡 Monitor training with:"
-echo "   tail -f logs/training_*.log"
+echo "💡 Preflight & Monitor:"
+echo "   source ./activate_simone.sh"
+echo "   python enhanced_preflight.py --data_dir ./mvlm_training_dataset_complete || true"
+echo "   ./monitor_simone.sh (after training starts)"
 echo "   nvidia-smi -l 1"
 echo ""
 
@@ -277,8 +279,11 @@ export TORCH_CUDNN_V8_API_ENABLED=1
 export CUDA_LAUNCH_BLOCKING=0
 export OMP_NUM_THREADS=8
 export MKL_NUM_THREADS=8
+# Ensure repo root and SIM-ONE Training are on PYTHONPATH for direct runs
+export PYTHONPATH="${PYTHONPATH}:$(pwd):$(pwd)/SIM-ONE Training"
 echo "🚀 SIM-ONE environment activated!"
-echo "🔥 To train models, run: python train_all_models.py"
+echo "🔥 To run preflight: python enhanced_preflight.py --data_dir ./mvlm_training_dataset_complete"
+echo "🔥 To train enhanced: python train_all_models.py"
 EOF
 chmod +x activate_simone.sh
 

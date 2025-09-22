@@ -6,9 +6,8 @@ This repository is now fully prepared for automated training of two different bi
 
 ## 📦 **What's Included:**
 
-### ✅ **Two Complete Training Pipelines**
-1. **MVLM-GPT2** - Biblical training with GPT-2 architecture
-2. **SIM-ONE Enhanced** - State-of-the-art with RoPE, SwiGLU, BPE, advanced losses, governance
+### ✅ **Enhanced SIM-ONE Training Pipeline**
+- State-of-the-art with RoPE, SwiGLU, BPE, advanced losses, governance
 
 ### ✅ **H200 GPU Optimization Stack**
 - **Automated environment setup** (`setup_environment.sh`)
@@ -19,9 +18,9 @@ This repository is now fully prepared for automated training of two different bi
 - **All dependencies** in `requirements.txt`
 
 ### ✅ **Automated Training Pipeline**  
-- **Sequential training script** (`train_all_models.py`)
+- **Enhanced training script** (`train_all_models.py` now runs Enhanced only)
 - **Automatic GPU monitoring** and optimization
-- **Comprehensive logging** for all models
+- **Comprehensive logging**
 - **Error handling** and recovery
 - **Progress tracking** and time estimation
 
@@ -51,39 +50,33 @@ cd <repo-directory>
 ./setup_environment.sh
 ```
 
-### 2. **Start Training** (6-9 hours total)
+### 2. **Start Training** (3-4 hours)
 ```bash
 python3 train_all_models.py
 ```
 
-### 3. **Validate Models** (5 minutes)  
+### 3. **Validate Model** (5 minutes)  
 ```bash
 python3 validate_models.py
 ```
 
-### 4. **Download Models** (10 minutes)
+### 4. **Download Model** (10 minutes)
 ```bash
 # Models automatically prepared in models_for_download/
-# Download all .tar.gz files before destroying droplet
+# Download simone_enhanced_model.tar.gz and training_summary.json before destroying droplet
 ```
 
 ## 📊 **Expected Results**
 
-### **Model 1: MVLM-GPT2**
-- **Output**: `models/mvlm_gpt2/`
-- **Size**: ~2-3 GB
-- **Training time**: 2-3 hours
-- **Features**: Biblical GPT-2 with worldview optimization
-
-### **Model 2: SIM-ONE Enhanced**
+### **SIM-ONE Enhanced**
 - **Output**: `models/simone_enhanced/`
 - **Size**: ~3-4 GB  
 - **Training time**: 3-4 hours
 - **Features**: Modern architecture with RoPE, SwiGLU, BPE, advanced losses, governance
 
 ### **Download Package**
-- **Total compressed size**: ~3-5 GB
-- **Files**: 2 model archives + training summary
+- **Total compressed size**: ~2-3 GB
+- **Files**: 1 model archive + training summary
 - **Format**: Ready-to-download tar.gz files
 
 ## 🔧 **H200 Optimizations Applied**
@@ -100,8 +93,8 @@ python3 validate_models.py
 
 All training progress will be automatically logged:
 - **Main log**: `logs/h200_training_*.log`
-- **Model logs**: Individual logs for each model
-- **GPU monitoring**: Built-in nvidia-smi tracking  
+- **Enhanced model log**: `logs/simone_enhanced_training.log`
+- **GPU monitoring**: Built-in nvidia-smi (or gpustat if installed)
 - **Progress reports**: Real-time training statistics
 
 ## ⚠️ **Important Notes**
@@ -115,9 +108,9 @@ All training progress will be automatically logged:
 ## 🎯 **Success Checklist**
 
 After training completes, you should have:
-- [ ] 2 model directories with trained models
-- [ ] All validation tests passing
-- [ ] 2 compressed model archives ready for download  
+- [ ] Enhanced SIM-ONE directory with trained model
+- [ ] Validation passing
+- [ ] Compressed model archive ready for download  
 - [ ] Training summary with statistics
 - [ ] Complete logs for troubleshooting
 

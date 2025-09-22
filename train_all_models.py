@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
-Sequential Training Script for All SIM-ONE Models on H200 GPU
-Trains three models in sequence and saves each to separate directories
+SIM-ONE Enhanced Training Orchestrator for H200 GPU
+Runs the Enhanced SIM-ONE trainer and logs progress.
 """
 
 import os
@@ -17,25 +17,12 @@ import torch
 
 
 class H200ModelTrainer:
-    """Manages sequential training of all SIM-ONE models on H200 GPU."""
+    """Manages training of the Enhanced SIM-ONE model on H200 GPU."""
     
     def __init__(self):
         self.start_time = datetime.now()
+        # Single-model configuration: Enhanced SIM-ONE only
         self.models = [
-            {
-                'name': 'MVLM-GPT2',
-                'description': 'Biblical MVLM with GPT-2 architecture',
-                'script': 'mvlm_trainer.py',
-                'output_dir': 'models/mvlm_gpt2',
-                'args': [
-                    '--data_dir', 'mvlm_training_dataset_complete',
-                    '--output_dir', 'models/mvlm_gpt2',
-                    '--batch_size', '16',
-                    '--learning_rate', '5e-5',
-                    '--num_epochs', '3',
-                    '--max_length', '512'
-                ]
-            },
             {
                 'name': 'SIM-ONE-Enhanced',
                 'description': 'Enhanced SIM-ONE with RoPE, SwiGLU, BPE, and advanced losses',
@@ -51,7 +38,8 @@ class H200ModelTrainer:
                     '--gradient_accumulation_steps', '4',
                     '--learning_rate', '3e-4',
                     '--num_epochs', '3',
-                    '--warmup_steps', '2000'
+                    '--warmup_steps', '2000',
+                    '--log_file', '../logs/simone_enhanced_training.log'
                 ]
             }
         ]
@@ -94,7 +82,7 @@ class H200ModelTrainer:
         self.logger.addHandler(file_handler)
         self.logger.addHandler(console_handler)
         
-        self.logger.info("H200 Sequential Model Training Started")
+        self.logger.info("H200 SIM-ONE Enhanced Training Started")
         self.logger.info(f"Log file: {log_file}")
     
     def check_gpu(self):
@@ -165,6 +153,10 @@ class H200ModelTrainer:
         # Set up environment for this training run
         env = os.environ.copy()
         env['CUDA_VISIBLE_DEVICES'] = '0'
+        # Ensure both repo root and SIM-ONE Training are importable during run
+        repo_root = str(Path('.').resolve())
+        simone_dir = str((Path('SIM-ONE Training')).resolve())
+        env['PYTHONPATH'] = os.pathsep.join(filter(None, [env.get('PYTHONPATH', ''), repo_root, simone_dir]))
         
         # Create model-specific log file
         log_file = Path('logs') / f'{model_name.lower().replace("-", "_")}_training.log'
@@ -231,7 +223,7 @@ class H200ModelTrainer:
             return False
     
     def create_model_summary(self):
-        """Create summary of all trained models."""
+        """Create summary of the trained model."""
         summary = {
             'training_session': {
                 'start_time': self.start_time.isoformat(),
