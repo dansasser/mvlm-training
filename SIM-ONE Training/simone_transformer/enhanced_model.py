@@ -451,6 +451,8 @@ class EnhancedSIMONEModel(nn.Module):
         if use_cache and past_key_values[0] is not None:
             past_length = past_key_values[0][0].size(-2)
 
+        kv_len = seq_len + past_length
+
         # Token embeddings for current step
         x = self.token_embedding(input_ids)
 
@@ -469,9 +471,40 @@ class EnhancedSIMONEModel(nn.Module):
             layer_modulations = None
             self.last_prophetic_state = None
 
-        # Create causal attention mask if not provided
-        if attention_mask is None:
-            attention_mask = create_causal_mask(seq_len, device)
+        def _prepare_attention_mask(mask: Optional[torch.Tensor]) -> torch.Tensor:
+            if mask is None:
+                mask = create_causal_mask(seq_len, device, kv_len=kv_len)
+            else:
+                if mask.dim() == 2:
+                    mask = mask.unsqueeze(0).unsqueeze(0)
+                elif mask.dim() == 3:
+                    mask = mask.unsqueeze(1)
+                elif mask.dim() != 4:
+                    raise ValueError("attention_mask must have 2, 3, or 4 dimensions")
+
+                mask = mask.to(device=device)
+
+                if mask.shape[-2] != seq_len:
+                    if mask.shape[-2] > seq_len:
+                        mask = mask[..., -seq_len:, :]
+                    else:
+                        raise ValueError("attention_mask query dimension is smaller than seq_len")
+
+                if mask.shape[-1] != kv_len:
+                    if mask.shape[-1] > kv_len:
+                        mask = mask[..., -kv_len:]
+                    else:
+                        pad_size = kv_len - mask.shape[-1]
+                        pad_shape = mask.shape[:-1] + (pad_size,)
+                        pad = mask.new_ones(pad_shape)
+                        mask = torch.cat([pad, mask], dim=-1)
+
+            if mask.size(0) != batch_size:
+                mask = mask.expand(batch_size, -1, -1, -1)
+
+            return mask
+
+        attention_mask = _prepare_attention_mask(attention_mask)
 
         # Store governance outputs from all layers
         all_governance_outputs = [] if output_governance else None
@@ -590,13 +623,9 @@ class EnhancedSIMONEModel(nn.Module):
         max_new_tokens = max(0, max_length - input_ids.shape[1])
 
         for _ in range(max_new_tokens):
-            seq_len = current_input.shape[1]
-            attention_mask = create_causal_mask(seq_len, device)
-
             with torch.no_grad():
                 logits, _, past_key_values = self.forward(
                     current_input,
-                    attention_mask=attention_mask,
                     output_governance=False,
                     use_cache=True,
                     past_key_values=past_key_values,

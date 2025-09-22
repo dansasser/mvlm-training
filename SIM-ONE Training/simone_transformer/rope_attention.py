@@ -24,16 +24,23 @@ class RotaryPositionalEmbedding(nn.Module):
         self.dim = dim
         self.max_seq_len = max_seq_len
         self.base = base
-        
+
         # Precompute frequency tensor
         inv_freq = 1.0 / (base ** (torch.arange(0, dim, 2).float() / dim))
         self.register_buffer('inv_freq', inv_freq)
-        
+
         # Cache for computed embeddings
         self._cached_embeddings = None
         self._cached_seq_len = 0
-    
-    def forward(self, x: torch.Tensor, seq_len: int) -> Tuple[torch.Tensor, torch.Tensor]:
+        self._cached_device: Optional[torch.device] = None
+        self._cached_dtype: Optional[torch.dtype] = None
+
+    def forward(
+        self,
+        x: torch.Tensor,
+        seq_len: int,
+        offset: int = 0
+    ) -> Tuple[torch.Tensor, torch.Tensor]:
         """
         Args:
             x: Input tensor [batch, seq_len, dim]
@@ -42,25 +49,35 @@ class RotaryPositionalEmbedding(nn.Module):
         Returns:
             cos, sin tensors for rotary embedding
         """
-        if seq_len > self._cached_seq_len or self._cached_embeddings is None:
-            self._compute_embeddings(seq_len, x.device, x.dtype)
-        
-        return (
-            self._cached_embeddings['cos'][:seq_len],
-            self._cached_embeddings['sin'][:seq_len]
+        total_len = offset + seq_len
+        cache_miss = (
+            self._cached_embeddings is None
+            or total_len > self._cached_seq_len
+            or self._cached_device != x.device
+            or self._cached_dtype != x.dtype
         )
-    
+
+        if cache_miss:
+            self._compute_embeddings(total_len, x.device, x.dtype)
+
+        return (
+            self._cached_embeddings['cos'][offset:offset + seq_len],
+            self._cached_embeddings['sin'][offset:offset + seq_len]
+        )
+
     def _compute_embeddings(self, seq_len: int, device: torch.device, dtype: torch.dtype):
         """Precompute embeddings for efficiency."""
-        t = torch.arange(seq_len, device=device, dtype=dtype)
-        freqs = torch.outer(t, self.inv_freq)
-        
+        t = torch.arange(seq_len, device=device, dtype=self.inv_freq.dtype)
+        freqs = torch.outer(t, self.inv_freq.to(device=device))
+
         # Create rotation matrices
-        cos = freqs.cos()
-        sin = freqs.sin()
-        
+        cos = freqs.cos().to(dtype)
+        sin = freqs.sin().to(dtype)
+
         self._cached_embeddings = {'cos': cos, 'sin': sin}
         self._cached_seq_len = seq_len
+        self._cached_device = device
+        self._cached_dtype = dtype
 
 
 def apply_rope(x: torch.Tensor, cos: torch.Tensor, sin: torch.Tensor) -> torch.Tensor:
@@ -96,11 +113,15 @@ class EnhancedGovernanceAttention(CachedAttentionMixin, nn.Module):
         cache_size: int = 1000
     ):
         super().__init__(enable_caching=enable_caching, cache_size=cache_size)
-        assert hidden_dim % num_heads == 0
-        
+
+        if hidden_dim % num_heads != 0:
+            raise ValueError("hidden_dim must be divisible by num_heads")
+
         self.hidden_dim = hidden_dim
         self.num_heads = num_heads
         self.head_dim = hidden_dim // num_heads
+        if self.head_dim % 2 != 0:
+            raise ValueError("head_dim must be even for RoPE (hidden_dim/num_heads)")
         self.scale = self.head_dim ** -0.5
         self.governance_strength = governance_strength
         
@@ -185,24 +206,36 @@ class EnhancedGovernanceAttention(CachedAttentionMixin, nn.Module):
         k = self.k_proj(x).view(batch_size, seq_len, self.num_heads, self.head_dim)
         v = self.v_proj(x).view(batch_size, seq_len, self.num_heads, self.head_dim)
         
-        # Apply RoPE to Q and K
-        cos, sin = self.rope(x, seq_len)
-        q = apply_rope(q, cos.unsqueeze(0).unsqueeze(2), sin.unsqueeze(0).unsqueeze(2))
-        k = apply_rope(k, cos.unsqueeze(0).unsqueeze(2), sin.unsqueeze(0).unsqueeze(2))
-        
+        past_k = None
+        past_v = None
+        past_length = 0
+        if past_key_value is not None:
+            past_k, past_v = past_key_value
+            if past_k is not None and past_v is not None:
+                past_length = past_k.size(-2)
+
+        # Apply RoPE to Q and K with offset for cached tokens
+        cos, sin = self.rope(x, seq_len, offset=past_length)
+        rope_cos = cos.unsqueeze(0).unsqueeze(2)
+        rope_sin = sin.unsqueeze(0).unsqueeze(2)
+        q = apply_rope(q, rope_cos, rope_sin)
+        k = apply_rope(k, rope_cos, rope_sin)
+
         # Transpose for attention computation
         q = q.transpose(1, 2)  # [batch, num_heads, seq_len, head_dim]
         k = k.transpose(1, 2)
         v = v.transpose(1, 2)
 
-        if past_key_value is not None:
-            past_k, past_v = past_key_value
-            if past_k is not None and past_v is not None:
-                k = torch.cat([past_k, k], dim=-2)
-                v = torch.cat([past_v, v], dim=-2)
+        if past_k is not None and past_v is not None:
+            k = torch.cat([past_k, k], dim=-2)
+            v = torch.cat([past_v, v], dim=-2)
 
         present_key_value = (k, v) if use_cache else None
-        
+
+        q_len = q.size(-2)
+        kv_len = k.size(-2)
+        past_kv_len = max(kv_len - q_len, 0)
+
         # Compute base attention scores
         scores = torch.matmul(q, k.transpose(-2, -1)) * self.scale
         
@@ -228,6 +261,92 @@ class EnhancedGovernanceAttention(CachedAttentionMixin, nn.Module):
         # Extract components for attention modification
         policy_mask = governance_outputs.get('policy_mask')
         memory_weights = governance_outputs.get('memory_weights')
+
+        def _ensure_attention_mask(mask: Optional[torch.Tensor]) -> torch.Tensor:
+            if mask is None:
+                mask = create_causal_mask(q_len, q.device, kv_len=kv_len)
+            else:
+                if mask.dim() == 2:
+                    mask = mask.unsqueeze(0).unsqueeze(0)
+                elif mask.dim() == 3:
+                    mask = mask.unsqueeze(1)
+                elif mask.dim() != 4:
+                    raise ValueError("attention_mask must have 2, 3, or 4 dimensions")
+
+                mask = mask.to(device=q.device)
+
+                if mask.shape[-2] != q_len:
+                    if mask.shape[-2] > q_len:
+                        mask = mask[..., -q_len:, :]
+                    else:
+                        raise ValueError("attention_mask has insufficient query length")
+
+                if mask.shape[-1] != kv_len:
+                    if mask.shape[-1] > kv_len:
+                        mask = mask[..., -kv_len:]
+                    else:
+                        pad_size = kv_len - mask.shape[-1]
+                        pad_shape = mask.shape[:-1] + (pad_size,)
+                        pad = mask.new_ones(pad_shape)
+                        mask = torch.cat([pad, mask], dim=-1)
+
+                mask = mask[:, :1, :, :]
+            if mask.size(0) != batch_size:
+                mask = mask.expand(batch_size, -1, -1, -1)
+            return mask
+
+        def _pad_additive_mask(mask: Optional[torch.Tensor]) -> Optional[torch.Tensor]:
+            if mask is None or past_kv_len == 0:
+                return mask
+            if mask.dim() == 3:
+                mask = mask.unsqueeze(1)
+            elif mask.dim() != 4:
+                raise ValueError("governance masks must have 3 or 4 dimensions")
+
+            mask = mask.to(device=q.device)
+
+            if mask.shape[-2] != q_len:
+                if mask.shape[-2] > q_len:
+                    mask = mask[..., -q_len:, :]
+                else:
+                    raise ValueError("governance mask has insufficient query length")
+
+            if mask.shape[-1] != kv_len:
+                if mask.shape[-1] > kv_len:
+                    mask = mask[..., -kv_len:]
+                else:
+                    pad_shape = mask.shape[:-1] + (past_kv_len,)
+                    pad = mask.new_zeros(pad_shape)
+                    mask = torch.cat([pad, mask], dim=-1)
+
+            return mask
+
+        def _pad_memory_weights(mask: Optional[torch.Tensor]) -> Optional[torch.Tensor]:
+            if mask is None or past_kv_len == 0:
+                return mask
+            if mask.dim() != 4:
+                raise ValueError("memory weights must have 4 dimensions")
+
+            mask = mask.to(device=q.device)
+
+            if mask.shape[-1] != kv_len:
+                if mask.shape[-1] > kv_len:
+                    mask = mask[..., -kv_len:]
+                else:
+                    pad_shape = mask.shape[:-1] + (past_kv_len,)
+                    pad = mask.new_zeros(pad_shape)
+                    mask = torch.cat([pad, mask], dim=-1)
+
+            return mask
+
+        attention_mask = _ensure_attention_mask(attention_mask)
+        prophetic_mask = _pad_additive_mask(prophetic_mask)
+        policy_mask = _pad_additive_mask(policy_mask)
+        if policy_mask is not None:
+            governance_outputs['policy_mask'] = policy_mask
+        memory_weights = _pad_memory_weights(memory_weights)
+        if memory_weights is not None:
+            governance_outputs['memory_weights'] = memory_weights
 
         # OPTIMIZED: Try to get cached attention weights first
         cached_attn_weights = self._try_get_cached_attention(
@@ -530,10 +649,24 @@ class TraceGenerator(nn.Module):
         return trace_info
 
 
-def create_causal_mask(seq_len: int, device: torch.device) -> torch.Tensor:
-    """Create causal attention mask."""
-    mask = torch.tril(torch.ones(seq_len, seq_len, device=device))
-    return mask.unsqueeze(0).unsqueeze(0)  # [1, 1, seq_len, seq_len]
+def create_causal_mask(
+    seq_len: int,
+    device: torch.device,
+    kv_len: Optional[int] = None
+) -> torch.Tensor:
+    """Create causal attention mask supporting cached key/value pairs."""
+    kv_len = kv_len or seq_len
+    if kv_len < seq_len:
+        raise ValueError("kv_len must be at least as large as seq_len")
+
+    current = torch.tril(torch.ones(seq_len, seq_len, device=device))
+    if kv_len == seq_len:
+        mask = current
+    else:
+        past = torch.ones(seq_len, kv_len - seq_len, device=device)
+        mask = torch.cat([past, current], dim=-1)
+
+    return mask.unsqueeze(0).unsqueeze(0)  # [1, 1, seq_len, kv_len]
 
 
 if __name__ == "__main__":
