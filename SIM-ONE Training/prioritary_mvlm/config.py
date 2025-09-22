@@ -397,6 +397,10 @@ class PrioritaryConfig:
     gradient_accumulation_steps: int = 1
     log_interval: int = 10
     eval_interval: int = 100
+    validation_split: float = 0.1
+    validation_dir: Optional[str] = None
+    dataloader_workers: int = 4
+    split_seed: int = 42
     lambda_policy: float = 1.0
     lambda_memory: float = 1.0
     lambda_energy: float = 1.0
