@@ -15,9 +15,9 @@ chmod +x setup_environment.sh
 ./setup_environment.sh
 ```
 
-### 2. Start Training All Models
+### 2. Start Enhanced SIM-ONE Training
 ```bash
-# Train all three models sequentially
+# Start the Enhanced SIM-ONE trainer (orchestrator now runs Enhanced only)
 python3 train_all_models.py
 ```
 
@@ -27,12 +27,9 @@ python3 train_all_models.py
 watch -n 1 nvidia-smi
 
 # Follow training logs
+# Overall H200 training log and Enhanced SIM-ONE training log
 tail -f logs/h200_training_*.log
-
-# Monitor individual model logs
-tail -f logs/mvlm_gpt2_training.log
-tail -f logs/sim_one_legacy_training.log  
-tail -f logs/sim_one_enhanced_training.log
+tail -f logs/simone_enhanced_training.log
 ```
 
 ### 4. Validate Models
@@ -41,36 +38,26 @@ tail -f logs/sim_one_enhanced_training.log
 python3 validate_models.py
 ```
 
-### 5. Download Models
+### 5. Download Model
 ```bash
 # Models are automatically prepared in models_for_download/
 ls -la models_for_download/
 
 # Download files:
-# - mvlm_gpt2_model.tar.gz
-# - sim_one_legacy_model.tar.gz  
-# - sim_one_enhanced_model.tar.gz
+# - simone_enhanced_model.tar.gz
 # - training_summary.json
 # - DOWNLOAD_INSTRUCTIONS.md
 ```
 
 ## Training Sequence
 
-The automated trainer will run these models in sequence:
+The automated trainer runs the SIM-ONE Enhanced model:
 
-### 1. MVLM-GPT2 (Biblical GPT-2)
-- **Script**: `mvlm_trainer.py`
-- **Output**: `models/mvlm_gpt2/`
-- **Features**: Biblical training with GPT-2 architecture
-- **Time**: ~2-3 hours
-
-### 2. SIM-ONE Enhanced (Modern Architecture)
+### SIM-ONE Enhanced (Modern Architecture)
 - **Script**: `SIM-ONE Training/enhanced_train.py`
 - **Output**: `models/simone_enhanced/`
 - **Features**: RoPE, SwiGLU, BPE tokenizer, advanced losses, governance
 - **Time**: ~3-4 hours
-
-**Total Training Time**: ~5-7 hours
 
 ## H200 Optimizations Applied
 
@@ -93,45 +80,27 @@ The automated trainer will run these models in sequence:
 
 ```
 ├── models/
-│   ├── mvlm_gpt2/                    # GPT-2 biblical model
 │   ├── simone_enhanced/              # Enhanced SIM-ONE
 │   └── training_summary.json         # Training statistics
 ├── models_for_download/              # Compressed models
-│   ├── mvlm_gpt2_model.tar.gz
 │   ├── simone_enhanced_model.tar.gz
 │   └── DOWNLOAD_INSTRUCTIONS.md
 ├── logs/                             # Training logs
 │   ├── h200_training_*.log           # Main training log
-│   ├── mvlm_gpt2_training.log        # GPT-2 model log
 │   └── simone_enhanced_training.log  # Enhanced model log
 └── checkpoints/                      # Training checkpoints
 ```
 
 ## Manual Training (Alternative)
 
-If you prefer to train models individually:
+If you prefer to run the enhanced trainer directly:
 
-### MVLM-GPT2
-```bash
-python3 mvlm_trainer.py \
-    --data_dir mvlm_training_dataset_complete \
-    --output_dir models/mvlm_gpt2 \
-    --batch_size 16 \
-    --learning_rate 5e-5 \
-    --num_epochs 3
-```
-
-### SIM-ONE Enhanced
-The enhanced SIM-ONE trainer now supports dedicated validation data. Point
-`--data_dir` at your training split and either specify `--validation_dir` for a
-separate validation folder or rely on the default `--validation_split` (10%
-holdout) when a dedicated directory is unavailable.
 ```bash
 cd "SIM-ONE Training"
 python3 enhanced_train.py \
     --data_dir ../mvlm_training_dataset_complete/train \
     --validation_dir ../mvlm_training_dataset_complete/val \
-    --output_dir ../models/mvlm_simone_enhanced \
+    --output_dir ../models/simone_enhanced \
     --vocab_size 32000 \
     --batch_size 12 \
     --gradient_accumulation_steps 4 \
@@ -218,26 +187,24 @@ iotop
 ## Performance Expectations
 
 ### H200 (80GB) Expected Performance:
-- **MVLM-GPT2**: ~1000 tokens/sec, 2-3 hours total
 - **SIM-ONE Enhanced**: ~600 tokens/sec, 3-4 hours total
 
 ### Memory Usage:
-- **MVLM-GPT2**: ~20-30GB GPU memory
 - **SIM-ONE Enhanced**: ~30-40GB GPU memory
 
 ## Success Indicators
 
 ✅ **Training Successful When**:
-- All logs show decreasing loss values
-- Models save without errors
+- Logs show decreasing loss values
+- Enhanced model saves without errors
 - Validation tests pass
 - Generated text is coherent and biblical
-- Model files are created in output directories
+- Model files are created in models/simone_enhanced
 
 ❌ **Training Failed When**:
 - CUDA out of memory errors
 - Loss becomes NaN or doesn't decrease
-- Models fail to save
+- Model fails to save
 - Generated text is incoherent
 - Missing output files
 
