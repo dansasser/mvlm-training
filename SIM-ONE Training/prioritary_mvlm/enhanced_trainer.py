@@ -14,7 +14,7 @@ import torch
 import torch.nn.functional as F
 from torch.optim import AdamW
 from torch.optim.lr_scheduler import CosineAnnealingLR, LinearLR, SequentialLR
-from torch.utils.data import DataLoader
+from torch.utils.data import DataLoader, Dataset, random_split
 import matplotlib.pyplot as plt
 import numpy as np
 
@@ -85,9 +85,16 @@ class EnhancedPrioritaryTrainer:
         else:
             self.scaler = None
         
-        # Initialize dataset and dataloader
+        # Initialize dataset and dataloaders
         self.logger.info("Loading enhanced training dataset...")
-        self.dataset, self.dataloader = self._setup_dataset()
+        (
+            self.train_dataset,
+            self.dataloader,
+            self.val_dataset,
+            self.val_dataloader,
+        ) = self._setup_dataset()
+        # Maintain legacy attribute for compatibility
+        self.dataset = self.train_dataset
         
         # Initialize optimizer and scheduler
         self.optimizer, self.scheduler = self._setup_optimization()
@@ -212,29 +219,156 @@ class EnhancedPrioritaryTrainer:
         self.logger.info(f"Model configuration: {model_config}")
         return model
 
-    def _setup_dataset(self) -> Tuple[WeightedTextDataset, DataLoader]:
-        """Setup the enhanced dataset and dataloader."""
-        # Use enhanced config values
-        dataset = WeightedTextDataset(
-            self.data_dir,
+    def _setup_dataset(
+        self,
+    ) -> Tuple[
+        Dataset,
+        DataLoader,
+        Optional[Dataset],
+        Optional[DataLoader],
+    ]:
+        """Setup train/validation datasets and dataloaders."""
+
+        data_path = Path(self.data_dir)
+        train_path = data_path
+        val_path: Optional[Path] = None
+
+        # Prefer explicit validation directory from config/CLI
+        if getattr(self.config, 'validation_dir', None):
+            candidate = Path(self.config.validation_dir).expanduser()
+            if not candidate.exists():
+                alt_candidate = (data_path / self.config.validation_dir).resolve()
+                if alt_candidate.exists():
+                    candidate = alt_candidate
+                else:
+                    self.logger.warning(
+                        f"Validation directory not found: {self.config.validation_dir}. "
+                        "Falling back to holdout split."
+                    )
+                    candidate = None
+            val_path = candidate
+
+        # Detect train/val directory layout automatically if not explicitly provided
+        if val_path is None:
+            candidate_pairs = [
+                (data_path / "train", data_path / "val"),
+                (data_path / "train", data_path / "validation"),
+            ]
+            for train_candidate, val_candidate in candidate_pairs:
+                if train_candidate.exists() and val_candidate.exists():
+                    train_path = train_candidate
+                    val_path = val_candidate
+                    break
+
+        if train_path != data_path:
+            self.logger.info(f"Using training directory: {train_path}")
+
+        train_dataset = WeightedTextDataset(
+            str(train_path),
             self.tokenizer,
-            self.config
+            self.config,
         )
-        
-        dataloader = DataLoader(
-            dataset,
+        val_dataset: Optional[WeightedTextDataset] = None
+
+        if val_path is not None and val_path.exists():
+            val_dataset = WeightedTextDataset(
+                str(val_path),
+                self.tokenizer,
+                self.config,
+            )
+            self.logger.info(f"Using validation directory: {val_path}")
+        elif val_path is not None:
+            self.logger.warning(
+                f"Validation directory resolved to {val_path}, but it does not exist. "
+                "Falling back to holdout split."
+            )
+            val_path = None
+
+        # Create holdout split if no explicit validation dataset was provided
+        if val_dataset is None:
+            val_ratio = float(getattr(self.config, 'validation_split', 0.0) or 0.0)
+            if val_ratio < 0 or val_ratio >= 1:
+                if val_ratio != 0:
+                    self.logger.warning(
+                        f"Validation split {val_ratio} is out of range (0, 1). "
+                        "No validation holdout will be created."
+                    )
+                val_ratio = 0.0
+
+            total_examples = len(train_dataset)
+            if val_ratio > 0 and total_examples >= 2:
+                val_size = max(1, int(total_examples * val_ratio))
+                if val_size >= total_examples:
+                    val_size = total_examples - 1
+
+                if val_size <= 0:
+                    self.logger.warning(
+                        "Unable to create validation split because the dataset is too small."
+                    )
+                else:
+                    generator = torch.Generator()
+                    generator.manual_seed(getattr(self.config, 'split_seed', 42))
+                    train_size = total_examples - val_size
+                    train_dataset, val_dataset = random_split(
+                        train_dataset,
+                        [train_size, val_size],
+                        generator=generator,
+                    )
+                    self.logger.info(
+                        f"Created validation split holding out {val_size} of {total_examples} "
+                        f"examples (~{val_ratio * 100:.1f}%)."
+                    )
+            elif val_ratio > 0 and total_examples < 2:
+                self.logger.warning(
+                    "Dataset too small to create validation split; training will use the full dataset."
+                )
+
+        def _resolve_collate_fn(dataset_ref):
+            if hasattr(dataset_ref, 'collate_fn'):
+                return dataset_ref.collate_fn
+            if hasattr(dataset_ref, 'dataset') and hasattr(dataset_ref.dataset, 'collate_fn'):
+                return dataset_ref.dataset.collate_fn
+            return None
+
+        num_workers = getattr(self.config, 'dataloader_workers', 4)
+
+        train_loader = DataLoader(
+            train_dataset,
             batch_size=self.config.batch_size,
             shuffle=True,
-            num_workers=4,
+            num_workers=num_workers,
             pin_memory=True,
             drop_last=True,
-            collate_fn=dataset.collate_fn
+            collate_fn=_resolve_collate_fn(train_dataset),
         )
-        
-        self.logger.info(f"Dataset size: {len(dataset)} examples")
-        self.logger.info(f"Batches per epoch: {len(dataloader)}")
-        
-        return dataset, dataloader
+
+        val_loader: Optional[DataLoader] = None
+        if val_dataset is not None and len(val_dataset) > 0:
+            val_loader = DataLoader(
+                val_dataset,
+                batch_size=self.config.batch_size,
+                shuffle=False,
+                num_workers=num_workers,
+                pin_memory=True,
+                drop_last=False,
+                collate_fn=_resolve_collate_fn(val_dataset),
+            )
+        elif val_dataset is not None:
+            self.logger.warning(
+                "Validation dataset is empty; evaluation will default to the training loader."
+            )
+
+        self.logger.info(f"Train dataset size: {len(train_dataset)} examples")
+        self.logger.info(f"Train batches per epoch: {len(train_loader)}")
+        if val_loader is not None:
+            self.logger.info(f"Validation dataset size: {len(val_dataset)} examples")
+            self.logger.info(f"Validation batches per epoch: {len(val_loader)}")
+        else:
+            self.logger.info(
+                "Validation dataset not configured; evaluation will default to the training loader."
+            )
+
+        return train_dataset, train_loader, val_dataset, val_loader
 
     def _setup_optimization(self) -> Tuple[AdamW, torch.optim.lr_scheduler.LRScheduler]:
         """Setup optimizer and learning rate scheduler with safety guards."""
@@ -463,9 +597,9 @@ class EnhancedPrioritaryTrainer:
                 # Save checkpoint
                 if self.global_step % self.config.eval_interval == 0:
                     self.save_checkpoint(f"checkpoint_step_{self.global_step}")
-                    
+
                     # Evaluation
-                    eval_metrics = self.evaluate()
+                    eval_metrics = self.evaluate(self.val_dataloader)
                     self.logger.info(f"Eval loss: {eval_metrics['loss']:.4f}, PPL: {eval_metrics['perplexity']:.2f}")
                     
                     # Save best model
@@ -482,17 +616,31 @@ class EnhancedPrioritaryTrainer:
         
         return epoch_metrics
 
-    def evaluate(self, max_batches: int = 100) -> Dict[str, float]:
-        """Evaluate model with enhanced metrics."""
+    def evaluate(
+        self,
+        dataloader: Optional[DataLoader] = None,
+        max_batches: int = 100,
+    ) -> Dict[str, float]:
+        """Evaluate model with enhanced metrics using the provided dataloader."""
         self.model.eval()
         total_loss = 0.0
         total_batches = 0
-        
+
+        eval_loader = dataloader or getattr(self, 'val_dataloader', None) or self.dataloader
+        if eval_loader is None:
+            self.logger.warning("No dataloader available for evaluation; returning default metrics.")
+            self.model.train()
+            return {'loss': float('inf'), 'perplexity': float('inf')}
+
+        using_train_loader = eval_loader is self.dataloader
+        if using_train_loader and getattr(self, 'val_dataloader', None) is None:
+            self.logger.debug("Validation loader unavailable; evaluating on training batches.")
+
         with torch.no_grad():
-            for i, batch in enumerate(self.dataloader):
+            for i, batch in enumerate(eval_loader):
                 if i >= max_batches:
                     break
-                
+
                 loss, _ = self.compute_enhanced_loss(batch)
                 total_loss += loss.item()
                 total_batches += 1
@@ -649,7 +797,9 @@ class EnhancedPrioritaryTrainer:
         self.logger.info("="*60)
         self.logger.info("STARTING ENHANCED SIM-ONE TRAINING")
         self.logger.info("="*60)
-        self.logger.info(f"Dataset: {len(self.dataset)} examples")
+        self.logger.info(f"Train dataset: {len(self.train_dataset)} examples")
+        if getattr(self, 'val_dataset', None) is not None:
+            self.logger.info(f"Validation dataset: {len(self.val_dataset)} examples")
         self.logger.info(f"Epochs: {epochs}")
         self.logger.info(f"Batch size: {self.config.batch_size}")
         self.logger.info(f"Learning rate: {self.config.learning_rate}")
