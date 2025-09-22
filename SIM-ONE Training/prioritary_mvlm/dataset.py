@@ -43,7 +43,12 @@ class WeightedTextDataset(Dataset):
         if not tokens:
             return
 
-        pad_token_id = self.tokenizer.pad_token_id
+        pad_token_id = getattr(self.tokenizer, 'pad_token_id', None)
+        if pad_token_id is None:
+            raise ValueError(
+                "Tokenizer must define pad_token_id to enable window padding. "
+                "Set tokenizer.pad_token_id or use a tokenizer that provides one."
+            )
 
         def append_window(window_tokens: List[int]) -> None:
             tokens_list = list(window_tokens)
@@ -66,6 +71,8 @@ class WeightedTextDataset(Dataset):
 
         last_start = None
         limit = len(tokens) - self.max_length + 1
+        if not isinstance(self.stride, int) or self.stride <= 0:
+            raise ValueError(f"stride must be a positive int; got {self.stride!r}")
         for start in range(0, limit, self.stride):
             append_window(tokens[start:start + self.max_length])
             last_start = start
