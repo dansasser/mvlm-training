@@ -3,21 +3,52 @@ SIM-ONE Transformer Model
 Delegates to the working implementation in the base models
 """
 
-import torch
-import torch.nn as nn
-from typing import Optional, Dict, Any, Tuple
+import importlib
 import sys
 from pathlib import Path
+from typing import Optional, Tuple
 
-# Add parent directory to path for base model imports
+import torch
+import torch.nn as nn
+
+# Add parent directory to path for base model imports (needed for runtime delegation)
 parent_dir = Path(__file__).parent.parent
-sys.path.insert(0, str(parent_dir))
+if str(parent_dir) not in sys.path:
+    sys.path.insert(0, str(parent_dir))
 
-try:
-    from simone_training.models.base import EnhancedSIMONEWrapper, MVLMAdapter
-    ENHANCED_AVAILABLE = True
-except ImportError:
-    ENHANCED_AVAILABLE = False
+ENHANCED_AVAILABLE = False
+_ENHANCED_IMPORT_ERROR: Optional[ImportError] = None
+_ENHANCED_COMPONENTS: Optional[Tuple[object, object]] = None
+
+
+def _load_enhanced_components():
+    """Lazy import to avoid circular dependency during module import."""
+
+    global ENHANCED_AVAILABLE, _ENHANCED_IMPORT_ERROR, _ENHANCED_COMPONENTS
+
+    if _ENHANCED_COMPONENTS is not None:
+        return _ENHANCED_COMPONENTS
+
+    try:
+        module = importlib.import_module("simone_training.models.base")
+        components = (module.EnhancedSIMONEWrapper, module.MVLMAdapter)
+        _ENHANCED_COMPONENTS = components
+        ENHANCED_AVAILABLE = True
+        return components
+    except ImportError as exc:
+        _ENHANCED_IMPORT_ERROR = exc
+        ENHANCED_AVAILABLE = False
+        raise
+
+
+if "simone_training.models.base" in sys.modules:
+    existing_module = sys.modules["simone_training.models.base"]
+    if hasattr(existing_module, "EnhancedSIMONEWrapper") and hasattr(existing_module, "MVLMAdapter"):
+        _ENHANCED_COMPONENTS = (
+            existing_module.EnhancedSIMONEWrapper,
+            existing_module.MVLMAdapter,
+        )
+        ENHANCED_AVAILABLE = True
 
 from .shared_governance import GovernanceAggregator
 
@@ -29,10 +60,14 @@ class SIMONEModel(nn.Module):
 
     def __init__(self, *args, **kwargs):
         super().__init__()
-        if ENHANCED_AVAILABLE:
-            self.enhanced_wrapper = EnhancedSIMONEWrapper(*args, **kwargs)
-        else:
-            raise ImportError("Enhanced SIM-ONE implementation not available")
+
+        try:
+            enhanced_wrapper_cls, _ = _load_enhanced_components()
+        except ImportError as exc:
+            origin = _ENHANCED_IMPORT_ERROR or exc
+            raise ImportError("Enhanced SIM-ONE implementation not available") from origin
+
+        self.enhanced_wrapper = enhanced_wrapper_cls(*args, **kwargs)
 
     def forward(self, *args, **kwargs):
         return self.enhanced_wrapper(*args, **kwargs)

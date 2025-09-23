@@ -824,17 +824,29 @@ class EnhancedPrioritaryTrainer:
             self.logger.info(f"Epoch {epoch_idx + 1} completed:")
             for metric, value in epoch_metrics.items():
                 self.logger.info(f"  {metric}: {value:.4f}")
-            
+
+            # Validation / evaluation metrics for early stopping
+            eval_metrics = self.evaluate(getattr(self, 'val_dataloader', None))
+            self.logger.info(
+                "  eval_loss: %.4f | eval_ppl: %.2f",
+                eval_metrics.get('loss', float('inf')),
+                eval_metrics.get('perplexity', float('inf')),
+            )
+
             # Record history
             epoch_record = {
                 'epoch': epoch_idx + 1,
                 'global_step': self.global_step,
-                **epoch_metrics
+                **epoch_metrics,
+                'eval_loss': eval_metrics.get('loss'),
+                'eval_perplexity': eval_metrics.get('perplexity'),
             }
             self.training_history.append(epoch_record)
 
             # Check for improvement and early stopping
-            current_loss = epoch_metrics.get('val_loss', epoch_metrics.get('train_loss', float('inf')))
+            current_loss = eval_metrics.get('loss', float('inf'))
+            if not math.isfinite(current_loss):
+                current_loss = epoch_metrics.get('total_loss', epoch_metrics.get('loss', float('inf')))
 
             if current_loss < self.best_loss:
                 self.best_loss = current_loss
@@ -842,7 +854,7 @@ class EnhancedPrioritaryTrainer:
                 self.patience_counter = 0
 
                 # Save best model
-                self.save_checkpoint("best_model.pt")
+                self.save_checkpoint("best_model")
                 self.logger.info(f"💾 New best model saved! Loss: {current_loss:.4f}")
             else:
                 self.patience_counter += 1
@@ -850,7 +862,7 @@ class EnhancedPrioritaryTrainer:
 
             # Early stopping check (only after minimum epochs)
             if (epoch_idx + 1) >= self.config.min_epochs and self.patience_counter >= self.config.patience:
-                self.logger.info(f"🛑 Early stopping triggered!")
+                self.logger.info("🛑 Early stopping triggered!")
                 self.logger.info(f"   Best loss: {self.best_loss:.4f} at epoch {self.best_epoch}")
                 self.logger.info(f"   No improvement for {self.patience_counter} epochs")
                 self.logger.info(f"   Stopping at epoch {epoch_idx + 1}/{epochs}")
