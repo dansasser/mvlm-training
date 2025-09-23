@@ -37,8 +37,10 @@ class H200ModelTrainer:
                     '--batch_size', '12',
                     '--gradient_accumulation_steps', '4',
                     '--learning_rate', '3e-4',
-                    '--num_epochs', '3',
+                    '--num_epochs', '7',  # Extended to 7 epochs for complete dataset
                     '--warmup_steps', '2000',
+                    '--patience', '2',  # Early stopping patience
+                    '--min_epochs', '6',  # Minimum 6 epochs before early stopping
                     '--log_file', '../logs/simone_enhanced_training.log'
                 ]
             }

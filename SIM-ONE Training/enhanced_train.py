@@ -47,6 +47,10 @@ def create_enhanced_config(args) -> PrioritaryConfig:
     config.validation_split = args.validation_split
     config.validation_dir = args.validation_dir
 
+    # Early stopping configuration
+    config.patience = args.patience
+    config.min_epochs = args.min_epochs
+
     return config
 
 
@@ -98,8 +102,10 @@ def main():
     parser.add_argument("--batch_size", type=int, default=8, help="Training batch size")
     parser.add_argument("--gradient_accumulation_steps", type=int, default=4, help="Gradient accumulation steps")
     parser.add_argument("--learning_rate", type=float, default=3e-4, help="Peak learning rate")
-    parser.add_argument("--num_epochs", type=int, default=3, help="Number of training epochs")
+    parser.add_argument("--num_epochs", type=int, default=7, help="Number of training epochs")
     parser.add_argument("--warmup_steps", type=int, default=2000, help="Warmup steps")
+    parser.add_argument("--patience", type=int, default=2, help="Early stopping patience (epochs)")
+    parser.add_argument("--min_epochs", type=int, default=6, help="Minimum epochs before early stopping")
     
     # Enhanced features
     parser.add_argument("--no_mixed_precision", action="store_true", help="Disable mixed precision training")
@@ -135,6 +141,7 @@ def main():
     print(f"Batch size: {config.batch_size}")
     print(f"Learning rate: {config.learning_rate}")
     print(f"Training epochs: {config.num_epochs}")
+    print(f"Early stopping: patience={config.patience}, min_epochs={config.min_epochs}")
     print(f"Mixed precision: {not args.no_mixed_precision}")
     print(f"Model compilation: {not args.no_compile}")
     print("=" * 50)

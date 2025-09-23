@@ -7,7 +7,7 @@ import logging
 import math
 import time
 from pathlib import Path
-from typing import Dict, Optional, Tuple, List
+from typing import Dict, Optional, Tuple, List, Type, TYPE_CHECKING
 import json
 
 import torch
@@ -22,7 +22,17 @@ from .config import PrioritaryConfig, PropheticSingularityState
 from .dataset import WeightedTextDataset
 from .advanced_tokenizer import BiblicalBPETokenizer, train_biblical_tokenizer
 from .advanced_losses import ComprehensiveBiblicalLoss, create_biblical_metadata
-from simone_transformer import EnhancedSIMONEModel
+
+if TYPE_CHECKING:
+    from simone_transformer import SIMONEModel
+
+
+def _load_enhanced_simone_model() -> Type['SIMONEModel']:
+    """Load the enhanced SIM-ONE model lazily to avoid circular imports."""
+
+    from simone_transformer import SIMONEModel
+
+    return SIMONEModel
 
 
 class EnhancedPrioritaryTrainer:
@@ -125,6 +135,10 @@ class EnhancedPrioritaryTrainer:
         self.epoch = 0
         self.best_loss = float('inf')
         self.training_history = []
+
+        # Early stopping state
+        self.patience_counter = 0
+        self.best_epoch = 0
         
         # Log model info
         num_params = self.model.get_num_params()
@@ -200,7 +214,7 @@ class EnhancedPrioritaryTrainer:
         self.logger.info(f"Tokenizer vocabulary size: {len(tokenizer)}")
         return tokenizer
 
-    def _setup_model(self) -> EnhancedSIMONEModel:
+    def _setup_model(self) -> 'SIMONEModel':
         """Setup the enhanced SIM-ONE model."""
         model_config = {
             'vocab_size': len(self.tokenizer),
@@ -214,7 +228,8 @@ class EnhancedPrioritaryTrainer:
             'tie_embeddings': True
         }
         
-        model = EnhancedSIMONEModel(**model_config)
+        model_cls = _load_enhanced_simone_model()
+        model = model_cls(**model_config)
         
         self.logger.info(f"Model configuration: {model_config}")
         return model
@@ -692,6 +707,8 @@ class EnhancedPrioritaryTrainer:
                 'epoch': self.epoch,
                 'global_step': self.global_step,
                 'best_loss': self.best_loss,
+                'best_epoch': self.best_epoch,
+                'patience_counter': self.patience_counter,
             },
             'training_history': self.training_history
         }
@@ -720,6 +737,8 @@ class EnhancedPrioritaryTrainer:
         self.epoch = training_state.get('epoch', 0)
         self.global_step = training_state.get('global_step', 0)
         self.best_loss = training_state.get('best_loss', float('inf'))
+        self.best_epoch = training_state.get('best_epoch', 0)
+        self.patience_counter = training_state.get('patience_counter', 0)
         
         self.training_history = checkpoint.get('training_history', [])
         
@@ -820,15 +839,50 @@ class EnhancedPrioritaryTrainer:
             self.logger.info(f"Epoch {epoch_idx + 1} completed:")
             for metric, value in epoch_metrics.items():
                 self.logger.info(f"  {metric}: {value:.4f}")
-            
+
+            # Validation / evaluation metrics for early stopping
+            eval_metrics = self.evaluate(getattr(self, 'val_dataloader', None))
+            self.logger.info(
+                "  eval_loss: %.4f | eval_ppl: %.2f",
+                eval_metrics.get('loss', float('inf')),
+                eval_metrics.get('perplexity', float('inf')),
+            )
+
             # Record history
             epoch_record = {
                 'epoch': epoch_idx + 1,
                 'global_step': self.global_step,
-                **epoch_metrics
+                **epoch_metrics,
+                'eval_loss': eval_metrics.get('loss'),
+                'eval_perplexity': eval_metrics.get('perplexity'),
             }
             self.training_history.append(epoch_record)
-            
+
+            # Check for improvement and early stopping
+            current_loss = eval_metrics.get('loss', float('inf'))
+            if not math.isfinite(current_loss):
+                current_loss = epoch_metrics.get('total_loss', epoch_metrics.get('loss', float('inf')))
+
+            if current_loss < self.best_loss:
+                self.best_loss = current_loss
+                self.best_epoch = epoch_idx + 1
+                self.patience_counter = 0
+
+                # Save best model
+                self.save_checkpoint("best_model")
+                self.logger.info(f"💾 New best model saved! Loss: {current_loss:.4f}")
+            else:
+                self.patience_counter += 1
+                self.logger.info(f"⏳ No improvement for {self.patience_counter} epoch(s). Best: {self.best_loss:.4f} at epoch {self.best_epoch}")
+
+            # Early stopping check (only after minimum epochs)
+            if (epoch_idx + 1) >= self.config.min_epochs and self.patience_counter >= self.config.patience:
+                self.logger.info("🛑 Early stopping triggered!")
+                self.logger.info(f"   Best loss: {self.best_loss:.4f} at epoch {self.best_epoch}")
+                self.logger.info(f"   No improvement for {self.patience_counter} epochs")
+                self.logger.info(f"   Stopping at epoch {epoch_idx + 1}/{epochs}")
+                break
+
             # Generate sample
             sample = self.generate_sample()
             self.logger.info(f"Sample generation: {sample[:200]}...")
@@ -840,8 +894,11 @@ class EnhancedPrioritaryTrainer:
         self.logger.info("ENHANCED SIM-ONE TRAINING COMPLETED")
         self.logger.info("="*60)
         self.logger.info(f"Training time: {training_time:.2f}s ({training_time/60:.2f}m)")
+        self.logger.info(f"Total epochs: {self.epoch + 1}/{epochs}")
         self.logger.info(f"Total steps: {self.global_step}")
-        self.logger.info(f"Best loss: {self.best_loss:.4f}")
+        self.logger.info(f"Best loss: {self.best_loss:.4f} (epoch {self.best_epoch})")
+        if self.patience_counter > 0:
+            self.logger.info(f"Early stopping: triggered after {self.patience_counter} epochs without improvement")
         
         # Save final model
         final_model_path = self.save_final_model()
