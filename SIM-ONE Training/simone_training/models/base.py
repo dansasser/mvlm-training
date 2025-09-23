@@ -40,6 +40,10 @@ class _TransformerBlock(nn.Module):
         attention_mask: Optional[torch.Tensor] = None,
     ) -> Tuple[torch.Tensor, torch.Tensor]:
         key_padding_mask = None
+        seq_len = x.size(1)
+        causal_mask = torch.triu(
+            torch.ones(seq_len, seq_len, device=x.device, dtype=torch.bool), diagonal=1
+        )
         if attention_mask is not None:
             # Expect attention mask as 1 for tokens to keep, 0 for masked
             key_padding_mask = attention_mask == 0
@@ -48,6 +52,7 @@ class _TransformerBlock(nn.Module):
             x,
             x,
             x,
+            attn_mask=causal_mask,
             key_padding_mask=key_padding_mask,
             need_weights=True,
             average_attn_weights=False,
@@ -116,23 +121,26 @@ class MVLMAdapter(nn.Module):
         """
         try:
             # Forward pass through Enhanced SIM-ONE
-            logits, governance_outputs, _ = self.enhanced_model(
+            logits, governance_outputs, hidden_states = self.enhanced_model(
                 input_ids=input_ids,
                 attention_mask=attention_mask,
                 output_governance=output_governance or (labels is not None),
                 prophetic_state=prophetic_state,
                 **kwargs
             )
-            
+
             # Prepare output dictionary
             hidden_state = kwargs.get('hidden_state')
+            if hidden_state is None:
+                hidden_state = hidden_states
             if hidden_state is None and isinstance(governance_outputs, dict):
                 hidden_state = governance_outputs.get('shared_governance_features')
 
-            outputs = {
-                'logits': logits,
-                'last_hidden_state': hidden_state if hidden_state is not None else logits,
-            }
+            outputs = {'logits': logits}
+            if hidden_state is not None and self.output_adapter is not None:
+                hidden_state = self.output_adapter(hidden_state)
+
+            outputs['last_hidden_state'] = hidden_state if hidden_state is not None else logits
             
             # Add governance outputs if requested
             if output_governance and governance_outputs:
@@ -341,7 +349,7 @@ class EnhancedSIMONEWrapper(nn.Module):
         output_governance: bool = False,
         prophetic_state: Optional[PropheticSingularityState] = None,
         **kwargs,
-    ) -> Tuple[torch.Tensor, Dict[str, torch.Tensor], Optional[Any]]:
+    ) -> Tuple[torch.Tensor, Dict[str, torch.Tensor], torch.Tensor]:
         """Forward pass through Enhanced SIM-ONE model."""
 
         logits, hidden_states, attn_weights = self._forward_internal(input_ids, attention_mask)
@@ -354,7 +362,7 @@ class EnhancedSIMONEWrapper(nn.Module):
                 prophetic_state=prophetic_state,
             )
             governance_outputs['trace'] = governance_outputs.get('trace', {})
-        return logits, governance_outputs, None
+        return logits, governance_outputs, hidden_states
 
     def generate(
         self,
