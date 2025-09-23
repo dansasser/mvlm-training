@@ -7,7 +7,7 @@ import logging
 import math
 import time
 from pathlib import Path
-from typing import Dict, Optional, Tuple, List
+from typing import Dict, Optional, Tuple, List, Type, TYPE_CHECKING
 import json
 
 import torch
@@ -22,7 +22,17 @@ from .config import PrioritaryConfig, PropheticSingularityState
 from .dataset import WeightedTextDataset
 from .advanced_tokenizer import BiblicalBPETokenizer, train_biblical_tokenizer
 from .advanced_losses import ComprehensiveBiblicalLoss, create_biblical_metadata
-from simone_transformer import EnhancedSIMONEModel
+
+if TYPE_CHECKING:
+    from simone_transformer import SIMONEModel
+
+
+def _load_enhanced_simone_model() -> Type['SIMONEModel']:
+    """Load the enhanced SIM-ONE model lazily to avoid circular imports."""
+
+    from simone_transformer import SIMONEModel
+
+    return SIMONEModel
 
 
 class EnhancedPrioritaryTrainer:
@@ -204,7 +214,7 @@ class EnhancedPrioritaryTrainer:
         self.logger.info(f"Tokenizer vocabulary size: {len(tokenizer)}")
         return tokenizer
 
-    def _setup_model(self) -> EnhancedSIMONEModel:
+    def _setup_model(self) -> 'SIMONEModel':
         """Setup the enhanced SIM-ONE model."""
         model_config = {
             'vocab_size': len(self.tokenizer),
@@ -218,7 +228,8 @@ class EnhancedPrioritaryTrainer:
             'tie_embeddings': True
         }
         
-        model = EnhancedSIMONEModel(**model_config)
+        model_cls = _load_enhanced_simone_model()
+        model = model_cls(**model_config)
         
         self.logger.info(f"Model configuration: {model_config}")
         return model
@@ -696,6 +707,8 @@ class EnhancedPrioritaryTrainer:
                 'epoch': self.epoch,
                 'global_step': self.global_step,
                 'best_loss': self.best_loss,
+                'best_epoch': self.best_epoch,
+                'patience_counter': self.patience_counter,
             },
             'training_history': self.training_history
         }
@@ -724,6 +737,8 @@ class EnhancedPrioritaryTrainer:
         self.epoch = training_state.get('epoch', 0)
         self.global_step = training_state.get('global_step', 0)
         self.best_loss = training_state.get('best_loss', float('inf'))
+        self.best_epoch = training_state.get('best_epoch', 0)
+        self.patience_counter = training_state.get('patience_counter', 0)
         
         self.training_history = checkpoint.get('training_history', [])
         

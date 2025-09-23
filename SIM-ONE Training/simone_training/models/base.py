@@ -3,13 +3,29 @@ Base model adapters for Enhanced SIM-ONE integration.
 Provides working wrappers to replace NotImplementedError stubs.
 """
 
+import logging
+from typing import Any, Dict, Optional, Tuple, Type, Union, TYPE_CHECKING
+
 import torch
 import torch.nn as nn
-from typing import Dict, Optional, Any, Union, Tuple
-import logging
 
-from simone_transformer import EnhancedSIMONEModel
 from prioritary_mvlm.config import PrioritaryConfig, PropheticSingularityState
+
+if TYPE_CHECKING:
+    from simone_transformer import SIMONEModel
+
+_SIMONE_MODEL_CLS: Optional[Type['SIMONEModel']] = None
+
+
+def _get_simone_model_cls() -> Type['SIMONEModel']:
+    """Load the enhanced SIM-ONE model class without creating circular imports."""
+
+    global _SIMONE_MODEL_CLS
+    if _SIMONE_MODEL_CLS is None:
+        from simone_transformer import SIMONEModel
+
+        _SIMONE_MODEL_CLS = SIMONEModel
+    return _SIMONE_MODEL_CLS
 
 logger = logging.getLogger(__name__)
 
@@ -20,7 +36,7 @@ class MVLMAdapter(nn.Module):
     Provides compatibility between MVLM interfaces and Enhanced SIM-ONE architecture.
     """
     
-    def __init__(self, enhanced_model: EnhancedSIMONEModel, mvlm_config: Optional[Dict] = None):
+    def __init__(self, enhanced_model: 'SIMONEModel', mvlm_config: Optional[Dict] = None):
         super().__init__()
         self.enhanced_model = enhanced_model
         self.mvlm_config = mvlm_config or {}
@@ -228,7 +244,8 @@ class EnhancedSIMONEWrapper(nn.Module):
             }
         
         # Create Enhanced SIM-ONE model
-        self.model = EnhancedSIMONEModel(**model_config)
+        model_cls = _get_simone_model_cls()
+        self.model = model_cls(**model_config)
         
         # Store configuration
         self.config = model_config
@@ -356,7 +373,8 @@ def create_mvlm_adapter(
         **kwargs
     }
     
-    enhanced_model = EnhancedSIMONEModel(**model_config)
+    model_cls = _get_simone_model_cls()
+    enhanced_model = model_cls(**model_config)
     
     # Create and return adapter
     return MVLMAdapter(enhanced_model, mvlm_config)

@@ -120,8 +120,20 @@ class SIMONEBlock(nn.Module):
         return x
 
 
-# Aliases for backward compatibility
-EnhancedSIMONEModel = SIMONEModel
-EnhancedSIMONEBlock = SIMONEBlock
+__all__ = [
+    "SIMONEModel",
+    "SIMONEBlock",
+    "EnhancedSIMONEModel",
+    "EnhancedSIMONEBlock",
+    "GovernanceAggregator",
+]
 
-__all__ = ["SIMONEModel", "SIMONEBlock", "EnhancedSIMONEModel", "EnhancedSIMONEBlock", "GovernanceAggregator"]
+
+def __getattr__(name: str):
+    """Provide backward-compatible lazy access to enhanced aliases."""
+
+    if name == "EnhancedSIMONEModel":
+        return SIMONEModel
+    if name == "EnhancedSIMONEBlock":
+        return SIMONEBlock
+    raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
