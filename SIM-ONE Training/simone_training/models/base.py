@@ -1,33 +1,63 @@
-"""
-Base model adapters for Enhanced SIM-ONE integration.
-Provides working wrappers to replace NotImplementedError stubs.
-"""
+"""Enhanced SIM-ONE base wrappers and MVLM adapter implementations."""
 
 import logging
-from typing import Any, Dict, Optional, Tuple, Type, Union, TYPE_CHECKING
+from typing import Any, Dict, Optional, Tuple
 
 import torch
 import torch.nn as nn
 
 from prioritary_mvlm.config import PrioritaryConfig, PropheticSingularityState
-
-if TYPE_CHECKING:
-    from simone_transformer import SIMONEModel
-
-_SIMONE_MODEL_CLS: Optional[Type['SIMONEModel']] = None
-
-
-def _get_simone_model_cls() -> Type['SIMONEModel']:
-    """Load the enhanced SIM-ONE model class without creating circular imports."""
-
-    global _SIMONE_MODEL_CLS
-    if _SIMONE_MODEL_CLS is None:
-        from simone_transformer import SIMONEModel
-
-        _SIMONE_MODEL_CLS = SIMONEModel
-    return _SIMONE_MODEL_CLS
+from simone_transformer.shared_governance import SharedGovernanceBackbone
 
 logger = logging.getLogger(__name__)
+
+
+class _TransformerBlock(nn.Module):
+    """Lightweight transformer block used by the enhanced wrapper."""
+
+    def __init__(self, hidden_dim: int, num_heads: int, ff_dim: int, dropout: float) -> None:
+        super().__init__()
+        self.hidden_dim = hidden_dim
+        self.attention = nn.MultiheadAttention(
+            hidden_dim,
+            num_heads,
+            dropout=dropout,
+            batch_first=True,
+        )
+        self.norm1 = nn.LayerNorm(hidden_dim)
+        self.norm2 = nn.LayerNorm(hidden_dim)
+        self.ff = nn.Sequential(
+            nn.Linear(hidden_dim, ff_dim),
+            nn.GELU(),
+            nn.Dropout(dropout),
+            nn.Linear(ff_dim, hidden_dim),
+            nn.Dropout(dropout),
+        )
+
+    def forward(
+        self,
+        x: torch.Tensor,
+        attention_mask: Optional[torch.Tensor] = None,
+    ) -> Tuple[torch.Tensor, torch.Tensor]:
+        key_padding_mask = None
+        if attention_mask is not None:
+            # Expect attention mask as 1 for tokens to keep, 0 for masked
+            key_padding_mask = attention_mask == 0
+
+        attn_out, attn_weights = self.attention(
+            x,
+            x,
+            x,
+            key_padding_mask=key_padding_mask,
+            need_weights=True,
+            average_attn_weights=False,
+        )
+        x = self.norm1(x + attn_out)
+
+        ff_out = self.ff(x)
+        x = self.norm2(x + ff_out)
+
+        return x, attn_weights
 
 
 class MVLMAdapter(nn.Module):
@@ -95,9 +125,13 @@ class MVLMAdapter(nn.Module):
             )
             
             # Prepare output dictionary
+            hidden_state = kwargs.get('hidden_state')
+            if hidden_state is None and isinstance(governance_outputs, dict):
+                hidden_state = governance_outputs.get('shared_governance_features')
+
             outputs = {
                 'logits': logits,
-                'last_hidden_state': logits,  # MVLM compatibility
+                'last_hidden_state': hidden_state if hidden_state is not None else logits,
             }
             
             # Add governance outputs if requested
@@ -243,22 +277,132 @@ class EnhancedSIMONEWrapper(nn.Module):
                 'tie_embeddings': tie_embeddings
             }
         
-        # Create Enhanced SIM-ONE model
-        model_cls = _get_simone_model_cls()
-        self.model = model_cls(**model_config)
-        
+        self.vocab_size = model_config['vocab_size']
+        self.hidden_dim = model_config['hidden_dim']
+        self.num_heads = model_config['num_heads']
+        self.ff_dim = model_config['ff_dim']
+        self.num_layers = model_config['num_layers']
+        self.max_seq_len = model_config['max_seq_len']
+        self.dropout = model_config['dropout']
+        self.use_moe = model_config['use_moe']
+        self.num_experts = model_config['num_experts']
+        self.tie_embeddings = model_config['tie_embeddings']
+
+        # Core transformer components
+        self.token_embedding = nn.Embedding(self.vocab_size, self.hidden_dim)
+        self.position_embedding = nn.Embedding(self.max_seq_len, self.hidden_dim)
+        self.dropout_layer = nn.Dropout(self.dropout)
+        self.blocks = nn.ModuleList(
+            _TransformerBlock(self.hidden_dim, self.num_heads, self.ff_dim, self.dropout)
+            for _ in range(self.num_layers)
+        )
+        self.norm = nn.LayerNorm(self.hidden_dim)
+        self.lm_head = nn.Linear(self.hidden_dim, self.vocab_size, bias=False)
+        if self.tie_embeddings:
+            self.lm_head.weight = self.token_embedding.weight
+
+        # Governance backbone for optional trace generation
+        self.governance = SharedGovernanceBackbone(self.hidden_dim, num_heads=self.num_heads)
+
         # Store configuration
         self.config = model_config
-        
+
         logger.info(f"EnhancedSIMONEWrapper initialized with config: {model_config}")
-    
-    def forward(self, *args, **kwargs):
+
+    def _forward_internal(
+        self,
+        input_ids: torch.Tensor,
+        attention_mask: Optional[torch.Tensor] = None,
+    ) -> Tuple[torch.Tensor, torch.Tensor, Optional[torch.Tensor]]:
+        batch_size, seq_len = input_ids.shape
+        if seq_len > self.max_seq_len:
+            raise ValueError(
+                f"Sequence length {seq_len} exceeds maximum supported length {self.max_seq_len}"
+            )
+
+        positions = torch.arange(seq_len, device=input_ids.device).unsqueeze(0).expand(batch_size, seq_len)
+        hidden_states = self.token_embedding(input_ids) + self.position_embedding(positions)
+        hidden_states = self.dropout_layer(hidden_states)
+
+        last_attn_weights = None
+        for block in self.blocks:
+            hidden_states, attn_weights = block(hidden_states, attention_mask)
+            last_attn_weights = attn_weights
+
+        hidden_states = self.norm(hidden_states)
+        logits = self.lm_head(hidden_states)
+
+        return logits, hidden_states, last_attn_weights
+
+    def forward(
+        self,
+        input_ids: torch.Tensor,
+        attention_mask: Optional[torch.Tensor] = None,
+        output_governance: bool = False,
+        prophetic_state: Optional[PropheticSingularityState] = None,
+        **kwargs,
+    ) -> Tuple[torch.Tensor, Dict[str, torch.Tensor], Optional[Any]]:
         """Forward pass through Enhanced SIM-ONE model."""
-        return self.model(*args, **kwargs)
-    
-    def generate(self, *args, **kwargs):
-        """Generate text using Enhanced SIM-ONE model."""
-        return self.model.generate(*args, **kwargs)
+
+        logits, hidden_states, attn_weights = self._forward_internal(input_ids, attention_mask)
+
+        governance_outputs: Dict[str, torch.Tensor] = {}
+        if output_governance:
+            governance_outputs = self.governance(
+                hidden_states,
+                attention_weights=attn_weights,
+                prophetic_state=prophetic_state,
+            )
+            governance_outputs['trace'] = governance_outputs.get('trace', {})
+        return logits, governance_outputs, None
+
+    def generate(
+        self,
+        input_ids: torch.Tensor,
+        max_length: int = 100,
+        temperature: float = 1.0,
+        top_k: Optional[int] = None,
+        top_p: Optional[float] = None,
+        do_sample: bool = True,
+        eos_token_id: Optional[int] = None,
+        pad_token_id: Optional[int] = None,
+        **kwargs,
+    ) -> torch.Tensor:
+        """Generate text using a simple autoregressive loop."""
+
+        self.eval()
+        generated = input_ids
+        with torch.no_grad():
+            for _ in range(max(0, max_length - input_ids.size(1))):
+                attention_mask = torch.ones_like(generated, device=generated.device)
+                logits, _, _ = self._forward_internal(generated, attention_mask)
+                next_token_logits = logits[:, -1, :]
+
+                if temperature != 1.0:
+                    next_token_logits = next_token_logits / max(temperature, 1e-5)
+
+                probs = torch.softmax(next_token_logits, dim=-1)
+
+                if do_sample:
+                    if top_k is not None and top_k > 0:
+                        values, indices = torch.topk(probs, top_k, dim=-1)
+                        probs = torch.zeros_like(probs).scatter(-1, indices, values)
+                        probs = probs / probs.sum(dim=-1, keepdim=True)
+                    next_token = torch.multinomial(probs, num_samples=1)
+                else:
+                    next_token = probs.argmax(dim=-1, keepdim=True)
+
+                generated = torch.cat([generated, next_token], dim=1)
+
+                if eos_token_id is not None and torch.all(next_token == eos_token_id):
+                    break
+
+        if pad_token_id is not None and generated.size(1) < max_length:
+            pad_size = max_length - generated.size(1)
+            padding = torch.full((generated.size(0), pad_size), pad_token_id, device=generated.device)
+            generated = torch.cat([generated, padding], dim=1)
+
+        return generated
     
     def get_mvlm_adapter(self, mvlm_config: Optional[Dict] = None) -> MVLMAdapter:
         """
@@ -270,15 +414,21 @@ class EnhancedSIMONEWrapper(nn.Module):
         Returns:
             MVLMAdapter instance wrapping this model
         """
-        return MVLMAdapter(self.model, mvlm_config)
+        return MVLMAdapter(self, mvlm_config)
     
     def get_num_params(self) -> int:
         """Get total number of parameters."""
-        return self.model.get_num_params()
-    
+        return sum(p.numel() for p in self.parameters())
+
     def get_memory_usage(self) -> Dict[str, int]:
         """Get memory usage statistics."""
-        return self.model.get_memory_usage()
+        param_bytes = sum(p.numel() * p.element_size() for p in self.parameters())
+        buffer_bytes = sum(b.numel() * b.element_size() for b in self.buffers())
+        return {
+            'parameters': param_bytes,
+            'buffers': buffer_bytes,
+            'total': param_bytes + buffer_bytes,
+        }
     
     @classmethod
     def from_pretrained(cls, model_path: str, **kwargs) -> 'EnhancedSIMONEWrapper':
@@ -294,19 +444,14 @@ class EnhancedSIMONEWrapper(nn.Module):
         """
         try:
             checkpoint = torch.load(model_path, map_location='cpu')
-            
-            # Extract model config from checkpoint
+
             model_config = checkpoint.get('model_config', {})
-            model_config.update(kwargs)  # Override with provided kwargs
-            
-            # Create wrapper
+            model_config.update(kwargs)
+
             wrapper = cls(**model_config)
-            
-            # Load state dict
-            if 'model_state_dict' in checkpoint:
-                wrapper.model.load_state_dict(checkpoint['model_state_dict'])
-            else:
-                wrapper.model.load_state_dict(checkpoint)
+
+            state_dict = checkpoint.get('model_state_dict', checkpoint)
+            wrapper.load_state_dict(state_dict)
             
             logger.info(f"Model loaded from {model_path}")
             return wrapper
@@ -324,10 +469,10 @@ class EnhancedSIMONEWrapper(nn.Module):
         """
         try:
             checkpoint = {
-                'model_state_dict': self.model.state_dict(),
-                'model_config': self.config
+                'model_state_dict': self.state_dict(),
+                'model_config': self.config,
             }
-            
+
             torch.save(checkpoint, save_path)
             logger.info(f"Model saved to {save_path}")
             
@@ -373,9 +518,8 @@ def create_mvlm_adapter(
         **kwargs
     }
     
-    model_cls = _get_simone_model_cls()
-    enhanced_model = model_cls(**model_config)
-    
+    enhanced_model = EnhancedSIMONEWrapper(**model_config)
+
     # Create and return adapter
     return MVLMAdapter(enhanced_model, mvlm_config)
 
