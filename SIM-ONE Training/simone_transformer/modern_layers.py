@@ -103,6 +103,22 @@ class MoELayer(nn.Module):
         expert_hidden_dim: Optional[int] = None,
         load_balancing_weight: float = 0.01
     ):
+        """
+        Create a Mixture-of-Experts (MoE) layer with a linear router, multiple expert networks, and load-balancing state.
+        
+        Parameters:
+            dim (int): Input and output feature dimension for the router and experts.
+            num_experts (int): Total number of experts to instantiate.
+            num_experts_per_token (int): Number of top experts assigned to each token during routing.
+            expert_hidden_dim (Optional[int]): Hidden dimension for each expert; defaults to dim * 4 when None.
+            load_balancing_weight (float): Weight applied to the optional load-balancing adjustment used during training.
+        
+        Attributes:
+            router (nn.Linear): Linear layer mapping input features to per-expert routing logits.
+            experts (nn.ModuleList): List of expert modules (SwiGLU) sized to num_experts.
+            expert_usage (Tensor): Registered buffer tracking running average usage per expert.
+            total_tokens (Tensor): Registered buffer tracking the total number of processed tokens.
+        """
         super().__init__()
         self.num_experts = num_experts
         self.num_experts_per_token = num_experts_per_token
@@ -122,6 +138,18 @@ class MoELayer(nn.Module):
         self.register_buffer('total_tokens', torch.tensor(0.0))
         
     def forward(self, x: torch.Tensor) -> torch.Tensor:
+        """
+        Route input token representations through a Mixture-of-Experts: select top-k experts per token, apply each expert in batched form, and aggregate weighted expert outputs back to the original shape.
+        
+        Parameters:
+            x (torch.Tensor): Input tensor of shape (batch_size, seq_len, dim) containing token representations.
+        
+        Returns:
+            torch.Tensor: Output tensor of shape (batch_size, seq_len, dim) where each token is the weighted sum of its selected experts' outputs.
+        
+        Additional behavior:
+            - During training, if `load_balancing_weight > 0`, a load-balancing penalty is computed from the router's softmax probabilities and applied to router logits; running expert-usage statistics are updated accordingly.
+        """
         batch_size, seq_len, dim = x.shape
         x_flat = x.view(-1, dim)  # [batch_size * seq_len, dim]
         num_tokens = x_flat.size(0)
@@ -178,7 +206,12 @@ class MoELayer(nn.Module):
         return output.view(batch_size, seq_len, dim)
     
     def get_load_balancing_loss(self) -> torch.Tensor:
-        """Get the current load balancing loss for regularization."""
+        """
+        Compute the current load-balancing penalty based on expert usage.
+        
+        Returns:
+            A scalar tensor equal to the sum of squared deviations of per-expert usage from 1 / num_experts when at least one token has been processed; otherwise a zero tensor on the same device as `expert_usage`.
+        """
         if self.total_tokens > 0:
             target_usage = 1.0 / self.num_experts
             return ((self.expert_usage - target_usage) ** 2).sum()

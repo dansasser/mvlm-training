@@ -46,6 +46,21 @@ class EnhancedSIMONEBlock(nn.Module):
         vocab_size: int = 32000,
         total_layers: int = 12
     ):
+        """
+        Initialize an EnhancedSIMONEBlock composed of RoPE-enabled governance-aware attention, a SwiGLU or MoE feedforward, RMSNorm layers, gated residuals, dropout, and a layer-specific governance enhancer.
+        
+        Parameters:
+            hidden_dim (int): Dimension of model hidden states.
+            num_heads (int): Number of attention heads.
+            ff_dim (int): Inner dimension of the feedforward network or expert hidden size for MoE.
+            dropout (float): Dropout probability applied after attention and feedforward.
+            max_seq_len (int): Maximum supported sequence length for attention positional handling.
+            use_moe (bool): If True, use a Mixture-of-Experts feedforward; otherwise use SwiGLU.
+            num_experts (int): Number of experts to instantiate when `use_moe` is True.
+            layer_idx (int): Zero-based index of this layer within the model; used to scale layer-specific governance behavior.
+            vocab_size (int): Vocabulary size used to initialize the BiblicalAttentionBias.
+            total_layers (int): Total number of layers in the model, used for layer-relative computations.
+        """
         super().__init__()
         self.hidden_dim = hidden_dim
         self.num_heads = num_heads
@@ -108,17 +123,25 @@ class EnhancedSIMONEBlock(nn.Module):
         use_cache: bool = False
     ) -> Tuple[torch.Tensor, Dict[str, torch.Tensor], Optional[Tuple[torch.Tensor, torch.Tensor]]]:
         """
-        Args:
-            x: Input tensor [batch, seq_len, hidden_dim]
-            input_ids: Token IDs [batch, seq_len] for biblical biasing
-            attention_mask: Causal mask
-            memory_context: Memory context from previous layers
-            policy_guidance: External policy guidance
-            output_traces: Whether to output interpretability traces
-            
+        Process a single transformer block: attention (with optional prophetic modulation and biblical bias), gated residuals, feedforward, and layer-wise governance enhancement.
+        
+        Parameters:
+            x (torch.Tensor): Hidden states of shape [batch, seq_len, hidden_dim].
+            input_ids (torch.Tensor): Token ids [batch, seq_len] used for optional biblical attention bias.
+            attention_mask (Optional[torch.Tensor]): Attention mask (causal or provided) aligned with x.
+            memory_context (Optional[torch.Tensor]): Optional memory signals propagated from previous layers.
+            policy_guidance (Optional[torch.Tensor]): External policy logits or guidance passed into the attention mechanism.
+            output_traces (bool): If True, request interpretability traces (attention/auxiliary outputs) from the attention module.
+            prophetic_state (Optional[PropheticSingularityState]): Per-step prophetic state used to compute layer-specific modulation gates; expected to provide alignment and layer_modulation helpers.
+            precomputed_modulation (Optional[torch.Tensor]): Pre-aligned modulation vector for this layer and sequence to avoid recomputation; shaped [batch, seq_len] or compatible for broadcasting.
+            past_key_value (Optional[Tuple[torch.Tensor, torch.Tensor]]): Cached key/value tensors for cached autoregressive decoding.
+            use_cache (bool): If True, produce and return present_key_value for use in subsequent cached decoding steps.
+        
         Returns:
-            output: Block output [batch, seq_len, hidden_dim]
-            governance_outputs: Governance information
+            Tuple containing:
+            - output (torch.Tensor): Block output hidden states of shape [batch, seq_len, hidden_dim].
+            - governance_outputs (Dict[str, torch.Tensor]): Collected governance signals and any enhanced policy/memory/trace outputs for this layer.
+            - present_key_value (Optional[Tuple[torch.Tensor, torch.Tensor]]): Key/value cache for this layer when caching is enabled, otherwise None.
         """
         residual = x
         
@@ -191,6 +214,20 @@ class GovernanceEnhancer(nn.Module):
     """
     
     def __init__(self, hidden_dim: int, layer_idx: int, max_layers: int = 12):
+        """
+        Initialize a GovernanceEnhancer with layer-positioned specialization weights and processors.
+        
+        Parameters:
+            hidden_dim (int): Dimensionality of the governance feature vectors processed by the layer-specific linear modules.
+            layer_idx (int): Zero-based index of this layer within the model; used to compute specialization strengths.
+            max_layers (int): Total number of layers used to scale the positional specialization profiles (default 12).
+        
+        Description:
+            Computes three layer-position-dependent scalar weights (syntax, semantic, pragmatic) that bias processing toward
+            syntactic signals in early layers, semantic signals in middle layers, and pragmatic signals in later layers.
+            Instantiates three linear processors (syntax_processor, semantic_processor, pragmatic_processor) that map
+            hidden-dimension vectors to the same dimensionality for subsequent governance refinement.
+        """
         super().__init__()
         self.layer_idx = layer_idx
         self.max_layers = max_layers
@@ -211,7 +248,19 @@ class GovernanceEnhancer(nn.Module):
         hidden_states: torch.Tensor,
         layer_idx: int
     ) -> Dict[str, torch.Tensor]:
-        """Enhance governance outputs with layer-specific processing."""
+        """
+        Refine and weight layer-specific governance signals and return an updated governance outputs dictionary.
+        
+        If `policy_logits` is present in `gov_outputs`, applies the layer's syntax, semantic, and pragmatic processors to those logits using the layer-specific weights, replaces `policy_logits` with the refined values, and adds a `governance_weights` entry containing the three weights.
+        
+        Parameters:
+            gov_outputs (Dict[str, torch.Tensor]): Governance outputs from a layer; may contain `policy_logits`.
+            hidden_states (torch.Tensor): Current hidden states for the layer (provided for contextual processing; not required for all enhancements).
+            layer_idx (int): Index of the current layer (used to select layer-specific behavior).
+        
+        Returns:
+            Dict[str, torch.Tensor]: A copy of `gov_outputs` with `policy_logits` replaced by the enhanced logits when applicable and `governance_weights` added to report the applied weights.
+        """
         
         enhanced_outputs = gov_outputs.copy()
         
@@ -265,6 +314,26 @@ class EnhancedSIMONEModel(nn.Module):
         tie_embeddings: bool = True,
         use_gradient_checkpointing: bool = False
     ):
+        """
+        Construct an EnhancedSIMONEModel and initialize its components and caches.
+        
+        Parameters:
+            vocab_size (int): Size of the token vocabulary.
+            hidden_dim (int): Dimensionality of model hidden states.
+            num_heads (int): Number of attention heads.
+            ff_dim (int): Hidden dimensionality of feedforward sublayers.
+            num_layers (int): Number of transformer layers to create.
+            max_seq_len (int): Maximum supported sequence length (RoPE is used for positions).
+            dropout (float): Dropout probability applied in attention and feedforward.
+            use_moe (bool): If True, enable Mixture-of-Experts feedforward layers where configured.
+            moe_layers (Optional[List[int]]): Indices of layers that should use MoE; if None, MoE is applied to all layers when enabled.
+            num_experts (int): Number of experts for MoE layers when used.
+            tie_embeddings (bool): If True, share token embedding weights with the language modeling head.
+            use_gradient_checkpointing (bool): If True, enable gradient checkpointing for memory-efficient training.
+        
+        Notes:
+            Initializes token embeddings, a stack of EnhancedSIMONEBlock layers, final normalization, the LM head, a GovernanceAggregator, weight initialization, and internal caches used for generation and prophetic-state precomputation.
+        """
         super().__init__()
         
         self.vocab_size = vocab_size
@@ -322,7 +391,17 @@ class EnhancedSIMONEModel(nn.Module):
         self._precomputed_prophetic_cache = None
         
     def _init_weights(self, module):
-        """Initialize model weights."""
+        """
+        Initialize parameters for supported module types.
+        
+        Applies the following initializations:
+        - nn.Linear: weight ~ Normal(mean=0.0, std=0.02); bias = 0 if present.
+        - nn.Embedding: weight ~ Normal(mean=0.0, std=0.02).
+        - RMSNorm: weight = 1.
+        
+        Parameters:
+            module: The module whose parameters should be initialized (e.g., nn.Linear, nn.Embedding, or RMSNorm).
+        """
         if isinstance(module, nn.Linear):
             torch.nn.init.normal_(module.weight, mean=0.0, std=0.02)
             if module.bias is not None:
@@ -333,7 +412,11 @@ class EnhancedSIMONEModel(nn.Module):
             torch.nn.init.ones_(module.weight)
     
     def enable_cache(self):
-        """Enable KV cache for efficient generation."""
+        """
+        Enable the key–value cache used during autoregressive generation.
+        
+        Sets the internal flag to enable caching and initializes an empty `kv_cache` dictionary.
+        """
         self.cache_enabled = True
         self.kv_cache = {}
     
@@ -343,7 +426,11 @@ class EnhancedSIMONEModel(nn.Module):
         self.kv_cache = None
     
     def clear_cache(self):
-        """Clear KV cache."""
+        """
+        Clear the model's key-value (KV) cache.
+        
+        If a KV cache exists, removes all cached entries; does nothing if no cache is present.
+        """
         if self.kv_cache is not None:
             self.kv_cache.clear()
     
@@ -362,8 +449,26 @@ class EnhancedSIMONEModel(nn.Module):
         ]
     ]:
         """
-        Pre-compute all layer modulations once for efficiency.
-        Avoids repeated computation in each layer.
+        Prepare per-layer modulation vectors from a prophetic state aligned to the current token window.
+        
+        Precomputes and caches layer-specific modulation tensors for the sequence window defined by seq_len and past_length so they can be reused by each Transformer layer during a forward pass.
+        
+        Parameters:
+            prophetic_state (Optional[PropheticSingularityState]): Time-varying governance/state object; if None, no precomputation is performed.
+            seq_len (int): Number of new tokens in the current forward pass (excluding past cached tokens).
+            device (torch.device): Target device for the returned tensors.
+            dtype (torch.dtype): Target dtype for the returned tensors.
+            past_length (int): Number of tokens already present in the past key/value cache; used to align and slice the prophetic state.
+        
+        Returns:
+            Optional[Tuple[PropheticSingularityState, List[torch.Tensor], PropheticSingularityState]]:
+                - aligned_state: the prophetic state sliced to the current sequence window (seq_len) and moved to the requested device/dtype.
+                - layer_modulations: list of per-layer modulation tensors, each already sliced to the current window.
+                - aligned_total: the full prophetic state aligned to the total sequence length (past_length + seq_len).
+                Returns None if `prophetic_state` is None.
+        
+        Side effects:
+            Caches the computed result on the model instance and will return the cached value when called again with an equivalent prophetic_state and length parameters.
         """
         if prophetic_state is None:
             return None
@@ -388,6 +493,16 @@ class EnhancedSIMONEModel(nn.Module):
             state: PropheticSingularityState,
             start: int
         ) -> PropheticSingularityState:
+            """
+            Create a copy of a PropheticSingularityState with its time-series tensors sliced from `start` to the end.
+            
+            Parameters:
+                state (PropheticSingularityState): The original prophetic state containing tensor fields aligned along the time dimension.
+                start (int): Start index (inclusive) along the time dimension to slice from.
+            
+            Returns:
+                PropheticSingularityState: A new state where `intensity`, `anointing`, `dominion`, `mercy`, `lambda_field`, and `time_index` are sliced as `[..., start:]`; `normalization` is preserved unchanged.
+            """
             if start == 0 and seq_len == total_len:
                 return state
 
@@ -426,19 +541,22 @@ class EnhancedSIMONEModel(nn.Module):
         prophetic_state: Optional['PropheticSingularityState'] = None
     ) -> Tuple[torch.Tensor, Optional[Dict], Optional[List[Tuple[torch.Tensor, torch.Tensor]]]]:
         """
-        Forward pass through the enhanced SIM-ONE model.
+        Compute language-model logits and, optionally, aggregated governance outputs for the provided token ids, supporting causal masking, KV caching, and optional prophetic-state modulations.
         
-        Args:
-            input_ids: Token IDs [batch, seq_len]
-            attention_mask: Attention mask [batch, seq_len, seq_len]
-            policy_guidance: External policy guidance [batch, seq_len, hidden_dim]
-            output_governance: Whether to output governance information
-            use_cache: Whether to use KV caching for generation
-            
+        Parameters:
+            input_ids (torch.Tensor): Token IDs with shape [batch, seq_len].
+            attention_mask (Optional[torch.Tensor]): Attention mask. Accepted shapes: [batch, seq_len], [batch, 1, 1, seq_len], [batch, seq_len, seq_len]; will be adapted to causal mask and KV cache length.
+            policy_guidance (Optional[torch.Tensor]): External policy guidance per token with shape [batch, seq_len, hidden_dim], if provided.
+            output_governance (bool): If True, collect and return aggregated governance information across layers.
+            use_cache (bool): If True, return per-layer present key/value tensors for incremental generation and accept past_key_values.
+            past_key_values (Optional[List[Tuple[torch.Tensor, torch.Tensor]]]): List of cached (key, value) tensors per layer used to extend past context; must have length equal to the number of layers when provided.
+            prophetic_state (Optional[PropheticSingularityState]): Optional prophetic-state object used to precompute and apply per-layer modulation signals.
+        
         Returns:
-            logits: Language modeling logits [batch, seq_len, vocab_size]
-            governance_info: Aggregated governance information (if output_governance=True)
-            present_key_values: Cached key/value tensors for each layer when ``use_cache`` is True
+            Tuple[torch.Tensor, Optional[dict], Optional[List[Tuple[torch.Tensor, torch.Tensor]]]]:
+                logits (torch.Tensor): Language modeling logits with shape [batch, seq_len, vocab_size].
+                governance_info (dict or None): Aggregated governance outputs produced by the GovernanceAggregator when `output_governance` is True; includes policy, memory, trace fields and may include prophetic summary statistics when a prophetic_state was provided.
+                next_past_key_values (list or None): Present key/value tuples for each layer when `use_cache` is True (None otherwise).
         """
         _, seq_len = input_ids.shape
         device = input_ids.device
@@ -583,20 +701,23 @@ class EnhancedSIMONEModel(nn.Module):
         prophetic_state: Optional['PropheticSingularityState'] = None
     ) -> torch.Tensor:
         """
-        Generate text using the enhanced SIM-ONE model.
+        Generate tokens autoregressively from the given prompt using the model's cached KV mechanism and optional prophetic guidance.
         
-        Args:
-            input_ids: Initial token IDs [batch, initial_seq_len]
-            max_length: Maximum generation length
-            temperature: Sampling temperature
-            top_k: Top-k sampling parameter
-            top_p: Top-p (nucleus) sampling parameter
-            do_sample: Whether to use sampling vs greedy decoding
-            eos_token_id: End-of-sequence token ID
-            pad_token_id: Padding token ID
-            
+        This performs stepwise decoding up to max_length, optionally using sampling (temperature, top_k, top_p) or greedy selection. If provided, `prophetic_state` adjusts per-step sampling parameters (temperature, top-k, top-p) based on its internal statistics. The method enables the model's KV cache at start and disables it before returning.
+        
+        Parameters:
+            input_ids (torch.Tensor): Initial token IDs with shape [batch, initial_seq_len].
+            max_length (int): Maximum total sequence length (prompt + generated tokens).
+            temperature (float): Base sampling temperature; lower values make outputs more deterministic.
+            top_k (Optional[int]): If set, keeps only the top_k highest-probability tokens at each step.
+            top_p (Optional[float]): If set, keeps the smallest set of tokens with cumulative probability >= top_p.
+            do_sample (bool): When True, sample from the distribution; otherwise take the highest-probability token.
+            eos_token_id (Optional[int]): If provided, generation stops when all batches produce this token.
+            pad_token_id (Optional[int]): Padding token id (not used for stopping behavior here).
+            prophetic_state (Optional[PropheticSingularityState]): Optional state used to dynamically modulate per-step sampling hyperparameters.
+        
         Returns:
-            generated_ids: Generated token IDs [batch, total_seq_len]
+            torch.Tensor: Generated token IDs with shape [batch, total_seq_len] where total_seq_len <= max_length.
         """
         batch_size = input_ids.shape[0]
         device = input_ids.device
@@ -639,6 +760,15 @@ class EnhancedSIMONEModel(nn.Module):
                 stats = state_device.step_statistics(step_idx)
 
                 def _to_float(value: torch.Tensor) -> float:
+                    """
+                    Convert a tensor or numeric value to a Python float.
+                    
+                    Parameters:
+                        value (torch.Tensor | number): A zero-dimensional torch.Tensor or any value convertible to float.
+                    
+                    Returns:
+                        float: The Python float representation of the input (for tensors, obtained via `tensor.item()`).
+                    """
                     if isinstance(value, torch.Tensor):
                         return float(value.item())
                     return float(value)
@@ -718,7 +848,15 @@ class EnhancedSIMONEModel(nn.Module):
         return sum(p.numel() for p in self.parameters())
     
     def get_memory_usage(self) -> Dict[str, int]:
-        """Get memory usage statistics."""
+        """
+        Report the model's memory usage for parameters and buffers.
+        
+        Returns:
+            memory_usage (Dict[str, int]): Dictionary with three keys:
+                - 'parameters': total bytes used by all model parameters.
+                - 'buffers': total bytes used by all registered buffers.
+                - 'total': sum of 'parameters' and 'buffers'.
+        """
         param_memory = sum(p.numel() * p.element_size() for p in self.parameters())
         buffer_memory = sum(b.numel() * b.element_size() for b in self.buffers())
         
@@ -736,6 +874,15 @@ class GovernanceAggregator(nn.Module):
     """
     
     def __init__(self, hidden_dim: int, num_layers: int):
+        """
+        Initialize the governance aggregator that consolidates per-layer governance signals into final policy, memory, and trace representations.
+        
+        Parameters:
+            hidden_dim (int): Dimensionality of model hidden states used per layer.
+            num_layers (int): Number of transformer layers whose governance outputs will be aggregated.
+        
+        The constructor builds three linear aggregation networks (policy, memory, trace) that each accept the concatenation of per-layer hidden vectors (hidden_dim * num_layers) and project down to hidden_dim, and a small sequential head (`final_policy`) that produces a scalar policy score in the range [0, 1].
+        """
         super().__init__()
         self.hidden_dim = hidden_dim
         self.num_layers = num_layers
@@ -758,7 +905,29 @@ class GovernanceAggregator(nn.Module):
         all_governance_outputs: List[Dict[str, torch.Tensor]],
         final_hidden_states: torch.Tensor
     ) -> Dict[str, torch.Tensor]:
-        """Aggregate governance outputs from all layers."""
+        """
+        Aggregate per-layer governance outputs into consolidated policy, memory, and trace outputs.
+        
+        Parameters:
+            all_governance_outputs (List[Dict[str, torch.Tensor]]): List of per-layer governance dictionaries. Each dictionary may contain:
+                - 'policy_logits': tensor of policy logits for that layer.
+                - 'memory_signals': tensor representing memory signals for that layer.
+                - 'trace': either a tensor representing layer trace or a dict with a 'tensor' key and optional metadata keys.
+            final_hidden_states (torch.Tensor): Final model hidden states used as a fallback trace when no per-layer trace is present.
+        
+        Returns:
+            Dict[str, torch.Tensor]: Aggregated governance outputs. Possible keys:
+                - 'policy' (torch.Tensor): Aggregated policy features from all layers.
+                - 'policy_score' (torch.Tensor): Final policy score produced by the policy head.
+                - 'policy_logits' (torch.Tensor): Policy logits from the last layer (preserved for loss/analysis).
+                - 'policy_logits_all_layers' (List[torch.Tensor]): List of policy logits from each layer.
+                - 'memory' (torch.Tensor): Aggregated memory features from all layers.
+                - 'memory_signals' (torch.Tensor): Memory signals from the last layer.
+                - 'memory_signals_all_layers' (List[torch.Tensor]): List of memory signals from each layer.
+                - 'trace' (torch.Tensor): Aggregated trace representation (or `final_hidden_states` if no per-layer traces).
+                - 'trace_all_layers' (List[torch.Tensor]): List of per-layer trace tensors (or a single entry of `final_hidden_states`).
+                - 'trace_metadata' (List[Dict[str, torch.Tensor]]): Optional list of metadata dictionaries associated with per-layer trace tensors.
+        """
         
         # Extract and concatenate outputs from all layers
         policy_outputs = []

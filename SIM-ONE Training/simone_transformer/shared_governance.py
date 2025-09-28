@@ -27,6 +27,19 @@ class SharedGovernanceBackbone(nn.Module):
     """
     
     def __init__(self, hidden_dim: int, governance_dim: int = None, num_heads: int = 8):
+        """
+        Initialize the shared governance backbone and its specialized heads.
+        
+        Parameters:
+            hidden_dim (int): Dimension of input features.
+            governance_dim (int, optional): Dimension used for shared governance features; defaults to `hidden_dim`.
+            num_heads (int, optional): Number of pattern heads used by the governance heads.
+        
+        Notes:
+            - Creates `shared_encoder`: a compact feature extractor mapping `hidden_dim` -> `governance_dim`.
+            - Instantiates `policy_head`, `memory_head`, and `trace_head` with `(governance_dim, hidden_dim, num_heads)`.
+            - Adds an optional cross-component `governance_coordination` MultiheadAttention (governance_dim, 4 heads, batch_first=True).
+        """
         super().__init__()
         self.hidden_dim = hidden_dim
         self.governance_dim = governance_dim or hidden_dim

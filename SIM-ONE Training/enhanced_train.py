@@ -51,6 +51,11 @@ def create_enhanced_config(args) -> PrioritaryConfig:
 
 
 def main():
+    """
+    Entry point for enhanced SIM-ONE transformer training.
+    
+    Parses command-line arguments to configure data paths, model architecture, and training hyperparameters; validates inputs; builds an enhanced training configuration; initializes and runs the EnhancedPrioritaryTrainer; prints runtime information and final model statistics; and handles user interruption and unexpected errors by exiting with a non-zero status.
+    """
     parser = argparse.ArgumentParser(
         description="Enhanced SIM-ONE Transformer Training",
         formatter_class=argparse.ArgumentDefaultsHelpFormatter

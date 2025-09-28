@@ -20,6 +20,11 @@ class H200ModelTrainer:
     """Manages training of the Enhanced SIM-ONE model on H200 GPU."""
     
     def __init__(self):
+        """
+        Initialize the trainer: record start time, configure the single Enhanced SIM-ONE model, prepare directories, set up logging, and verify the H200 GPU.
+        
+        The instance records the training session start time and defines a single-model configuration for "SIM-ONE-Enhanced" including its script path, output directory, and default training arguments (data directory, model hyperparameters, training hyperparameters, and log file). It then configures logging, ensures each model's output directory exists, and performs GPU checks/optimizations required for H200 execution.
+        """
         self.start_time = datetime.now()
         # Single-model configuration: Enhanced SIM-ONE only
         self.models = [

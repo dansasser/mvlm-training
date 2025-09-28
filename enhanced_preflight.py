@@ -98,6 +98,19 @@ def check_disk_space(path: Path, min_free_gb: int) -> Tuple[bool, str]:
 
 
 def main():
+    """
+    Run a suite of preflight checks for training readiness and exit with a status code.
+    
+    Performs GPU, import, dataset, and disk-space checks using configured defaults or
+    command-line flags, prints a one-line summary and a line per check, then exits
+    with code 0 if all checks pass or 1 if any check fails.
+    
+    Command-line flags:
+      --data_dir       Path to the dataset root (default: ./mvlm_training_dataset_complete/mvlm_comprehensive_dataset)
+      --train_subdir   Name of the training subdirectory under the dataset root (default: "train")
+      --val_subdir     Name of the validation subdirectory under the dataset root (default: "val")
+      --min_free_gb    Minimum required free disk space in GB at the repository root (default: 50)
+    """
     ap = argparse.ArgumentParser(description="SIM-ONE Enhanced preflight checker")
     ap.add_argument("--data_dir", type=str, default="./mvlm_training_dataset_complete/mvlm_comprehensive_dataset")
     ap.add_argument("--train_subdir", type=str, default="train")
