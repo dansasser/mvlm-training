@@ -48,7 +48,7 @@ The models trained here provide the foundational text generation capabilities th
 
 **Training Specifications:**
 ```
-Training Time: 3-4 hours on H200
+Training Time: ~6-7 hours on H200 (7 epochs)
 GPU Memory: ~30-40GB
 Performance: ~600 tokens/sec (higher quality)
 Output Size: ~3-4GB model
@@ -120,30 +120,35 @@ cd <repository-directory>
 chmod +x setup_environment.sh
 ./setup_environment.sh
 
-# 3. Train both models sequentially (5-7 hours)
+# 3. Launch Enhanced SIM-ONE training on the comprehensive dataset (~6-7 hours, 7 epochs)
 python3 train_all_models.py
 
-# 4. Validate trained models (5 minutes)
+# 4. (Optional) Monitor training from another shell
+./monitor_simone.sh
+
+# 5. Validate the trained model (5 minutes)
 python3 validate_models.py
 
-# 5. Download compressed models
+# 6. Download compressed artifacts
 ls models_for_download/
 # Download: simone_enhanced_model.tar.gz
 ```
+
+### Hands-Off Launch
+For a turnkey run (background training, GPU monitoring, and log tail), execute `./launch_simone_enhanced.sh`.
 
 ### Individual Training
 ```
 # Train Enhanced SIM-ONE
 cd "SIM-ONE Training"
 python3 enhanced_train.py \
-    # Provide --validation_dir when you have a dedicated validation set
-    --data_dir ../mvlm_training_dataset_complete/train \
-    --validation_dir ../mvlm_training_dataset_complete/val \
+    --data_dir ../mvlm_training_dataset_complete/mvlm_comprehensive_dataset \
     --output_dir ../models/simone_enhanced \
     --vocab_size 32000 \
     --batch_size 12 \
     --gradient_accumulation_steps 4 \
-    --num_epochs 3
+    --learning_rate 3e-4 \
+    --num_epochs 7
 ```
 
 ## Repository Structure
@@ -214,7 +219,7 @@ The training corpus (`mvlm_training_dataset_complete/`) consists of high-quality
 ### Performance Specifications
 
 ### Expected Training Performance (H200 GPU)
-- Enhanced SIM-ONE: 3-4 hours, 30-40GB GPU memory, ~600 tokens/sec, final size ~3-4GB
+- Enhanced SIM-ONE: ~6-7 hours, 30-40GB GPU memory, ~600 tokens/sec, final size ~3-4GB
 
 ### Model Capabilities
 - **Text Generation**: High-quality, coherent text output

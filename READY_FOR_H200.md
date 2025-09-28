@@ -50,7 +50,7 @@ cd <repo-directory>
 ./setup_environment.sh
 ```
 
-### 2. **Start Training** (3-4 hours)
+### 2. **Start Training** (~6-7 hours, 7 epochs)
 ```bash
 python3 train_all_models.py
 ```
@@ -71,7 +71,7 @@ python3 validate_models.py
 ### **SIM-ONE Enhanced**
 - **Output**: `models/simone_enhanced/`
 - **Size**: ~3-4 GB  
-- **Training time**: 3-4 hours
+- **Training time**: ~6-7 hours
 - **Features**: Modern architecture with RoPE, SwiGLU, BPE, advanced losses, governance
 
 ### **Download Package**

@@ -381,25 +381,25 @@ class PrioritaryConfig:
         Stride when creating training windows.
     """
 
-    vocab_size: int = 131
-    hidden_dim: int = 512
-    num_heads: int = 8
-    ff_dim: int = 2048
-    num_layers: int = 6
-    batch_size: int = 8
-    max_length: int = 512
-    stride: int = 128
-    learning_rate: float = 5e-5
-    num_epochs: int = 3
-    warmup_steps: int = 100
+    vocab_size: int = 32000
+    hidden_dim: int = 768
+    num_heads: int = 12
+    ff_dim: int = 3072
+    num_layers: int = 12
+    batch_size: int = 12
+    max_length: int = 1024
+    stride: int = 256
+    learning_rate: float = 3e-4
+    num_epochs: int = 7
+    warmup_steps: int = 2000
     max_grad_norm: float = 1.0
-    weight_decay: float = 0.01
-    gradient_accumulation_steps: int = 1
+    weight_decay: float = 0.1
+    gradient_accumulation_steps: int = 4
     log_interval: int = 10
     eval_interval: int = 100
     validation_split: float = 0.1
     validation_dir: Optional[str] = None
-    dataloader_workers: int = 4
+    dataloader_workers: int = 8
     split_seed: int = 42
     lambda_policy: float = 1.0
     lambda_memory: float = 1.0

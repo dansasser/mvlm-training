@@ -18,7 +18,7 @@ mkdir -p logs
 # Start preflight + training in a detached screen session
 SCREEN_NAME="simone-enhanced"
 CMD='export PYTHONPATH="${PYTHONPATH}:$(pwd):$(pwd)/SIM-ONE Training"; \
-python3 enhanced_preflight.py --data_dir ./mvlm_training_dataset_complete || true; \
+python3 enhanced_preflight.py --data_dir ./mvlm_training_dataset_complete/mvlm_comprehensive_dataset || true; \
 python3 train_all_models.py'
 
 if command -v screen >/dev/null 2>&1; then

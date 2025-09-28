@@ -60,7 +60,7 @@ python3 validate_models.py
    - ~20-30GB GPU memory
    - ~1000 tokens/sec
 
-2. **Enhanced SIM-ONE** (3-4 hours)
+2. **Enhanced SIM-ONE** (~6-7 hours, 7 epochs)
    - Modern architecture training
    - ~30-40GB GPU memory  
    - ~600 tokens/sec

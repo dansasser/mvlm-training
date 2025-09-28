@@ -3,14 +3,18 @@ Attention Pattern Caching System for Enhanced SIM-ONE Transformer
 Caches frequently used attention patterns to improve performance.
 """
 
+from __future__ import annotations
+
 import torch
 import torch.nn as nn
 import hashlib
-from typing import Dict, Optional, Tuple, Any
+from typing import Dict, Optional, Tuple, Any, TYPE_CHECKING
 from collections import OrderedDict
 import time
 
-from prioritary_mvlm.config import PropheticSingularityState
+if TYPE_CHECKING:
+    from prioritary_mvlm.config import PropheticSingularityState
+
 
 
 class AttentionPatternCache:
@@ -80,7 +84,7 @@ class AttentionPatternCache:
         self,
         policy_logits: Optional[torch.Tensor] = None,
         memory_signals: Optional[torch.Tensor] = None,
-        prophetic_state: Optional[PropheticSingularityState] = None
+        prophetic_state: Optional['PropheticSingularityState'] = None
     ) -> Optional[torch.Tensor]:
         """Create a compact signature for governance state."""
         signatures = []
@@ -127,7 +131,7 @@ class AttentionPatternCache:
         num_heads: int,
         governance_outputs: Dict[str, Any],
         attention_mask: Optional[torch.Tensor] = None,
-        prophetic_state: Optional[PropheticSingularityState] = None
+        prophetic_state: Optional['PropheticSingularityState'] = None
     ) -> Optional[torch.Tensor]:
         """
         Try to get cached attention pattern.
@@ -183,7 +187,7 @@ class AttentionPatternCache:
         num_heads: int,
         governance_outputs: Dict[str, Any],
         attention_mask: Optional[torch.Tensor] = None,
-        prophetic_state: Optional[PropheticSingularityState] = None
+        prophetic_state: Optional['PropheticSingularityState'] = None
     ):
         """Store attention pattern in cache."""
         # Create signatures
@@ -269,7 +273,7 @@ class CachedAttentionMixin:
         num_heads: int,
         governance_outputs: Dict[str, Any],
         attention_mask: Optional[torch.Tensor] = None,
-        prophetic_state: Optional[PropheticSingularityState] = None
+        prophetic_state: Optional['PropheticSingularityState'] = None
     ) -> Optional[torch.Tensor]:
         """Try to get cached attention pattern."""
         if not self.enable_caching or self.attention_cache is None:
@@ -286,7 +290,7 @@ class CachedAttentionMixin:
         num_heads: int,
         governance_outputs: Dict[str, Any],
         attention_mask: Optional[torch.Tensor] = None,
-        prophetic_state: Optional[PropheticSingularityState] = None
+        prophetic_state: Optional['PropheticSingularityState'] = None
     ):
         """Cache attention pattern."""
         if not self.enable_caching or self.attention_cache is None:

@@ -29,17 +29,17 @@ class H200ModelTrainer:
                 'script': 'SIM-ONE Training/enhanced_train.py',
                 'output_dir': 'models/simone_enhanced',
                 'args': [
-                    '--data_dir', '../mvlm_training_dataset_complete',
-                    '--output_dir', '../models/simone_enhanced',
+                    '--data_dir', './mvlm_training_dataset_complete/mvlm_comprehensive_dataset',
+                    '--output_dir', './models/simone_enhanced',
                     '--vocab_size', '32000',
                     '--hidden_dim', '768',
                     '--num_layers', '12',
                     '--batch_size', '12',
                     '--gradient_accumulation_steps', '4',
                     '--learning_rate', '3e-4',
-                    '--num_epochs', '3',
+                    '--num_epochs', '7',
                     '--warmup_steps', '2000',
-                    '--log_file', '../logs/simone_enhanced_training.log'
+                    '--log_file', './logs/simone_enhanced_training.log'
                 ]
             }
         ]

@@ -99,7 +99,7 @@ def check_disk_space(path: Path, min_free_gb: int) -> Tuple[bool, str]:
 
 def main():
     ap = argparse.ArgumentParser(description="SIM-ONE Enhanced preflight checker")
-    ap.add_argument("--data_dir", type=str, default="./mvlm_training_dataset_complete")
+    ap.add_argument("--data_dir", type=str, default="./mvlm_training_dataset_complete/mvlm_comprehensive_dataset")
     ap.add_argument("--train_subdir", type=str, default="train")
     ap.add_argument("--val_subdir", type=str, default="val")
     ap.add_argument("--min_free_gb", type=int, default=50)

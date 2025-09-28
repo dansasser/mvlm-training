@@ -36,7 +36,7 @@ This paper provides the essential context for understanding the repository's app
 - **Script**: `enhanced_train.py` (main) or `train.py` (simplified)
 - **Architecture**: Modern transformer with all enhancements
 - **Output**: `models/simone_enhanced/`
-- **Training Time**: 3-4 hours
+- **Training Time**: ~6-7 hours (7 epochs)
 - **Memory**: ~30-40GB GPU
 - **Features**: RoPE, SwiGLU, BPE tokenizer, RMSNorm, advanced training losses, governance mechanisms
 

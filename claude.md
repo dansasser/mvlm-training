@@ -27,7 +27,7 @@ Features: Traditional transformer, proven stability, general-purpose capabilitie
 Location: ./SIM-ONE Training/enhanced_train.py
 Architecture: Modern transformer with all enhancements
 Output: models/simone_enhanced/
-Training Time: 3-4 hours  
+Training Time: ~6-7 hours (7 epochs)  
 Memory Usage: ~30-40GB GPU
 Features: RoPE, SwiGLU, BPE, RMSNorm, advanced losses, governance mechanisms
 ```
@@ -158,10 +158,10 @@ python3 mvlm_trainer.py \
 # Enhanced SIM-ONE
 cd "SIM-ONE Training"
 python3 enhanced_train.py \
-    --data_dir ../mvlm_training_dataset_complete \
+    --data_dir ../mvlm_training_dataset_complete/mvlm_comprehensive_dataset \
     --output_dir ../models/simone_enhanced \
     --vocab_size 32000 --batch_size 12 \
-    --gradient_accumulation_steps 4 --num_epochs 3
+    --gradient_accumulation_steps 4 --learning_rate 3e-4 --num_epochs 7
 ```
 
 ## Claude Best Practices

@@ -60,7 +60,7 @@ def main():
     parser.add_argument(
         "--data_dir",
         type=str,
-        default="../mvlm_training_dataset_complete",
+        default="./mvlm_training_dataset_complete/mvlm_comprehensive_dataset",
         help="Directory containing training data"
     )
     parser.add_argument(
@@ -77,7 +77,7 @@ def main():
     parser.add_argument(
         "--output_dir",
         type=str,
-        default="enhanced_checkpoints",
+        default="./models/simone_enhanced",
         help="Directory to save trained model"
     )
     parser.add_argument(
@@ -95,10 +95,10 @@ def main():
     parser.add_argument("--max_length", type=int, default=1024, help="Maximum sequence length")
     
     # Training parameters
-    parser.add_argument("--batch_size", type=int, default=8, help="Training batch size")
+    parser.add_argument("--batch_size", type=int, default=12, help="Training batch size")
     parser.add_argument("--gradient_accumulation_steps", type=int, default=4, help="Gradient accumulation steps")
     parser.add_argument("--learning_rate", type=float, default=3e-4, help="Peak learning rate")
-    parser.add_argument("--num_epochs", type=int, default=3, help="Number of training epochs")
+    parser.add_argument("--num_epochs", type=int, default=7, help="Number of training epochs")
     parser.add_argument("--warmup_steps", type=int, default=2000, help="Warmup steps")
     
     # Enhanced features

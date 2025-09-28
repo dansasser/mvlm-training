@@ -3,12 +3,16 @@ Shared Governance Backbone for Enhanced SIM-ONE Transformer
 Optimizes governance computation by sharing feature extraction across components.
 """
 
+from __future__ import annotations
+
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from typing import Optional, Dict, Tuple
+from typing import Optional, Dict, Tuple, TYPE_CHECKING
 
-from prioritary_mvlm.config import PropheticSingularityState
+if TYPE_CHECKING:
+    from prioritary_mvlm.config import PropheticSingularityState
+
 
 
 class SharedGovernanceBackbone(nn.Module):
@@ -25,7 +29,7 @@ class SharedGovernanceBackbone(nn.Module):
     def __init__(self, hidden_dim: int, governance_dim: int = None, num_heads: int = 8):
         super().__init__()
         self.hidden_dim = hidden_dim
-        self.governance_dim = governance_dim or hidden_dim // 2  # Reduce dimensionality
+        self.governance_dim = governance_dim or hidden_dim
         self.num_heads = num_heads
         
         # Shared feature extraction backbone

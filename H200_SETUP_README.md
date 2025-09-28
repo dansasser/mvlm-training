@@ -17,7 +17,7 @@ chmod +x setup_environment.sh
 
 ### 2. Start Enhanced SIM-ONE Training
 ```bash
-# Start the Enhanced SIM-ONE trainer (orchestrator now runs Enhanced only)
+# Train on the comprehensive dataset (7 epochs, ~6-7 hours)
 python3 train_all_models.py
 ```
 
@@ -57,7 +57,7 @@ The automated trainer runs the SIM-ONE Enhanced model:
 - **Script**: `SIM-ONE Training/enhanced_train.py`
 - **Output**: `models/simone_enhanced/`
 - **Features**: RoPE, SwiGLU, BPE tokenizer, advanced losses, governance
-- **Time**: ~3-4 hours
+- **Time**: ~6-7 hours (7 epochs)
 
 ## H200 Optimizations Applied
 
@@ -98,14 +98,13 @@ If you prefer to run the enhanced trainer directly:
 ```bash
 cd "SIM-ONE Training"
 python3 enhanced_train.py \
-    --data_dir ../mvlm_training_dataset_complete/train \
-    --validation_dir ../mvlm_training_dataset_complete/val \
+    --data_dir ../mvlm_training_dataset_complete/mvlm_comprehensive_dataset \
     --output_dir ../models/simone_enhanced \
     --vocab_size 32000 \
     --batch_size 12 \
     --gradient_accumulation_steps 4 \
     --learning_rate 3e-4 \
-    --num_epochs 3
+    --num_epochs 7
 ```
 
 ## Troubleshooting
@@ -187,7 +186,7 @@ iotop
 ## Performance Expectations
 
 ### H200 (80GB) Expected Performance:
-- **SIM-ONE Enhanced**: ~600 tokens/sec, 3-4 hours total
+- **SIM-ONE Enhanced**: ~600 tokens/sec, ~6-7 hours total (7 epochs)
 
 ### Memory Usage:
 - **SIM-ONE Enhanced**: ~30-40GB GPU memory
