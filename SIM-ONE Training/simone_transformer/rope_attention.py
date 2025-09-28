@@ -24,6 +24,17 @@ class RotaryPositionalEmbedding(nn.Module):
     """
     
     def __init__(self, dim: int, max_seq_len: int = 2048, base: int = 10000):
+        """
+        Initialize a RotaryPositionalEmbedding and precompute inverse frequencies used for RoPE.
+        
+        Parameters:
+            dim (int): Embedding dimensionality (must be even); RoPE operates on pairs of dimensions.
+            max_seq_len (int): Maximum sequence length to support for cached embeddings.
+            base (int): Base used to compute inverse frequencies for rotary angles (default 10000).
+        
+        Notes:
+            Registers `inv_freq` as a buffer and initializes internal caches for cosine/sine embeddings.
+        """
         super().__init__()
         self.dim = dim
         self.max_seq_len = max_seq_len
@@ -39,12 +50,15 @@ class RotaryPositionalEmbedding(nn.Module):
     
     def forward(self, x: torch.Tensor, seq_len: int, offset: int = 0) -> Tuple[torch.Tensor, torch.Tensor]:
         """
-        Args:
-            x: Input tensor [batch, seq_len, dim]
-            seq_len: Sequence length
-
+        Return precomputed cosine and sine rotary positional embeddings for a contiguous subsequence.
+        
+        Parameters:
+            x (torch.Tensor): Reference tensor whose device and dtype are used for the embeddings.
+            seq_len (int): Number of positions to return.
+            offset (int, optional): Starting position in the cached embeddings. Defaults to 0.
+        
         Returns:
-            cos, sin tensors for rotary embedding
+            tuple[torch.Tensor, torch.Tensor]: `(cos, sin)` tensors for positions `[offset:offset+seq_len]`, with device, dtype, and trailing embedding dimension compatible with `x`.
         """
         total_len = seq_len + offset
         if (
@@ -61,7 +75,17 @@ class RotaryPositionalEmbedding(nn.Module):
         )
 
     def _compute_embeddings(self, seq_len: int, device: torch.device, dtype: torch.dtype):
-        """Precompute embeddings for efficiency."""
+        """
+        Precompute and cache cosine and sine rotary positional embeddings up to a given sequence length.
+        
+        Parameters:
+            seq_len (int): Number of positions to compute embeddings for.
+            device (torch.device): Device on which to allocate the tensors.
+            dtype (torch.dtype): Data type for the computed tensors.
+        
+        Notes:
+            Stores results in `self._cached_embeddings` with keys `'cos'` and `'sin'`, and updates `self._cached_seq_len`.
+        """
         t = torch.arange(seq_len, device=device, dtype=dtype)
         freqs = torch.outer(t, self.inv_freq)
 
@@ -74,7 +98,18 @@ class RotaryPositionalEmbedding(nn.Module):
 
 
 def apply_rope(x: torch.Tensor, cos: torch.Tensor, sin: torch.Tensor) -> torch.Tensor:
-    """Apply rotary position embedding to input tensor."""
+    """
+    Apply rotary position embeddings (RoPE) to the last dimension of the input tensor.
+    
+    Parameters:
+        x (torch.Tensor): Input tensor with last dimension = 2 * d (two interleaved halves).
+        cos (torch.Tensor): Cosine positional factors broadcastable to x[..., :d].
+        sin (torch.Tensor): Sine positional factors broadcastable to x[..., :d].
+    
+    Returns:
+        torch.Tensor: Tensor with the same shape as `x` where the last dimension has been rotated
+        by the provided `cos` and `sin` factors (RoPE applied).
+    """
     # Split last dimension in half
     x1, x2 = x.chunk(2, dim=-1)
     
@@ -105,6 +140,21 @@ class EnhancedGovernanceAttention(CachedAttentionMixin, nn.Module):
         enable_caching: bool = True,
         cache_size: int = 1000
     ):
+        """
+        Initialize EnhancedGovernanceAttention with RoPE-enabled multi-head attention and a shared governance backbone.
+        
+        Parameters:
+            hidden_dim (int): Total model hidden dimension.
+            num_heads (int): Number of attention heads.
+            dropout (float): Dropout probability applied to attention weights.
+            max_seq_len (int): Maximum sequence length used to precompute rotary embeddings.
+            governance_strength (float): Scaling factor that controls the influence of policy/memory/governance signals on attention bias.
+            enable_caching (bool): If True, enables KV and attention-pattern caching provided by CachedAttentionMixin.
+            cache_size (int): Maximum number of cached attention patterns when caching is enabled.
+        
+        Raises:
+            AssertionError: If `hidden_dim` is not divisible by `num_heads`, or if the derived per-head dimension is not even (required for RoPE).
+        """
         super().__init__(enable_caching=enable_caching, cache_size=cache_size)
         assert hidden_dim % num_heads == 0
         
@@ -140,8 +190,16 @@ class EnhancedGovernanceAttention(CachedAttentionMixin, nn.Module):
         aligned_state: Optional['PropheticSingularityState'] = None
     ) -> torch.Tensor:
         """
-        Pre-compute combined attention modifications for efficiency.
-        Combines prophetic, policy, and memory biases in single operation.
+        Combine prophetic, policy, and memory signals into a single attention bias tensor.
+        
+        Parameters:
+            prophetic_mask (Optional[torch.Tensor]): Binary or scalar mask contributing a fixed positive bias; expected shape broadcastable to attention scores (e.g., [batch, heads, q_len, kv_len]).
+            policy_mask (Optional[torch.Tensor]): Per-head policy mask contributing a scaled bias; expected shape broadcastable to attention scores.
+            memory_weights (Optional[torch.Tensor]): Per-position memory weights that are converted to an additive bias via log(1 + memory_weights * governance_strength + 1e-8); expected shape broadcastable to attention scores.
+            aligned_state (Optional[PropheticSingularityState]): Unused in the current computation (reserved for aligned-state-dependent extensions).
+        
+        Returns:
+            torch.Tensor: The combined additive bias to add to attention scores (shape broadcastable to the provided masks). If no inputs are provided, returns scalar 0.0.
         """
         combined_bias = None
         
@@ -178,16 +236,23 @@ class EnhancedGovernanceAttention(CachedAttentionMixin, nn.Module):
         use_cache: bool = False
     ) -> Tuple[torch.Tensor, Dict[str, torch.Tensor], Optional[Tuple[torch.Tensor, torch.Tensor]]]:
         """
-        Args:
-            x: Input tensor [batch, seq_len, hidden_dim]
-            attention_mask: Causal mask [seq_len, seq_len] 
-            policy_guidance: External policy guidance [batch, seq_len, hidden_dim]
-            memory_context: Memory context from previous layers
-            output_traces: Whether to generate interpretability traces
-            
+        Compute multi-head attention with RoPE and governance adjustments, returning the attention output, governance signals, and optional cached key/value tensors.
+        
+        Parameters:
+            x (torch.Tensor): Input tensor of shape [batch, seq_len, hidden_dim].
+            attention_mask (Optional[torch.Tensor]): Binary mask that prevents attention to certain keys. Accepted shapes: [seq_len, seq_len], [batch, seq_len, seq_len], or [batch, num_heads, seq_len, kv_len]; shorter dimensions are automatically expanded or padded to match query/key lengths.
+            policy_guidance (Optional[torch.Tensor]): External policy conditioning tensor of shape [batch, seq_len, hidden_dim] that adjusts per-position policy signals.
+            memory_context (Optional[torch.Tensor]): Prior memory representations to be integrated into memory-aware attention adjustments.
+            output_traces (bool): If True, generate and include interpretability traces in the governance outputs.
+            prophetic_state (Optional[PropheticSingularityState]): Optional aligned prophetic state used to derive policy/memory masks and decay signals; it will be aligned to the current sequence length and device/dtype.
+            past_key_value (Optional[Tuple[torch.Tensor, torch.Tensor]]): Optional cached (k, v) tensors to prepend to current keys/values for decoding; each tensor must be shaped to match per-head layout used by the module.
+            use_cache (bool): If True, returns present_key_value (k, v) suitable for caching in subsequent calls.
+        
         Returns:
-            output: Attention output [batch, seq_len, hidden_dim]
-            governance_outputs: Dict containing policy, memory, and trace outputs
+            Tuple[torch.Tensor, Dict[str, torch.Tensor], Optional[Tuple[torch.Tensor, torch.Tensor]]]:
+                - output: Attention output tensor of shape [batch, seq_len, hidden_dim].
+                - governance_outputs: Dictionary containing governance-related tensors such as 'policy_mask', 'memory_weights', 'trace' (when requested), 'attn_weights', and any prophetic signals like 'prophetic_mask' or 'prophetic_decay'.
+                - present_key_value: Tuple (k, v) of the keys and values after concatenating past and current tensors when `use_cache` is True, otherwise None.
         """
         batch_size, seq_len, hidden_dim = x.shape
         
@@ -355,6 +420,15 @@ class PolicyController(nn.Module):
     """
     
     def __init__(self, hidden_dim: int, num_heads: int):
+        """
+        Initialize the PolicyController with a policy MLP and per-head pattern controllers.
+        
+        The policy_net is an MLP (Linear -> ReLU -> Linear -> Tanh) that maps token representations of size `hidden_dim` back to `hidden_dim` for producing policy logits; `pattern_controllers` is a ModuleList of `num_heads` linear layers (each Linear(hidden_dim, 1)) that produce a per-token scalar controller signal for each attention head.
+        
+        Parameters:
+            hidden_dim (int): Dimensionality of token representations processed by the policy network.
+            num_heads (int): Number of attention heads; determines the number of per-head pattern controllers.
+        """
         super().__init__()
         self.hidden_dim = hidden_dim
         self.num_heads = num_heads
@@ -380,16 +454,17 @@ class PolicyController(nn.Module):
         prophetic_state: Optional['PropheticSingularityState'] = None
     ) -> Tuple[torch.Tensor, Optional[torch.Tensor]]:
         """
-        Generate policy-based attention modifications.
+        Produce per-token policy logits and per-head attention modification masks.
         
-        Args:
-            x: Input representations [batch, seq_len, hidden_dim]
-            attention_scores: Current attention scores [batch, num_heads, seq_len, seq_len]
-            policy_guidance: External policy guidance
-            
+        Parameters:
+            x (torch.Tensor): Input representations of shape [batch, seq_len, hidden_dim].
+            attention_scores (torch.Tensor): Current attention scores of shape [batch, num_heads, seq_len, seq_len].
+            policy_guidance (Optional[torch.Tensor]): Optional external per-token guidance added to `x` before policy prediction.
+            prophetic_state (Optional[PropheticSingularityState]): Optional prophetic state aligned to `seq_len` that modifies logits and can contribute an additional per-head policy mask.
+        
         Returns:
-            policy_logits: Policy predictions for governance loss
-            policy_mask: Attention score modifications
+            policy_logits (torch.Tensor): Per-token policy predictions with shape [batch, seq_len, hidden_dim].
+            policy_mask (torch.Tensor): Per-head attention modification masks with shape [batch, num_heads, seq_len, seq_len]; higher values encourage attention between positions.
         """
         batch_size, seq_len, hidden_dim = x.shape
         
@@ -437,6 +512,14 @@ class MemoryManager(nn.Module):
     """
     
     def __init__(self, hidden_dim: int, num_heads: int, memory_dim: int = None):
+        """
+        Initialize the MemoryManager and construct modules used to encode current inputs into memory, integrate them with contextual memory, and produce per-head memory weights.
+        
+        Parameters:
+            hidden_dim (int): Dimensionality of the input token embeddings.
+            num_heads (int): Number of attention heads used to produce per-head memory weights.
+            memory_dim (int, optional): Dimensionality used for internal memory representations; defaults to `hidden_dim`.
+        """
         super().__init__()
         self.hidden_dim = hidden_dim
         self.num_heads = num_heads
@@ -463,16 +546,17 @@ class MemoryManager(nn.Module):
         prophetic_state: Optional['PropheticSingularityState'] = None
     ) -> Tuple[Optional[torch.Tensor], torch.Tensor]:
         """
-        Generate memory-based attention modifications.
+        Compute memory-derived attention weight modifications and produce updated memory signals.
         
-        Args:
-            x: Input representations [batch, seq_len, hidden_dim]
-            attention_scores: Current attention scores
-            memory_context: Previous memory state
-            
+        Integrates the current input into a memory representation, optionally merges it with a provided memory_context, and applies prophetic scaling and decay when prophetic_state is given. Produces per-head memory weight adjustments suitable for biasing attention and returns the integrated memory signals for downstream use.
+        
+        Parameters:
+            memory_context (Optional[torch.Tensor]): Previous memory sequence to integrate with the current memory.
+            prophetic_state (Optional[PropheticSingularityState]): Prophetic state used to modulate memory integration (affects scaling and decay).
+        
         Returns:
-            memory_weights: Attention weight modifications
-            memory_signals: New memory signals for next layer
+            memory_weights (Optional[torch.Tensor]): Per-head memory weight modifications with shape [batch, num_heads, 1, seq_len].
+            integrated_memory (torch.Tensor): Memory signals after encoding and integration with shape [batch, seq_len, memory_dim].
         """
         batch_size, seq_len, hidden_dim = x.shape
         
@@ -514,6 +598,20 @@ class TraceGenerator(nn.Module):
     """
     
     def __init__(self, hidden_dim: int, num_heads: int):
+        """
+        Initialize the TraceGenerator, setting up modules that extract attention-derived features, importance scores, concept activations, and project combined trace representations.
+        
+        Parameters:
+            hidden_dim (int): Dimensionality of the model hidden representations used as the feature size for trace outputs.
+            num_heads (int): Number of attention heads; used as input width for attention analysis.
+        
+        Attributes:
+            attention_analyzer (nn.Linear): Maps per-head averaged attention (width `num_heads`) into `hidden_dim` features.
+            importance_scorer (nn.Linear): Scores combined features to produce a scalar importance value per token.
+            concept_dim (int): Number of concept detectors (fixed to 64).
+            concept_detector (nn.Linear): Projects `hidden_dim` features into `concept_dim` concept activations.
+            trace_projector (nn.Linear): Projects the concatenation of attention features, concept activations, and importance gate (size `hidden_dim + concept_dim + 1`) back to `hidden_dim`.
+        """
         super().__init__()
         self.hidden_dim = hidden_dim
         self.num_heads = num_heads
@@ -533,15 +631,26 @@ class TraceGenerator(nn.Module):
         prophetic_state: Optional['PropheticSingularityState'] = None
     ) -> Dict[str, torch.Tensor]:
         """
-        Generate interpretability traces.
+        Generate interpretability traces from attention patterns and model representations.
         
-        Args:
-            x: Input representations [batch, seq_len, hidden_dim]
-            attention_weights: Attention weights [batch, num_heads, seq_len, seq_len]
-            attention_output: Attention output [batch, num_heads, seq_len, head_dim]
-            
+        Parameters:
+            x (torch.Tensor): Input representations of shape [batch, seq_len, hidden_dim].
+            attention_weights (torch.Tensor): Attention weights of shape [batch, num_heads, seq_len, seq_len].
+            attention_output (torch.Tensor): Per-head attention output of shape [batch, num_heads, seq_len, head_dim].
+            prophetic_state (Optional[PropheticSingularityState]): Optional prophetic state aligned to the current sequence for additional contextual traces.
+        
         Returns:
-            trace_info: Dictionary of trace information
+            dict: A dictionary containing trace tensors and scalar/summary signals:
+                - 'tensor' (torch.Tensor): Trace representation [batch, seq_len, hidden_dim].
+                - 'importance_scores' (torch.Tensor): Raw importance scores per token [batch, seq_len].
+                - 'importance_gate' (torch.Tensor): Sigmoid-scaled importance gate per token [batch, seq_len].
+                - 'concept_activations' (torch.Tensor): Detected concept activations [batch, seq_len, 64].
+                - 'attention_entropy' (torch.Tensor): Mean attention entropy across heads per token [batch, seq_len].
+                - 'attention_patterns' (torch.Tensor): Average attention patterns across target positions [batch, num_heads, seq_len].
+                - If `prophetic_state` is provided, includes:
+                    - 'prophetic_envelope' (torch.Tensor): Aligned prophetic envelope for the sequence.
+                    - 'kingdom_mean' (torch.Tensor): Prophetic summary mean.
+                    - 'kingdom_std' (torch.Tensor): Prophetic summary standard deviation.
         """
         batch_size, seq_len = x.shape[:2]
         
@@ -599,7 +708,20 @@ def create_causal_mask(
     kv_len: Optional[int] = None,
     dtype: Optional[torch.dtype] = None
 ) -> torch.Tensor:
-    """Create causal attention mask supporting cached KV (q_len x kv_len)."""
+    """
+    Builds a causal attention mask that supports cached key/value memories (q_len x kv_len).
+    
+    Parameters:
+        seq_len (int): Query sequence length (q_len).
+        device (torch.device): Device for the returned tensor.
+        kv_len (Optional[int]): Key/value sequence length (kv_len). If None, uses seq_len.
+        dtype (Optional[torch.dtype]): Data type for the mask tensor. If None, uses torch.float32.
+    
+    Returns:
+        torch.Tensor: A mask of shape [1, 1, seq_len, kv_len] where allowed attention positions are 1 and disallowed positions are 0.
+        - If kv_len == seq_len: lower-triangular mask for causal attention.
+        - If kv_len > seq_len: left block of ones for past (kv_len - seq_len) positions and a lower-triangular block for current positions.
+    """
     kv_len = kv_len or seq_len
     dtype = dtype or torch.float32
 

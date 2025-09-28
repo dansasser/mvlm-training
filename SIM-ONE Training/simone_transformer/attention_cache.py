@@ -86,7 +86,19 @@ class AttentionPatternCache:
         memory_signals: Optional[torch.Tensor] = None,
         prophetic_state: Optional['PropheticSingularityState'] = None
     ) -> Optional[torch.Tensor]:
-        """Create a compact signature for governance state."""
+        """
+        Create a compact, deterministic governance signature tensor from provided governance inputs.
+        
+        If provided, computes a signature for `policy_logits` and `memory_signals` by taking the mean and standard deviation across the first two dimensions and stacking them. If `prophetic_state` is provided, uses the mean of `prophetic_state.kingdom_flow` across its first dimension as an additional signature. Concatenates all present signatures into a single tensor; returns `None` when no inputs are given.
+        
+        Parameters:
+            policy_logits (Optional[torch.Tensor]): Tensor whose mean and std are used as part of the signature (mean/std taken over dims 0 and 1).
+            memory_signals (Optional[torch.Tensor]): Tensor whose mean and std are used as part of the signature (mean/std taken over dims 0 and 1).
+            prophetic_state (Optional['PropheticSingularityState']): Object whose `kingdom_flow` tensor contributes its mean (over dim 0) to the signature.
+        
+        Returns:
+            Optional[torch.Tensor]: Concatenated signature tensor combining all available component signatures, or `None` if no inputs were provided.
+        """
         signatures = []
         
         if policy_logits is not None:
@@ -134,10 +146,19 @@ class AttentionPatternCache:
         prophetic_state: Optional['PropheticSingularityState'] = None
     ) -> Optional[torch.Tensor]:
         """
-        Try to get cached attention pattern.
+        Retrieve a cached attention pattern that matches the provided sequence/head sizes, governance-derived signatures, and attention mask, if a valid (non-expired) entry exists.
+        
+        The method updates cache statistics: on a successful retrieval it increments the cache hit counter, updates the entry's access count and LRU position; on a miss it increments the miss counter. Expired entries are removed.
+        
+        Parameters:
+            seq_len (int): Sequence length used to form the cache key.
+            num_heads (int): Number of attention heads used to form the cache key.
+            governance_outputs (Dict[str, Any]): Dict from which `policy_logits` and `memory_signals` (if present) are used to build the governance signature.
+            attention_mask (Optional[torch.Tensor]): Optional attention mask affecting the cache key; a special deterministic hash is used for common causal masks.
+            prophetic_state (Optional['PropheticSingularityState']): Optional prophetic state used to derive an additional signature.
         
         Returns:
-            Cached pattern if found, None otherwise
+            torch.Tensor | None: A clone of the cached attention pattern if a matching, non-expired cache entry is found; `None` otherwise.
         """
         # Create signatures
         governance_sig = self._create_governance_signature(
@@ -189,7 +210,21 @@ class AttentionPatternCache:
         attention_mask: Optional[torch.Tensor] = None,
         prophetic_state: Optional['PropheticSingularityState'] = None
     ):
-        """Store attention pattern in cache."""
+        """
+        Store an attention pattern in the cache, keyed by sequence length, head count, governance signatures, prophetic signature, and attention mask hash.
+        
+        Parameters:
+            pattern (torch.Tensor): Attention pattern tensor to cache; a clone is stored.
+            seq_len (int): Sequence length associated with the pattern.
+            num_heads (int): Number of attention heads associated with the pattern.
+            governance_outputs (Dict[str, Any]): Mapping that may include 'policy_logits' and/or 'memory_signals' used to build a compact governance signature.
+            attention_mask (Optional[torch.Tensor]): Optional attention mask used to compute a deterministic mask hash for the cache key.
+            prophetic_state (Optional[PropheticSingularityState]): Optional prophetic state whose `kingdom_flow` mean is used as part of the cache key.
+        
+        Notes:
+            - The stored entry records the time of storage and an initial access count of 1.
+            - If storing causes the cache to exceed `max_cache_size`, the oldest entries are evicted and the `evictions` counter is incremented.
+        """
         # Create signatures
         governance_sig = self._create_governance_signature(
             governance_outputs.get('policy_logits'),
@@ -275,7 +310,19 @@ class CachedAttentionMixin:
         attention_mask: Optional[torch.Tensor] = None,
         prophetic_state: Optional['PropheticSingularityState'] = None
     ) -> Optional[torch.Tensor]:
-        """Try to get cached attention pattern."""
+        """
+        Retrieve a cached attention pattern matching the provided inputs if available.
+        
+        Parameters:
+            seq_len (int): Sequence length used to form the cache key.
+            num_heads (int): Number of attention heads used to form the cache key.
+            governance_outputs (Dict[str, Any]): Outputs (e.g., policy_logits, memory_signals) used to build a governance signature for cache lookup.
+            attention_mask (Optional[torch.Tensor]): Attention mask that influences cache key hashing; may be None.
+            prophetic_state (Optional['PropheticSingularityState']): Optional prophetic state contributing to the cache key.
+        
+        Returns:
+            Optional[torch.Tensor]: The cached attention pattern tensor if a valid, unexpired entry exists; `None` otherwise.
+        """
         if not self.enable_caching or self.attention_cache is None:
             return None
         
@@ -292,7 +339,17 @@ class CachedAttentionMixin:
         attention_mask: Optional[torch.Tensor] = None,
         prophetic_state: Optional['PropheticSingularityState'] = None
     ):
-        """Cache attention pattern."""
+        """
+        Store an attention pattern in the attention cache when caching is enabled and the module is in evaluation mode.
+        
+        Parameters:
+        	pattern (torch.Tensor): Attention pattern tensor to cache (will be cloned by the cache).
+        	seq_len (int): Sequence length associated with the pattern.
+        	num_heads (int): Number of attention heads associated with the pattern.
+        	governance_outputs (Dict[str, Any]): Governance-related outputs used to derive the cache key.
+        	attention_mask (Optional[torch.Tensor]): Optional attention mask used as part of the cache key.
+        	prophetic_state (Optional['PropheticSingularityState']): Optional prophetic state used as part of the cache key.
+        """
         if not self.enable_caching or self.attention_cache is None:
             return
         
